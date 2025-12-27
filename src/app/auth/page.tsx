@@ -1,7 +1,19 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { Logo } from '@/components/ui/Logo'
 import { AuthForm } from '@/components/auth/AuthForm'
 import { LanguageSwitchServer } from '@/components/ui/LanguageSwitchServer'
+
+function AuthFormFallback() {
+  return (
+    <div className="card p-8 animate-pulse">
+      <div className="h-8 bg-navy-800 rounded mb-4"></div>
+      <div className="h-12 bg-navy-800 rounded mb-4"></div>
+      <div className="h-12 bg-navy-800 rounded mb-4"></div>
+      <div className="h-12 bg-navy-800 rounded"></div>
+    </div>
+  )
+}
 
 export default function AuthPage() {
   return (
@@ -21,7 +33,9 @@ export default function AuthPage() {
             <Logo size="lg" />
           </div>
           
-          <AuthForm />
+          <Suspense fallback={<AuthFormFallback />}>
+            <AuthForm />
+          </Suspense>
         </div>
       </main>
     </div>
