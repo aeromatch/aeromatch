@@ -22,12 +22,16 @@ export default async function DashboardPage() {
     redirect('/onboarding/role')
   }
 
-  // Redirect to onboarding if not completed
+  // Redirect to onboarding only if not completed
+  // For technicians: simplified onboarding just asks for name
+  // For companies: full onboarding with company details
   if (!profile.onboarding_completed) {
     if (profile.role === 'technician') {
       redirect('/onboarding/technician')
-    } else {
+    } else if (profile.role === 'company') {
       redirect('/onboarding/company')
+    } else {
+      redirect('/onboarding/role')
     }
   }
 

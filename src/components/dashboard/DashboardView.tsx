@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
@@ -15,11 +15,30 @@ interface DashboardViewProps {
   pendingRequests: any[]
 }
 
+// Profile completion checker for technicians
+function getProfileCompletion(technician: any, availabilitySlots: any[]) {
+  const checks = {
+    licenses: technician?.license_category?.length > 0,
+    aircraft: technician?.aircraft_types?.length > 0,
+    specialties: technician?.specialties?.length > 0,
+    availability: availabilitySlots.length > 0,
+    documents: false, // We'd need to check documents table
+  }
+  
+  const completed = Object.values(checks).filter(Boolean).length
+  const total = Object.keys(checks).length
+  
+  return { checks, completed, total, percentage: Math.round((completed / total) * 100) }
+}
+
 export function DashboardView({ profile, technician, company, availabilitySlots, pendingRequests }: DashboardViewProps) {
   const { t, language } = useLanguage()
   const isTechnician = profile.role === 'technician'
   const supabase = createClient()
 
+  // Documents count
+  const [documentsCount, setDocumentsCount] = useState(0)
+  
   // Password change state (for companies)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [newPassword, setNewPassword] = useState('')
@@ -27,6 +46,57 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSuccess, setPasswordSuccess] = useState(false)
+
+  // Dismiss reminders state
+  const [dismissedReminders, setDismissedReminders] = useState<string[]>([])
+
+  useEffect(() => {
+    if (isTechnician) {
+      // Check documents count
+      supabase
+        .from('documents')
+        .select('id', { count: 'exact' })
+        .eq('technician_id', profile.id)
+        .then(({ count }) => {
+          setDocumentsCount(count || 0)
+        })
+    }
+  }, [isTechnician, profile.id])
+
+  const profileCompletion = isTechnician 
+    ? getProfileCompletion(technician, availabilitySlots)
+    : null
+
+  // Update checks with actual documents count
+  if (profileCompletion) {
+    profileCompletion.checks.documents = documentsCount > 0
+    profileCompletion.completed = Object.values(profileCompletion.checks).filter(Boolean).length
+    profileCompletion.percentage = Math.round((profileCompletion.completed / profileCompletion.total) * 100)
+  }
+
+  const reminderTexts = {
+    es: {
+      completeProfile: '¡Completa tu perfil para que las empresas te encuentren!',
+      addLicenses: 'Añade tus licencias EASA para aparecer en búsquedas',
+      addAircraft: 'Selecciona los tipos de aeronave que dominas',
+      addSpecialties: 'Indica tus especialidades (línea, base, NDT...)',
+      addAvailability: 'Añade tus períodos de disponibilidad',
+      addDocuments: 'Sube tu licencia y CV para verificar tu perfil',
+      profileProgress: 'Perfil completado',
+      goTo: 'Ir a'
+    },
+    en: {
+      completeProfile: 'Complete your profile so companies can find you!',
+      addLicenses: 'Add your EASA licenses to appear in searches',
+      addAircraft: 'Select the aircraft types you work on',
+      addSpecialties: 'Indicate your specialties (line, base, NDT...)',
+      addAvailability: 'Add your availability periods',
+      addDocuments: 'Upload your license and CV to verify your profile',
+      profileProgress: 'Profile completed',
+      goTo: 'Go to'
+    }
+  }
+  const rt = reminderTexts[language] || reminderTexts.en
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,6 +132,71 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     }
   }
 
+  const dismissReminder = (key: string) => {
+    setDismissedReminders([...dismissedReminders, key])
+  }
+
+  // Generate active reminders for technicians
+  const getActiveReminders = () => {
+    if (!isTechnician || !profileCompletion) return []
+    
+    const reminders = []
+    
+    if (!profileCompletion.checks.licenses && !dismissedReminders.includes('licenses')) {
+      reminders.push({
+        key: 'licenses',
+        text: rt.addLicenses,
+        link: '/profile/edit',
+        icon: '🎓',
+        priority: 1
+      })
+    }
+    
+    if (!profileCompletion.checks.aircraft && !dismissedReminders.includes('aircraft')) {
+      reminders.push({
+        key: 'aircraft',
+        text: rt.addAircraft,
+        link: '/profile/edit',
+        icon: '✈️',
+        priority: 2
+      })
+    }
+    
+    if (!profileCompletion.checks.specialties && !dismissedReminders.includes('specialties')) {
+      reminders.push({
+        key: 'specialties',
+        text: rt.addSpecialties,
+        link: '/profile/edit',
+        icon: '🔧',
+        priority: 3
+      })
+    }
+    
+    if (!profileCompletion.checks.availability && !dismissedReminders.includes('availability')) {
+      reminders.push({
+        key: 'availability',
+        text: rt.addAvailability,
+        link: '/profile/availability',
+        icon: '📅',
+        priority: 4
+      })
+    }
+    
+    if (!profileCompletion.checks.documents && !dismissedReminders.includes('documents')) {
+      reminders.push({
+        key: 'documents',
+        text: rt.addDocuments,
+        link: '/profile/documents',
+        icon: '📄',
+        priority: 5
+      })
+    }
+    
+    return reminders.sort((a, b) => a.priority - b.priority)
+  }
+
+  const activeReminders = getActiveReminders()
+
   return (
     <AppLayout userEmail={profile.email} userRole={profile.role}>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -75,13 +210,65 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
           </p>
         </div>
 
+        {/* Profile Completion Banner - Only for technicians with incomplete profile */}
+        {isTechnician && profileCompletion && profileCompletion.percentage < 100 && (
+          <div className="mb-8 p-5 rounded-xl bg-gradient-to-r from-gold-500/10 via-gold-500/5 to-transparent border border-gold-500/30">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl">⚡</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-1">
+                  {rt.completeProfile}
+                </h3>
+                <p className="text-sm text-steel-400 mb-4">
+                  {rt.profileProgress}: {profileCompletion.percentage}%
+                </p>
+                
+                {/* Progress bar */}
+                <div className="w-full h-2 bg-navy-800 rounded-full overflow-hidden mb-4">
+                  <div 
+                    className="h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full transition-all duration-500"
+                    style={{ width: `${profileCompletion.percentage}%` }}
+                  />
+                </div>
+
+                {/* Reminder cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {activeReminders.slice(0, 4).map((reminder) => (
+                    <Link
+                      key={reminder.key}
+                      href={reminder.link}
+                      className="group flex items-center gap-3 p-3 rounded-lg bg-navy-800/60 border border-steel-700/30 hover:border-gold-500/50 hover:bg-navy-800 transition-all"
+                    >
+                      <span className="text-lg">{reminder.icon}</span>
+                      <span className="text-sm text-steel-300 group-hover:text-white transition-colors flex-1">
+                        {reminder.text}
+                      </span>
+                      <svg className="w-4 h-4 text-gold-500/50 group-hover:text-gold-400 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-white mb-4">{t.dashboard.quickActions}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {isTechnician ? (
               <>
-                <Link href="/profile" className="card-action-primary p-5 group">
+                <Link href="/profile" className="card-action-primary p-5 group relative">
+                  {/* Notification badge if profile incomplete */}
+                  {profileCompletion && profileCompletion.percentage < 100 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold-500 rounded-full flex items-center justify-center text-[10px] font-bold text-navy-900">
+                      !
+                    </span>
+                  )}
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
                       <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +285,12 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
                   </div>
                 </Link>
 
-                <Link href="/profile/availability" className="card-action-primary p-5 group">
+                <Link href="/profile/availability" className="card-action-primary p-5 group relative">
+                  {availabilitySlots.length === 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-warning-500 rounded-full flex items-center justify-center text-[10px] font-bold text-navy-900">
+                      !
+                    </span>
+                  )}
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
                       <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +307,12 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
                   </div>
                 </Link>
 
-                <Link href="/profile/documents" className="card-action-primary p-5 group">
+                <Link href="/profile/documents" className="card-action-primary p-5 group relative">
+                  {documentsCount === 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-warning-500 rounded-full flex items-center justify-center text-[10px] font-bold text-navy-900">
+                      !
+                    </span>
+                  )}
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gold-500/10 border border-gold-500/30 flex items-center justify-center">
                       <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +420,9 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-steel-400">{t.dashboard.licenses}</span>
                   <span className="text-sm text-white">
-                    {technician.license_category?.join(', ') || t.dashboard.notSpecified}
+                    {technician.license_category?.length > 0 
+                      ? technician.license_category.join(', ') 
+                      : <span className="text-warning-400">{t.dashboard.notSpecified}</span>}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -234,8 +433,32 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-steel-400">{t.dashboard.activePeriods}</span>
-                  <span className="text-sm text-white">{availabilitySlots.length}</span>
+                  <span className={`text-sm ${availabilitySlots.length > 0 ? 'text-white' : 'text-warning-400'}`}>
+                    {availabilitySlots.length > 0 ? availabilitySlots.length : t.dashboard.notSpecified}
+                  </span>
                 </div>
+                {profileCompletion && (
+                  <div className="pt-3 mt-3 border-t border-steel-700/40">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-steel-400">{rt.profileProgress}</span>
+                      <span className={`text-sm font-medium ${
+                        profileCompletion.percentage === 100 ? 'text-success-400' : 'text-gold-400'
+                      }`}>
+                        {profileCompletion.percentage}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-navy-800 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          profileCompletion.percentage === 100 
+                            ? 'bg-success-500' 
+                            : 'bg-gradient-to-r from-gold-500 to-gold-400'
+                        }`}
+                        style={{ width: `${profileCompletion.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : company ? (
               <div className="space-y-3">
@@ -360,4 +583,3 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     </AppLayout>
   )
 }
-
