@@ -46,8 +46,8 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
     socialProof: {
       title: language === 'es' ? 'La comunidad crece' : 'The community grows',
       technicians: language === 'es' ? 'técnicos aeronáuticos registrados' : 'registered aircraft technicians',
-      waitlist: language === 'es' ? 'en lista de espera' : 'on waitlist',
-      companies: language === 'es' ? 'empresas activas en búsqueda' : 'companies actively searching',
+      profileComplete: language === 'es' ? 'con perfil completado' : 'with completed profile',
+      companies: language === 'es' ? 'empresas registradas' : 'registered companies',
     },
     // How It Works
     howItWorks: {
@@ -383,11 +383,11 @@ No paperwork. No middlemen. No commissions.`,
               <div className="text-steel-400">{content.socialProof.technicians}</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">10</div>
-              <div className="text-steel-400">{content.socialProof.waitlist}</div>
+              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">5</div>
+              <div className="text-steel-400">{content.socialProof.profileComplete}</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">5+</div>
+              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">2</div>
               <div className="text-steel-400">{content.socialProof.companies}</div>
             </div>
           </div>
