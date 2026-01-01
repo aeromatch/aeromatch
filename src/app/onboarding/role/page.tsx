@@ -1,29 +1,114 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/Logo'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-export default async function RoleSelectionPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function RoleSelectionPage() {
+  const router = useRouter()
+  const supabase = createClient()
+  const { language } = useLanguage()
+  
+  const [loading, setLoading] = useState(true)
+  const [selecting, setSelecting] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
-  if (!user) {
-    redirect('/auth')
+  const t = {
+    es: {
+      title: '¿Cómo quieres usar AeroMatch?',
+      subtitle: 'Selecciona tu tipo de cuenta para continuar',
+      technician: 'Soy Técnico',
+      technicianDesc: 'Busco oportunidades laborales en el sector aeronáutico',
+      company: 'Soy Empresa',
+      companyDesc: 'Busco talento técnico certificado para mi empresa',
+      continue: 'Continuar',
+      selecting: 'Configurando...'
+    },
+    en: {
+      title: 'How do you want to use AeroMatch?',
+      subtitle: 'Select your account type to continue',
+      technician: 'I\'m a Technician',
+      technicianDesc: 'I\'m looking for job opportunities in the aviation sector',
+      company: 'I\'m a Company',
+      companyDesc: 'I\'m looking for certified technical talent for my company',
+      continue: 'Continue',
+      selecting: 'Setting up...'
+    }
   }
 
-  // Check if profile already exists
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, onboarding_completed')
-    .eq('id', user.id)
-    .single()
+  const text = t[language] || t.en
 
-  if (profile?.onboarding_completed) {
-    redirect('/dashboard')
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      router.push('/auth')
+      return
+    }
+
+    setUserId(user.id)
+    setUserEmail(user.email || null)
+
+    // Check if already has a profile with role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, onboarding_completed')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.onboarding_completed) {
+      router.push('/dashboard')
+      return
+    }
+
+    if (profile?.role) {
+      // Has role but not completed onboarding
+      router.push(profile.role === 'technician' ? '/onboarding/technician' : '/onboarding/company')
+      return
+    }
+
+    setLoading(false)
   }
 
-  if (profile?.role) {
-    redirect(profile.role === 'technician' ? '/onboarding/technician' : '/onboarding/company')
+  const selectRole = async (role: 'technician' | 'company') => {
+    if (!userId || !userEmail) return
+    
+    setSelecting(true)
+
+    try {
+      // Create or update profile with selected role
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: userEmail,
+          role: role,
+          onboarding_completed: false
+        }, { onConflict: 'id' })
+
+      if (error) throw error
+
+      // Redirect to role-specific onboarding
+      router.push(role === 'technician' ? '/onboarding/technician' : '/onboarding/company')
+    } catch (err) {
+      console.error('Error setting role:', err)
+      setSelecting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-navy-950 flex items-center justify-center">
+        <div className="text-steel-400">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -32,16 +117,17 @@ export default async function RoleSelectionPage() {
         <Logo size="lg" className="justify-center mb-10" />
         
         <h1 className="text-3xl font-bold text-white mb-4">
-          ¿Cómo quieres usar AeroMatch?
+          {text.title}
         </h1>
         <p className="text-steel-400 mb-10">
-          Selecciona tu tipo de cuenta para continuar
+          {text.subtitle}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Link
-            href="/onboarding/technician"
-            className="card-action-primary p-8 text-left group"
+          <button
+            onClick={() => selectRole('technician')}
+            disabled={selecting}
+            className="card-action-primary p-8 text-left group disabled:opacity-50"
           >
             <div className="w-14 h-14 rounded-2xl bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mb-6">
               <svg className="w-7 h-7 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,22 +135,23 @@ export default async function RoleSelectionPage() {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-gold-300 transition-colors">
-              Soy Técnico
+              {text.technician}
             </h3>
             <p className="text-steel-400 text-sm mb-4">
-              Busco oportunidades laborales en el sector aeronáutico
+              {text.technicianDesc}
             </p>
             <div className="flex items-center text-gold-400 text-sm font-medium">
-              Continuar
+              {selecting ? text.selecting : text.continue}
               <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </Link>
+          </button>
 
-          <Link
-            href="/onboarding/company"
-            className="card-action-primary p-8 text-left group"
+          <button
+            onClick={() => selectRole('company')}
+            disabled={selecting}
+            className="card-action-primary p-8 text-left group disabled:opacity-50"
           >
             <div className="w-14 h-14 rounded-2xl bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mb-6">
               <svg className="w-7 h-7 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,21 +159,20 @@ export default async function RoleSelectionPage() {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-gold-300 transition-colors">
-              Soy Empresa
+              {text.company}
             </h3>
             <p className="text-steel-400 text-sm mb-4">
-              Busco talento técnico certificado para mi empresa
+              {text.companyDesc}
             </p>
             <div className="flex items-center text-gold-400 text-sm font-medium">
-              Continuar
+              {selecting ? text.selecting : text.continue}
               <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </Link>
+          </button>
         </div>
       </div>
     </div>
   )
 }
-
