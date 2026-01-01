@@ -58,7 +58,7 @@ export function useSubscription() {
       }
 
       if (subscriptionData) {
-        const plan = getPlanByKey(subscriptionData.plan_id)
+        const plan = getPlanByKey(subscriptionData.plan_id) || null
         setState({
           isLoading: false,
           isSubscribed: true,
