@@ -96,14 +96,20 @@ export default function TechnicianOnboardingPage() {
     setError(null)
 
     try {
-      // Update profile with name
+      // Get user email for profile
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user found')
+
+      // Create or update profile with role and name
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
+        .upsert({ 
+          id: userId,
+          email: user.email,
+          role: 'technician',
           full_name: fullName.trim(),
           onboarding_completed: true 
-        })
-        .eq('id', userId)
+        }, { onConflict: 'id' })
 
       if (profileError) throw profileError
 
