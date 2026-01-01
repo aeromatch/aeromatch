@@ -1,0 +1,74 @@
+============================================
+        AEROMATCH - PALETA DE COLORES
+============================================
+
+NAVY (Azules principales - Fondos)
+------------------------------------------
+navy-950    #0B132B    Fondo principal
+navy-900    #1A2642    Fondo secundario
+navy-800    #263666    Cards, elementos
+navy-700    #334C88    Hover states
+navy-600    #4066AA    Acentos azules
+
+
+STEEL (Grises azulados - Textos y bordes)
+------------------------------------------
+steel-800   #3A4A6B    Bordes oscuros
+steel-700   #4A5C7A    Bordes medios
+steel-600   #5A6E8A    Texto inactivo
+steel-500   #6B809A    Texto secundario
+steel-400   #8899AA    Texto body
+steel-300   #A5B4C4    Texto claro
+steel-200   #C2CED9    Texto muy claro
+steel-100   #E0E6EC    Casi blanco
+
+
+GOLD (Dorado - Acentos y CTAs)
+------------------------------------------
+gold-600    #8B7355    Dorado oscuro
+gold-500    #C9A24D    Dorado principal ⭐
+gold-400    #D4B366    Dorado claro
+gold-300    #E0C580    Dorado suave
+gold-200    #EBD799    Dorado muy claro
+
+
+SUCCESS (Verde - Estados positivos)
+------------------------------------------
+success-600 #2D6A4F
+success-500 #40916C
+success-400 #52B788
+
+
+WARNING (Amarillo - Estados de alerta)
+------------------------------------------
+warning-600 #B07D2B
+warning-500 #D4A03D
+warning-400 #E6B84F
+
+
+ERROR (Rojo - Estados de error)
+------------------------------------------
+error-600   #9B2C2C
+error-500   #C53030
+error-400   #E53E3E
+
+
+TIPOGRAFIA
+------------------------------------------
+Font:       Inter (Google Fonts)
+Fallback:   system-ui, sans-serif
+
+
+COLORES MAS USADOS
+------------------------------------------
+Fondo:           #0B132B (navy-950)
+Texto principal: #FFFFFF (white)
+Texto body:      #8899AA (steel-400)
+Acento/CTA:      #C9A24D (gold-500)
+Bordes:          #3A4A6B (steel-800)
+
+
+============================================
+           © 2025 AeroMatch
+============================================
+

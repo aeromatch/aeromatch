@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { createClient } from '@/lib/supabase/client'
+import { SubscriptionSection } from '@/components/billing/SubscriptionSection'
 
 interface DashboardViewProps {
   profile: any
@@ -169,6 +170,11 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
               </>
             )}
           </div>
+        </div>
+
+        {/* Subscription Section */}
+        <div className="mb-8">
+          <SubscriptionSection userRole={profile.role} />
         </div>
 
         {/* Status Cards */}

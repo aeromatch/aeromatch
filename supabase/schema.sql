@@ -81,11 +81,50 @@ CREATE TABLE IF NOT EXISTS job_requests (
   technician_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   final_client_name TEXT NOT NULL,
   work_location TEXT NOT NULL,
+  country_code TEXT DEFAULT 'ES',
   contract_type TEXT DEFAULT 'short-term' CHECK (contract_type IN ('short-term', 'long-term')),
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+  daily_rate_gross DECIMAL(10,2),
   notes TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('draft', 'pending', 'accepted', 'rejected', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Umbrella Providers
+CREATE TABLE IF NOT EXISTS umbrella_providers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  website_url TEXT,
+  contact_email TEXT,
+  countries TEXT[] DEFAULT '{}',
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Umbrella Country Recommendations
+CREATE TABLE IF NOT EXISTS umbrella_country_recommendations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  country_code TEXT NOT NULL,
+  umbrella_provider_id UUID NOT NULL REFERENCES umbrella_providers(id) ON DELETE CASCADE,
+  priority INT DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(country_code, umbrella_provider_id)
+);
+
+-- Job Acceptance Workflow
+CREATE TABLE IF NOT EXISTS job_acceptance_workflow (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_request_id UUID NOT NULL UNIQUE REFERENCES job_requests(id) ON DELETE CASCADE,
+  technician_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  company_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  work_mode TEXT NOT NULL CHECK (work_mode IN ('self_employed', 'umbrella', 'umbrella_with_insurance')),
+  umbrella_provider_id UUID REFERENCES umbrella_providers(id),
+  payout_bank_account TEXT,
+  payout_details_json JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -97,6 +136,8 @@ CREATE INDEX IF NOT EXISTS idx_availability_dates ON availability_slots(start_da
 CREATE INDEX IF NOT EXISTS idx_job_requests_technician ON job_requests(technician_id);
 CREATE INDEX IF NOT EXISTS idx_job_requests_company ON job_requests(company_id);
 CREATE INDEX IF NOT EXISTS idx_job_requests_status ON job_requests(status);
+CREATE INDEX IF NOT EXISTS idx_umbrella_country_rec_country ON umbrella_country_recommendations(country_code);
+CREATE INDEX IF NOT EXISTS idx_job_acceptance_workflow_job ON job_acceptance_workflow(job_request_id);
 
 -- Row Level Security
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -105,6 +146,9 @@ ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE availability_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE umbrella_providers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE umbrella_country_recommendations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_acceptance_workflow ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile" ON profiles
@@ -170,6 +214,28 @@ CREATE POLICY "Companies can create requests" ON job_requests
 
 CREATE POLICY "Users can update relevant requests" ON job_requests
   FOR UPDATE USING (auth.uid() = technician_id OR auth.uid() = company_id);
+
+-- Umbrella providers policies (anyone can read active)
+CREATE POLICY "Anyone can read active umbrella providers" ON umbrella_providers
+  FOR SELECT USING (is_active = true);
+
+-- Umbrella country recommendations policies
+CREATE POLICY "Anyone can read active umbrella recommendations" ON umbrella_country_recommendations
+  FOR SELECT USING (is_active = true);
+
+-- Job acceptance workflow policies
+CREATE POLICY "Technicians can manage their acceptance workflow" ON job_acceptance_workflow
+  FOR ALL USING (auth.uid() = technician_user_id);
+
+CREATE POLICY "Companies can read accepted job workflows" ON job_acceptance_workflow
+  FOR SELECT USING (
+    auth.uid() = company_user_id
+    AND EXISTS (
+      SELECT 1 FROM job_requests jr 
+      WHERE jr.id = job_acceptance_workflow.job_request_id 
+      AND jr.status = 'accepted'
+    )
+  );
 
 -- Storage bucket for documents
 INSERT INTO storage.buckets (id, name, public)
