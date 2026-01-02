@@ -17,8 +17,8 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
   const content = {
     // Early Access Banner
     earlyAccess: {
-      badge: language === 'es' ? '⚡ Early Access hasta 26 Enero' : '⚡ Early Access until Jan 26',
-      benefit: language === 'es' ? 'Primeros usuarios: verificación gratis de por vida' : 'First users: free verification for life',
+      badge: language === 'es' ? '🎁 Oferta Lanzamiento' : '🎁 Launch Offer',
+      benefit: language === 'es' ? 'Premium 12 meses GRATIS por perfil completo antes del 20 de enero' : 'FREE 12 months Premium for complete profile before January 20',
       counter: language === 'es' ? '24 técnicos ya registrados' : '24 technicians already registered',
     },
     // Header
@@ -213,10 +213,10 @@ No paperwork. No middlemen. No commissions.`,
             : 'You can stay registered at no cost until you find a match. You only pay for premium features.',
         },
         {
-          q: language === 'es' ? '¿Qué incluye el early access?' : 'What does early access include?',
+          q: language === 'es' ? '¿Qué incluye la oferta de lanzamiento?' : 'What does the launch offer include?',
           a: language === 'es'
-            ? 'Registro antes del 26 enero → Verificación de documentos gratis de por vida + apareces primero en búsquedas.'
-            : 'Registration before January 26 → Free document verification for life + you appear first in searches.',
+            ? 'Perfil completo antes del 20 enero → 12 meses de Premium GRATIS (valor 47,88€). Incluye documentos ilimitados, verificación prioritaria y badge Premium.'
+            : 'Complete profile before January 20 → 12 months of FREE Premium (value €47.88). Includes unlimited documents, priority verification and Premium badge.',
         },
       ],
     },
