@@ -38,14 +38,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Job request not found' }, { status: 404 })
     }
 
-    // Check permissions (company must own the job request)
-    const { data: company } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!company || company.id !== jobRequest.company_id) {
+    // Check permissions (company user must own the job request)
+    if (jobRequest.company_id !== user.id) {
       return NextResponse.json({ error: 'Not authorized to rate this job' }, { status: 403 })
     }
 
@@ -67,8 +61,8 @@ export async function POST(request: NextRequest) {
       .from('job_ratings')
       .insert({
         job_request_id: jobRequestId,
-        technician_id: technicianId,
-        company_id: company.id,
+        technician_user_id: technicianId,
+        company_user_id: user.id,
         overall_rating: overall,
         reliability_rating: reliability || null,
         skills_match_rating: skillsMatch || null,
@@ -96,7 +90,7 @@ export async function POST(request: NextRequest) {
     const { data: ratings } = await supabase
       .from('job_ratings')
       .select('overall_rating')
-      .eq('technician_id', technicianId)
+      .eq('technician_user_id', technicianId)
 
     if (ratings && ratings.length > 0) {
       const avgRating = ratings.reduce((sum, r) => sum + r.overall_rating, 0) / ratings.length
