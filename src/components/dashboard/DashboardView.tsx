@@ -16,13 +16,13 @@ interface DashboardViewProps {
 }
 
 // Profile completion checker for technicians
-function getProfileCompletion(technician: any, availabilitySlots: any[]) {
+function getProfileCompletion(technician: any, availabilitySlots: any[], documentsCount: number) {
   const checks = {
     licenses: technician?.license_category?.length > 0,
     aircraft: technician?.aircraft_types?.length > 0,
     specialties: technician?.specialties?.length > 0,
     availability: availabilitySlots.length > 0,
-    documents: false, // We'd need to check documents table
+    documents: documentsCount > 0,
   }
   
   const completed = Object.values(checks).filter(Boolean).length
@@ -39,6 +39,11 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
   // Documents count
   const [documentsCount, setDocumentsCount] = useState(0)
   
+  // Premium state
+  const [premiumGranted, setPremiumGranted] = useState(false)
+  const [showPremiumToast, setShowPremiumToast] = useState(false)
+  const [premiumChecked, setPremiumChecked] = useState(false)
+  
   // Password change state (for companies)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [newPassword, setNewPassword] = useState('')
@@ -50,9 +55,9 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
   // Dismiss reminders state
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([])
 
+  // Load documents count
   useEffect(() => {
     if (isTechnician) {
-      // Check documents count
       supabase
         .from('documents')
         .select('id', { count: 'exact' })
@@ -63,16 +68,34 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     }
   }, [isTechnician, profile.id])
 
-  const profileCompletion = isTechnician 
-    ? getProfileCompletion(technician, availabilitySlots)
-    : null
+  // Check and grant premium automatically when profile is complete
+  useEffect(() => {
+    if (isTechnician && !premiumChecked && documentsCount > 0) {
+      const completion = getProfileCompletion(technician, availabilitySlots, documentsCount)
+      
+      // Only check if profile appears complete (has capabilities + docs + availability)
+      if (completion.checks.licenses && completion.checks.documents && completion.checks.availability) {
+        setPremiumChecked(true)
+        
+        // Call premium evaluate API
+        fetch('/api/premium/evaluate', { method: 'POST' })
+          .then(res => res.json())
+          .then(data => {
+            if (data.premiumGranted) {
+              setPremiumGranted(true)
+              setShowPremiumToast(true)
+              // Hide toast after 8 seconds
+              setTimeout(() => setShowPremiumToast(false), 8000)
+            }
+          })
+          .catch(err => console.error('Premium check error:', err))
+      }
+    }
+  }, [isTechnician, technician, availabilitySlots, documentsCount, premiumChecked])
 
-  // Update checks with actual documents count
-  if (profileCompletion) {
-    profileCompletion.checks.documents = documentsCount > 0
-    profileCompletion.completed = Object.values(profileCompletion.checks).filter(Boolean).length
-    profileCompletion.percentage = Math.round((profileCompletion.completed / profileCompletion.total) * 100)
-  }
+  const profileCompletion = isTechnician 
+    ? getProfileCompletion(technician, availabilitySlots, documentsCount)
+    : null
 
   const reminderTexts = {
     es: {
@@ -197,8 +220,31 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
 
   const activeReminders = getActiveReminders()
 
+  const premiumToastText = {
+    es: '🎉 ¡Premium activado por 12 meses! Gracias por completar tu perfil antes del lanzamiento.',
+    en: '🎉 Premium activated for 12 months! Thanks for completing your profile before launch.'
+  }
+
   return (
     <AppLayout userEmail={profile.email} userRole={profile.role}>
+      {/* Premium Granted Toast */}
+      {showPremiumToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-pulse">
+          <div className="bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 max-w-md">
+            <span className="text-2xl">🎁</span>
+            <p className="font-medium text-sm">
+              {premiumToastText[language] || premiumToastText.en}
+            </p>
+            <button 
+              onClick={() => setShowPremiumToast(false)}
+              className="ml-2 text-navy-950/60 hover:text-navy-950"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

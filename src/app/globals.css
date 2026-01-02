@@ -371,6 +371,11 @@
            bg-success-500/15 text-success-400 border-2 border-success-500/40;
   }
 
+  .chip-gold {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium
+           bg-gold-500/15 text-gold-400 border-2 border-gold-500/40;
+  }
+
   .chip-warning {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium
            bg-warning-500/15 text-warning-400 border-2 border-warning-500/40;

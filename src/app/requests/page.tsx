@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { AcceptJobModal } from '@/components/requests/AcceptJobModal'
+import { RatingModal, RatingData } from '@/components/ratings/RatingModal'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface JobRequest {
@@ -23,6 +24,7 @@ interface JobRequest {
   daily_rate_gross?: number
   company_name?: string
   technician_name?: string
+  rated?: boolean
   // Workflow data (for accepted jobs)
   work_mode?: string
   umbrella_provider_name?: string
@@ -42,6 +44,10 @@ export default function RequestsPage() {
   // Accept modal state
   const [acceptModalOpen, setAcceptModalOpen] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<JobRequest | null>(null)
+  
+  // Rating modal state
+  const [ratingModalOpen, setRatingModalOpen] = useState(false)
+  const [ratingRequest, setRatingRequest] = useState<JobRequest | null>(null)
 
   const labels = {
     title: language === 'es' ? 'Solicitudes Recibidas' : 'Received Requests',
@@ -66,6 +72,10 @@ export default function RequestsPage() {
     umbrella: language === 'es' ? 'Umbrella' : 'Umbrella',
     umbrellaInsurance: language === 'es' ? 'Umbrella + Seguro' : 'Umbrella + Insurance',
     umbrellaProvider: language === 'es' ? 'Proveedor' : 'Provider',
+    rateNow: language === 'es' ? 'Valorar técnico' : 'Rate technician',
+    ratingPending: language === 'es' ? '¡Trabajo finalizado! Valora al técnico' : 'Job completed! Rate the technician',
+    rated: language === 'es' ? 'Valorado' : 'Rated',
+    completed: language === 'es' ? 'Completado' : 'Completed',
   }
 
   const workModeLabels: Record<string, string> = {
@@ -203,16 +213,65 @@ export default function RequestsPage() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const handleRateClick = (request: JobRequest) => {
+    setRatingRequest(request)
+    setRatingModalOpen(true)
+  }
+
+  const handleSubmitRating = async (rating: RatingData) => {
+    if (!ratingRequest) return
+
+    const response = await fetch('/api/ratings/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jobRequestId: ratingRequest.id,
+        technicianId: ratingRequest.technician_id,
+        ...rating
+      })
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error)
+
+    // Update local state to mark as rated
+    setRequests(requests.map(r => 
+      r.id === ratingRequest.id ? { ...r, rated: true } : r
+    ))
+  }
+
+  // Check if a job should show rating prompt (accepted + end_date passed + not rated)
+  const shouldShowRatingPrompt = (request: JobRequest) => {
+    if (request.status !== 'accepted' || request.rated) return false
+    const endDate = new Date(request.end_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return endDate < today
+  }
+
+  const getStatusBadge = (request: JobRequest) => {
+    // Check if should show as completed (end date passed)
+    if (request.status === 'accepted') {
+      const endDate = new Date(request.end_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      if (endDate < today) {
+        if (request.rated) {
+          return <span className="chip-success">{labels.rated} ✓</span>
+        }
+        return <span className="chip-gold">{labels.completed}</span>
+      }
+      return <span className="chip-success">{labels.accepted}</span>
+    }
+    
+    switch (request.status) {
       case 'pending':
         return <span className="chip-warning">{labels.pending}</span>
-      case 'accepted':
-        return <span className="chip-success">{labels.accepted}</span>
       case 'rejected':
         return <span className="chip-error">{labels.rejected}</span>
       default:
-        return <span className="chip">{status}</span>
+        return <span className="chip">{request.status}</span>
     }
   }
 
@@ -272,7 +331,7 @@ export default function RequestsPage() {
                     <h3 className="font-semibold text-white">{request.final_client_name}</h3>
                     <p className="text-sm text-steel-400">{request.work_location}</p>
                   </div>
-                  {getStatusBadge(request.status)}
+                  {getStatusBadge(request)}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
@@ -337,6 +396,31 @@ export default function RequestsPage() {
                   </div>
                 )}
 
+                {/* Rating prompt for companies (job completed + not rated) */}
+                {!isTechnician && shouldShowRatingPrompt(request) && (
+                  <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-gold-500/10 to-gold-500/5 border border-gold-500/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">⭐</span>
+                        <div>
+                          <p className="text-white font-medium">{labels.ratingPending}</p>
+                          <p className="text-xs text-steel-400">
+                            {language === 'es' 
+                              ? 'Tu valoración ayuda a otros a encontrar buenos técnicos'
+                              : 'Your rating helps others find great technicians'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRateClick(request)}
+                        className="btn-primary"
+                      >
+                        {labels.rateNow}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-steel-600 mt-4">
                   {labels.created}: {new Date(request.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-GB')}
                 </p>
@@ -356,6 +440,20 @@ export default function RequestsPage() {
           }}
           jobRequest={selectedRequest}
           onAccepted={handleAccepted}
+        />
+      )}
+
+      {/* Rating Modal (for companies) */}
+      {ratingRequest && (
+        <RatingModal
+          isOpen={ratingModalOpen}
+          onClose={() => {
+            setRatingModalOpen(false)
+            setRatingRequest(null)
+          }}
+          technicianName={ratingRequest.technician_name || 'Técnico'}
+          jobTitle={ratingRequest.final_client_name}
+          onSubmit={handleSubmitRating}
         />
       )}
     </AppLayout>
