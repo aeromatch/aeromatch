@@ -18,7 +18,7 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
     // Early Access Banner
     earlyAccess: {
       badge: language === 'es' ? '🎁 Oferta Lanzamiento' : '🎁 Launch Offer',
-      benefit: language === 'es' ? 'Premium 12 meses GRATIS por perfil completo antes del 20 de enero' : 'FREE 12 months Premium for complete profile before January 20',
+      benefit: language === 'es' ? 'Premium 12 meses GRATIS por perfil completo antes del 20 de enero (perfil técnico + documentos + disponibilidad)' : 'FREE 12 months Premium for complete profile before January 20 (technician profile + documents + availability)',
       counter: language === 'es' ? '24 técnicos ya registrados' : '24 technicians already registered',
     },
     // Header
