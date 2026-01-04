@@ -50,19 +50,19 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a1628; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a1628; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; background-color: #0B132B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0B132B; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #111d32; border-radius: 16px; overflow: hidden;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #1A2642; border-radius: 16px; overflow: hidden; border: 1px solid #3A4A6B;">
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #c9a227 0%, #e8c547 100%); padding: 30px; text-align: center;">
-              <h1 style="margin: 0; color: #0a1628; font-size: 28px; font-weight: bold;">
+            <td style="background: linear-gradient(135deg, #C9A24D 0%, #D4B366 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: #0B132B; font-size: 28px; font-weight: bold;">
                 ✈️ AeroMatch
               </h1>
-              <p style="margin: 10px 0 0; color: #0a1628; font-size: 14px; opacity: 0.8;">
+              <p style="margin: 10px 0 0; color: #0B132B; font-size: 14px; opacity: 0.8;">
                 Nueva oportunidad de trabajo
               </p>
             </td>
@@ -71,49 +71,49 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
           <!-- Content -->
           <tr>
             <td style="padding: 40px 30px;">
-              <p style="color: #94a3b8; font-size: 16px; margin: 0 0 20px;">
+              <p style="color: #8899AA; font-size: 16px; margin: 0 0 20px;">
                 Hola <strong style="color: #ffffff;">${technicianName}</strong>,
               </p>
               
-              <p style="color: #94a3b8; font-size: 16px; margin: 0 0 30px;">
-                <strong style="color: #c9a227;">${companyName}</strong> te ha enviado una solicitud de trabajo:
+              <p style="color: #8899AA; font-size: 16px; margin: 0 0 30px;">
+                <strong style="color: #C9A24D;">${companyName}</strong> te ha enviado una solicitud de trabajo:
               </p>
 
               <!-- Job Details Card -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a1628; border-radius: 12px; border: 1px solid #1e3a5f;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0B132B; border-radius: 12px; border: 1px solid #3A4A6B;">
                 <tr>
                   <td style="padding: 25px;">
                     
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 8px 0;">
-                          <span style="color: #64748b; font-size: 13px;">Cliente final</span><br>
+                          <span style="color: #6B809A; font-size: 13px;">Cliente final</span><br>
                           <span style="color: #ffffff; font-size: 16px; font-weight: 500;">${finalClient}</span>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 8px 0;">
-                          <span style="color: #64748b; font-size: 13px;">Ubicación</span><br>
+                          <span style="color: #6B809A; font-size: 13px;">Ubicación</span><br>
                           <span style="color: #ffffff; font-size: 16px; font-weight: 500;">📍 ${workLocation}</span>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 8px 0;">
-                          <span style="color: #64748b; font-size: 13px;">Fechas</span><br>
+                          <span style="color: #6B809A; font-size: 13px;">Fechas</span><br>
                           <span style="color: #ffffff; font-size: 16px; font-weight: 500;">📅 ${formatDate(startDate)} - ${formatDate(endDate)}</span>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 8px 0;">
-                          <span style="color: #64748b; font-size: 13px;">Tipo de contrato</span><br>
-                          <span style="color: #c9a227; font-size: 16px; font-weight: 500;">${contractTypeLabel}</span>
+                          <span style="color: #6B809A; font-size: 13px;">Tipo de contrato</span><br>
+                          <span style="color: #C9A24D; font-size: 16px; font-weight: 500;">${contractTypeLabel}</span>
                         </td>
                       </tr>
                       ${notes ? `
                       <tr>
                         <td style="padding: 12px 0 0;">
-                          <span style="color: #64748b; font-size: 13px;">Notas adicionales</span><br>
-                          <span style="color: #94a3b8; font-size: 14px; font-style: italic;">"${notes}"</span>
+                          <span style="color: #6B809A; font-size: 13px;">Notas adicionales</span><br>
+                          <span style="color: #8899AA; font-size: 14px; font-style: italic;">"${notes}"</span>
                         </td>
                       </tr>
                       ` : ''}
@@ -125,13 +125,13 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
               
               ${requiresRightToWorkUk ? `
               <!-- UK Right to Work Warning -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; background-color: #422006; border-radius: 12px; border: 1px solid #854d0e;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; background-color: #3D2607; border-radius: 12px; border: 1px solid #B07D2B;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="color: #fbbf24; font-size: 15px; font-weight: bold; margin: 0 0 10px;">
+                    <p style="color: #E6B84F; font-size: 15px; font-weight: bold; margin: 0 0 10px;">
                       🇬🇧 ⚠️ Requiere Right to Work UK
                     </p>
-                    <p style="color: #fcd34d; font-size: 13px; margin: 0;">
+                    <p style="color: #D4A03D; font-size: 13px; margin: 0;">
                       Este trabajo requiere elegibilidad laboral legal en UK. Deberás gestionar la elegibilidad mediante Umbrella/EoR o sponsorship de visado. Podrás seleccionar tu método al aceptar la solicitud.
                     </p>
                   </td>
@@ -143,15 +143,15 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
                 <tr>
                   <td align="center">
-                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://aeromatch.eu'}/requests" 
-                       style="display: inline-block; background: linear-gradient(135deg, #c9a227 0%, #e8c547 100%); color: #0a1628; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: bold; font-size: 16px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://app.aeromatch.eu'}/requests" 
+                       style="display: inline-block; background: linear-gradient(135deg, #C9A24D 0%, #D4B366 100%); color: #0B132B; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: bold; font-size: 16px;">
                       Ver solicitud y responder
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="color: #64748b; font-size: 14px; margin: 30px 0 0; text-align: center;">
+              <p style="color: #6B809A; font-size: 14px; margin: 30px 0 0; text-align: center;">
                 Accede a tu panel de AeroMatch para aceptar o rechazar esta solicitud.
               </p>
             </td>
@@ -159,11 +159,11 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #0a1628; padding: 25px 30px; border-top: 1px solid #1e3a5f;">
-              <p style="color: #64748b; font-size: 12px; margin: 0; text-align: center;">
+            <td style="background-color: #0B132B; padding: 25px 30px; border-top: 1px solid #3A4A6B;">
+              <p style="color: #6B809A; font-size: 12px; margin: 0; text-align: center;">
                 © 2025 AeroMatch · Conectando talento aeronáutico · aeromatch.eu
               </p>
-              <p style="color: #475569; font-size: 11px; margin: 10px 0 0; text-align: center;">
+              <p style="color: #5A6E8A; font-size: 11px; margin: 10px 0 0; text-align: center;">
                 Recibes este email porque tienes una cuenta en AeroMatch.
               </p>
             </td>
