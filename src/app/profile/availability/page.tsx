@@ -86,6 +86,32 @@ export default function AvailabilityPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error(t.common.notAuthenticated || 'Not authenticated')
 
+      // Ensure technician record exists (required for FK constraint)
+      const { data: existingTech } = await supabase
+        .from('technicians')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!existingTech) {
+        const { error: techError } = await supabase
+          .from('technicians')
+          .upsert({
+            user_id: user.id,
+            license_category: [],
+            aircraft_types: [],
+            specialties: [],
+            languages: [],
+            is_available: false,
+            visibility_anonymous: true
+          }, { onConflict: 'user_id' })
+        
+        if (techError) {
+          console.error('Error creating technician record:', techError)
+          throw new Error(language === 'es' ? 'Error al preparar el perfil' : 'Error preparing profile')
+        }
+      }
+
       const { data, error } = await supabase
         .from('availability_slots')
         .insert({

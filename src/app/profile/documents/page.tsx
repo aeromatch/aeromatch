@@ -107,6 +107,33 @@ export default function DocumentsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error(t.common.notAuthenticated)
 
+      // Ensure technician record exists (required for FK constraint)
+      if (!technician) {
+        const { error: techError } = await supabase
+          .from('technicians')
+          .upsert({
+            user_id: user.id,
+            license_category: [],
+            aircraft_types: [],
+            specialties: [],
+            languages: [],
+            is_available: false,
+            visibility_anonymous: true
+          }, { onConflict: 'user_id' })
+        
+        if (techError) {
+          console.error('Error creating technician record:', techError)
+          throw new Error(language === 'es' ? 'Error al preparar el perfil' : 'Error preparing profile')
+        }
+        // Reload technician data
+        const { data: techData } = await supabase
+          .from('technicians')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+        setTechnician(techData)
+      }
+
       const timestamp = Date.now()
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
       const path = `${user.id}/${docType}/${timestamp}-${sanitizedFileName}`
