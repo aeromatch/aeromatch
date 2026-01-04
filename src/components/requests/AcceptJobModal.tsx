@@ -335,7 +335,7 @@ Note: MoR billing and any insurance are handled by the provider under their own 
           )}
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
             step === 'work_mode' ? 'bg-gold-500 text-navy-950' : 
-            step !== 'uk_eligibility' && step !== 'work_mode' ? 'bg-gold-500/50 text-white' : 'bg-navy-700 text-steel-400'
+            (step === 'umbrella_selection' || step === 'confirmation') ? 'bg-gold-500/50 text-white' : 'bg-navy-700 text-steel-400'
           }`}>1</div>
           <div className={`flex-1 h-1 ${step === 'umbrella_selection' || step === 'confirmation' ? 'bg-gold-500' : 'bg-navy-700'}`} />
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
