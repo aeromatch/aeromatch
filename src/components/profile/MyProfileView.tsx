@@ -17,14 +17,15 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
   const uploadedDocs = documents.filter(d => d.status === 'uploaded' || d.status === 'verified')
   const verifiedDocs = documents.filter(d => d.status === 'verified')
   
-  // Calculate document completion
-  const requiredDocTypes = ['easa_b1', 'easa_b2', 'uk_caa_b1', 'uk_caa_b2', 'faa_ap']
-  const missingDocs = requiredDocTypes.filter(type => 
-    !documents.some(d => d.doc_type === type)
-  )
+  // Check if has at least one basic license (minimum requirement)
+  const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
+  const hasBasicLicense = documents.some(d => basicLicenseTypes.includes(d.doc_type))
+  
+  // Documents are complete if user has at least one basic license uploaded
+  const documentsComplete = hasBasicLicense
 
-  // Check if profile is verified (stub - all docs verified)
-  const isVerified = verifiedDocs.length > 0 && missingDocs.length === 0
+  // Check if profile is verified (has verified docs)
+  const isVerified = verifiedDocs.length > 0
 
   return (
     <AppLayout userEmail={profile?.email} userRole={profile?.role}>
@@ -259,14 +260,24 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
               </div>
               <span className="text-white">{uploadedDocs.length} {t.profile.documentsUploaded}</span>
             </div>
-            {missingDocs.length > 0 && (
+            {!documentsComplete && (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-warning-500/20 flex items-center justify-center">
                   <svg className="w-4 h-4 text-warning-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
-                <span className="text-warning-400">{missingDocs.length} {t.profile.documentsMissing}</span>
+                <span className="text-warning-400">{language === 'es' ? 'Falta licencia básica' : 'Basic license missing'}</span>
+              </div>
+            )}
+            {documentsComplete && (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-success-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="text-success-400">{language === 'es' ? 'Documentos completos' : 'Documents complete'}</span>
               </div>
             )}
           </div>
