@@ -1,13 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { useSubscription } from '@/lib/billing/useSubscription'
 import { getPlansByRole, formatPrice, Plan, PlanRole } from '@/lib/billing/plans'
+import { createClient } from '@/lib/supabase/client'
 
 interface SubscriptionSectionProps {
   userRole: PlanRole
   userEmail?: string
+}
+
+interface FoundingPremium {
+  expires_at: string
+  reason: string
 }
 
 export function SubscriptionSection({ userRole, userEmail }: SubscriptionSectionProps) {
@@ -16,20 +22,49 @@ export function SubscriptionSection({ userRole, userEmail }: SubscriptionSection
   const [showPlans, setShowPlans] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [foundingPremium, setFoundingPremium] = useState<FoundingPremium | null>(null)
+  const [loadingPremium, setLoadingPremium] = useState(true)
 
   const plans = getPlansByRole(userRole)
+  const supabase = createClient()
+
+  // Check for founding premium
+  useEffect(() => {
+    const checkFoundingPremium = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoadingPremium(false)
+        return
+      }
+
+      const { data: grant } = await supabase
+        .from('premium_grants')
+        .select('expires_at, reason')
+        .eq('technician_id', user.id)
+        .single()
+
+      if (grant && new Date(grant.expires_at) > new Date()) {
+        setFoundingPremium(grant)
+      }
+      setLoadingPremium(false)
+    }
+
+    checkFoundingPremium()
+  }, [])
 
   const labels = {
-    title: language === 'es' ? 'Suscripción' : 'Subscription',
+    title: language === 'es' ? 'Tu Plan' : 'Your Plan',
     currentPlan: language === 'es' ? 'Plan actual' : 'Current Plan',
     status: language === 'es' ? 'Estado' : 'Status',
     renewsOn: language === 'es' ? 'Se renueva el' : 'Renews on',
-    expiresOn: language === 'es' ? 'Expira el' : 'Expires on',
+    expiresOn: language === 'es' ? 'Válido hasta' : 'Valid until',
     upgrade: language === 'es' ? 'Mejorar plan' : 'Upgrade',
     managePlan: language === 'es' ? 'Gestionar plan' : 'Manage plan',
     selectPlan: language === 'es' ? 'Seleccionar plan' : 'Select plan',
     noPlan: language === 'es' ? 'Sin suscripción activa' : 'No active subscription',
     freePlan: language === 'es' ? 'Plan Gratuito' : 'Free Plan',
+    premiumPlan: language === 'es' ? 'Plan Premium' : 'Premium Plan',
+    premiumFounding: language === 'es' ? 'Premium Fundador' : 'Founding Premium',
     active: language === 'es' ? 'Activo' : 'Active',
     trialing: language === 'es' ? 'Prueba' : 'Trialing',
     pastDue: language === 'es' ? 'Pago pendiente' : 'Past due',
@@ -40,6 +75,7 @@ export function SubscriptionSection({ userRole, userEmail }: SubscriptionSection
     choosePlan: language === 'es' ? 'Elige tu plan' : 'Choose your plan',
     popular: language === 'es' ? 'Popular' : 'Popular',
     back: language === 'es' ? 'Volver' : 'Back',
+    thanksFounding: language === 'es' ? '¡Gracias por ser usuario fundador!' : 'Thanks for being a founding user!',
   }
 
   const statusLabels: Record<string, string> = {
@@ -78,11 +114,68 @@ export function SubscriptionSection({ userRole, userEmail }: SubscriptionSection
     }
   }
 
-  if (isLoading) {
+  if (isLoading || loadingPremium) {
     return (
       <div className="card p-6">
         <h3 className="text-lg font-semibold text-white mb-4">{labels.title}</h3>
         <div className="text-steel-400">{labels.loading}</div>
+      </div>
+    )
+  }
+
+  // Show Founding Premium if user has it
+  if (foundingPremium) {
+    return (
+      <div className="card p-6 border-2 border-gold-500/30 bg-gradient-to-br from-gold-500/5 to-transparent">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
+            <span className="text-xl">👑</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gold-400">{labels.premiumFounding}</h3>
+            <p className="text-sm text-steel-400">{labels.thanksFounding}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-4">
+          <div className="flex items-center gap-2 text-sm text-steel-300">
+            <svg className="w-4 h-4 text-gold-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            {language === 'es' ? 'Verificación prioritaria (48h)' : 'Priority verification (48h)'}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-steel-300">
+            <svg className="w-4 h-4 text-gold-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            {language === 'es' ? 'Badge "Verificado Premium"' : 'Premium Verified badge'}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-steel-300">
+            <svg className="w-4 h-4 text-gold-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            {language === 'es' ? 'Sugerencias de Umbrella Partners' : 'Umbrella Partners suggestions'}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-steel-300">
+            <svg className="w-4 h-4 text-gold-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            {language === 'es' ? 'Soporte prioritario' : 'Priority support'}
+          </div>
+        </div>
+
+        <div className="p-3 bg-navy-800/50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-steel-400">{labels.expiresOn}</span>
+            <span className="text-white font-medium">
+              {new Date(foundingPremium.expires_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}
+            </span>
+          </div>
+        </div>
       </div>
     )
   }

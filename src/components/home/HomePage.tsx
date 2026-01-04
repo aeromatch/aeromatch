@@ -152,8 +152,8 @@ No paperwork. No middlemen. No commissions.`,
           name: language === 'es' ? 'Plan Premium' : 'Premium Plan',
           price: '3,99€',
           features: language === 'es'
-            ? ['Todo lo de básico +', 'Documentos ilimitados', 'Verificación prioritaria (24h)', 'Personalización avanzada', 'Badge "Verificado Premium"', 'Soporte prioritario']
-            : ['Everything in basic +', 'Unlimited documents', 'Priority verification (24h)', 'Advanced customization', '"Verified Premium" badge', 'Priority support'],
+            ? ['Todo lo de básico +', 'Verificación prioritaria (48h)', 'Badge "Verificado Premium"', 'Sugerencias de Umbrella Partners', 'Soporte prioritario']
+            : ['Everything in basic +', 'Priority verification (48h)', '"Verified Premium" badge', 'Umbrella Partners suggestions', 'Priority support'],
         },
       },
       companyPlans: [
