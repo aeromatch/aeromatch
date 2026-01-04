@@ -1,6 +1,9 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Resend client - only initialize if API key is available
+const resend = process.env.RESEND_API_KEY 
+  ? new Resend(process.env.RESEND_API_KEY) 
+  : null
 
 interface JobRequestEmailData {
   technicianEmail: string
@@ -155,6 +158,12 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
 </body>
 </html>
 `
+
+  // Skip if Resend is not configured
+  if (!resend) {
+    console.log('Email skipped: RESEND_API_KEY not configured')
+    return { success: false, error: 'Email service not configured' }
+  }
 
   try {
     const { data, error } = await resend.emails.send({
