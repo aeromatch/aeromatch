@@ -122,7 +122,7 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
                 <tr>
                   <td align="center">
-                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://aeromatch.es'}/requests" 
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://aeromatch.eu'}/requests" 
                        style="display: inline-block; background: linear-gradient(135deg, #c9a227 0%, #e8c547 100%); color: #0a1628; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-weight: bold; font-size: 16px;">
                       Ver solicitud y responder
                     </a>
@@ -140,7 +140,7 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
           <tr>
             <td style="background-color: #0a1628; padding: 25px 30px; border-top: 1px solid #1e3a5f;">
               <p style="color: #64748b; font-size: 12px; margin: 0; text-align: center;">
-                © 2025 AeroMatch · Conectando talento aeronáutico
+                © 2025 AeroMatch · Conectando talento aeronáutico · aeromatch.eu
               </p>
               <p style="color: #475569; font-size: 11px; margin: 10px 0 0; text-align: center;">
                 Recibes este email porque tienes una cuenta en AeroMatch.
@@ -158,7 +158,7 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'AeroMatch <notificaciones@aeromatch.es>',
+      from: 'AeroMatch <solicitudes@aeromatch.eu>',
       to: technicianEmail,
       subject: `🛫 Nueva solicitud de trabajo de ${companyName}`,
       html: htmlContent,
