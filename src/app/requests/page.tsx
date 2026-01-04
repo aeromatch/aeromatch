@@ -25,9 +25,11 @@ interface JobRequest {
   company_name?: string
   technician_name?: string
   rated?: boolean
+  requires_right_to_work_uk?: boolean
   // Workflow data (for accepted jobs)
   work_mode?: string
   umbrella_provider_name?: string
+  uk_eligibility_mode?: string
 }
 
 export default function RequestsPage() {
@@ -36,6 +38,7 @@ export default function RequestsPage() {
   const { language } = useLanguage()
 
   const [profile, setProfile] = useState<any>(null)
+  const [technicianData, setTechnicianData] = useState<any>(null)
   const [requests, setRequests] = useState<JobRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
@@ -76,6 +79,11 @@ export default function RequestsPage() {
     ratingPending: language === 'es' ? '¡Trabajo finalizado! Valora al técnico' : 'Job completed! Rate the technician',
     rated: language === 'es' ? 'Valorado' : 'Rated',
     completed: language === 'es' ? 'Completado' : 'Completed',
+    ukEligibilityWarning: language === 'es' 
+      ? '⚠️ Se requiere elegibilidad laboral en UK. AeroMatch no sponsoriza visados ni ofrece seguro directamente en esta fase. Debes gestionar la elegibilidad mediante:\n• Umbrella/EoR (MoR y seguro bajo términos del proveedor), O\n• Sponsorship de visado o Right to Work UK por tu cuenta.'
+      : '⚠️ UK Work Eligibility Required. This job requires legal Right to Work in the UK to execute the contract. AeroMatch does NOT sponsor VISAs or provide insurance directly at this stage. You must arrange eligibility via:\n• Umbrella/EoR (MoR billing + insurance under provider terms), OR\n• VISA sponsorship / Right to Work UK independently.',
+    ukRtw: language === 'es' ? 'Right to Work UK' : 'UK Right to Work',
+    required: language === 'es' ? 'Requerido' : 'Required',
   }
 
   const workModeLabels: Record<string, string> = {
@@ -105,6 +113,15 @@ export default function RequestsPage() {
 
     // Load requests based on role
     if (profileData?.role === 'technician') {
+      // Load technician data to check right_to_work_uk
+      const { data: techData } = await supabase
+        .from('technicians')
+        .select('right_to_work_uk')
+        .eq('user_id', user.id)
+        .single()
+      
+      setTechnicianData(techData)
+
       const { data: requestsData } = await supabase
         .from('job_requests')
         .select('*')
@@ -376,6 +393,34 @@ export default function RequestsPage() {
                   </div>
                 )}
 
+                {/* UK Right to Work Warning for technicians on pending requests */}
+                {isTechnician && request.status === 'pending' && request.requires_right_to_work_uk && technicianData?.right_to_work_uk !== true && (
+                  <div className="mb-4 p-4 rounded-xl bg-warning-500/10 border border-warning-500/30">
+                    <div className="flex items-start gap-3">
+                      <span className="text-xl">⚠️</span>
+                      <div>
+                        <p className="text-white font-medium mb-2">
+                          {language === 'es' ? 'Se requiere elegibilidad laboral en UK' : 'UK Work Eligibility Required'}
+                        </p>
+                        <p className="text-sm text-steel-300 whitespace-pre-line">
+                          {language === 'es' 
+                            ? 'Este trabajo requiere Right to Work legal en UK para ejecutar el contrato. AeroMatch NO sponsoriza visados ni provee seguro directamente.\n\nDebes gestionar la elegibilidad mediante:\n• Umbrella/EoR (facturación MoR + seguro bajo términos del proveedor), O\n• Sponsorship de visado / Right to Work UK independiente.'
+                            : 'This job requires legal Right to Work in the UK to execute the contract. AeroMatch does NOT sponsor VISAs or provide insurance directly.\n\nYou must arrange eligibility via:\n• Umbrella/EoR (MoR billing + insurance under provider terms), OR\n• VISA sponsorship / Right to Work UK independently.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* UK RTW badge if required */}
+                {request.requires_right_to_work_uk && (
+                  <div className="mb-4">
+                    <span className="chip-warning text-xs">
+                      🇬🇧 {labels.ukRtw} {labels.required}
+                    </span>
+                  </div>
+                )}
+
                 {/* Action buttons for pending requests (technician only) */}
                 {isTechnician && request.status === 'pending' && (
                   <div className="flex gap-3 pt-4 border-t border-steel-700/30">
@@ -440,6 +485,7 @@ export default function RequestsPage() {
           }}
           jobRequest={selectedRequest}
           onAccepted={handleAccepted}
+          technicianHasRightToWorkUK={technicianData?.right_to_work_uk === true}
         />
       )}
 

@@ -25,6 +25,7 @@ interface JobRequest {
   status: string
   country_code?: string
   daily_rate_gross?: number
+  requires_right_to_work_uk?: boolean
 }
 
 interface AcceptJobModalProps {
@@ -32,16 +33,25 @@ interface AcceptJobModalProps {
   onClose: () => void
   jobRequest: JobRequest
   onAccepted: () => void
+  technicianHasRightToWorkUK?: boolean
 }
 
 type WorkMode = 'self_employed' | 'umbrella' | 'umbrella_with_insurance'
+type UkEligibilityMode = 'not_required' | 'umbrella' | 'self_arranged'
 
-export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted }: AcceptJobModalProps) {
+export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, technicianHasRightToWorkUK }: AcceptJobModalProps) {
   const { language } = useLanguage()
   const supabase = createClient()
   
-  const [step, setStep] = useState<'work_mode' | 'umbrella_selection' | 'confirmation'>('work_mode')
+  // Check if UK eligibility step is needed
+  const needsUkEligibility = jobRequest.requires_right_to_work_uk && technicianHasRightToWorkUK !== true
+  
+  const [step, setStep] = useState<'uk_eligibility' | 'work_mode' | 'umbrella_selection' | 'confirmation'>(
+    needsUkEligibility ? 'uk_eligibility' : 'work_mode'
+  )
   const [workMode, setWorkMode] = useState<WorkMode>('self_employed')
+  const [ukEligibilityMode, setUkEligibilityMode] = useState<UkEligibilityMode>('umbrella')
+  const [ukSelfArrangedAcknowledged, setUkSelfArrangedAcknowledged] = useState(false)
   const [umbrellaProviders, setUmbrellaProviders] = useState<UmbrellaProvider[]>([])
   const [selectedUmbrella, setSelectedUmbrella] = useState<UmbrellaProvider | null>(null)
   const [bankAccount, setBankAccount] = useState('')
@@ -83,6 +93,21 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted }: Acce
     visitWebsite: language === 'es' ? 'Visitar web' : 'Visit website',
     contactEmail: language === 'es' ? 'Enviar email' : 'Send email',
     noProviders: language === 'es' ? 'No hay proveedores disponibles' : 'No providers available',
+    ukEligibilityTitle: language === 'es' ? 'Elegibilidad laboral en UK' : 'UK Work Eligibility',
+    ukEligibilityDesc: language === 'es' 
+      ? 'Este trabajo requiere Right to Work legal en UK. AeroMatch no sponsoriza visados ni ofrece seguro directamente en esta fase.'
+      : 'This job requires legal Right to Work in the UK. AeroMatch does NOT sponsor VISAs or provide insurance directly at this stage.',
+    ukUmbrellaOption: language === 'es' ? 'Usar proveedor Umbrella/EoR recomendado' : 'Use recommended Umbrella/EoR provider',
+    ukUmbrellaDesc: language === 'es' 
+      ? 'Una umbrella gestionará facturación MoR y seguro (bajo sus términos)'
+      : 'An umbrella will handle MoR billing and insurance (under their terms)',
+    ukSelfOption: language === 'es' ? 'Gestionaré la elegibilidad UK por mi cuenta' : 'I will arrange UK eligibility myself',
+    ukSelfDesc: language === 'es' 
+      ? 'Tengo o conseguiré Right to Work UK / sponsorship de visado independientemente'
+      : 'I have or will arrange Right to Work UK / VISA sponsorship independently',
+    ukSelfAcknowledge: language === 'es' 
+      ? 'Confirmo que gestionaré Right to Work UK / sponsorship de visado de forma independiente.'
+      : 'I confirm I will arrange Right to Work UK / VISA sponsorship independently.',
   }
 
   const workModeLabels: Record<WorkMode, string> = {
@@ -157,7 +182,19 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted }: Acce
   }
 
   const handleNext = () => {
-    if (step === 'work_mode') {
+    if (step === 'uk_eligibility') {
+      if (ukEligibilityMode === 'self_arranged' && !ukSelfArrangedAcknowledged) {
+        setError(language === 'es' ? 'Debes confirmar que gestionarás la elegibilidad UK' : 'You must acknowledge UK eligibility arrangement')
+        return
+      }
+      // If using umbrella for UK eligibility, go to umbrella selection
+      if (ukEligibilityMode === 'umbrella') {
+        setWorkMode('umbrella') // Force umbrella mode
+        setStep('umbrella_selection')
+      } else {
+        setStep('work_mode')
+      }
+    } else if (step === 'work_mode') {
       if (workMode === 'self_employed') {
         setStep('confirmation')
       } else {
@@ -168,17 +205,34 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted }: Acce
         setError(language === 'es' ? 'Selecciona un proveedor umbrella' : 'Select an umbrella provider')
         return
       }
-      setStep('confirmation')
+      // If came from UK eligibility with umbrella mode, skip work_mode and go to confirmation
+      if (needsUkEligibility && ukEligibilityMode === 'umbrella') {
+        setStep('confirmation')
+      } else {
+        setStep('confirmation')
+      }
     }
     setError(null)
   }
 
   const handleBack = () => {
     if (step === 'umbrella_selection') {
-      setStep('work_mode')
+      if (needsUkEligibility && ukEligibilityMode === 'umbrella') {
+        setStep('uk_eligibility')
+      } else {
+        setStep('work_mode')
+      }
+    } else if (step === 'work_mode') {
+      if (needsUkEligibility) {
+        setStep('uk_eligibility')
+      }
     } else if (step === 'confirmation') {
       if (workMode === 'self_employed') {
-        setStep('work_mode')
+        if (needsUkEligibility) {
+          setStep('work_mode')
+        } else {
+          setStep('work_mode')
+        }
       } else {
         setStep('umbrella_selection')
       }
@@ -213,6 +267,8 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted }: Acce
           work_mode: workMode,
           umbrella_provider_id: selectedUmbrella?.id || null,
           payout_bank_account: bankAccount || null,
+          uk_eligibility_mode: needsUkEligibility ? ukEligibilityMode : 'not_required',
+          uk_eligibility_acknowledged: ukEligibilityMode === 'self_arranged' ? ukSelfArrangedAcknowledged : null,
         })
 
       if (workflowError) {
@@ -230,6 +286,10 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted }: Acce
   }
 
   const copyDetailsToClipboard = () => {
+    const ukNote = needsUkEligibility 
+      ? `\nUK Eligibility: ${ukEligibilityMode === 'umbrella' ? 'Via Umbrella/EoR provider' : 'Self-arranged by technician'}` 
+      : ''
+    
     const details = `Job details for Umbrella Provider
 Job: ${jobRequest.final_client_name}
 Country: ${jobRequest.country_code || 'ES'}
@@ -239,7 +299,9 @@ Contract Type: ${jobRequest.contract_type === 'short-term' ? 'Short-term' : 'Lon
 ${jobRequest.daily_rate_gross ? `Agreed Rate (Gross): €${jobRequest.daily_rate_gross}/day` : ''}
 ${bankAccount ? `Technician IBAN: ${bankAccount}` : ''}
 Umbrella Selected: ${selectedUmbrella?.name} (${selectedUmbrella?.website_url || 'N/A'})
-Umbrella Contact: ${selectedUmbrella?.contact_email || 'N/A'}`
+Umbrella Contact: ${selectedUmbrella?.contact_email || 'N/A'}${ukNote}
+
+Note: MoR billing and any insurance are handled by the provider under their own policy terms.`
 
     navigator.clipboard.writeText(details)
     setCopied(true)
@@ -263,10 +325,19 @@ Umbrella Contact: ${selectedUmbrella?.contact_email || 'N/A'}`
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-6">
+          {needsUkEligibility && (
+            <>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                step === 'uk_eligibility' ? 'bg-warning-500 text-navy-950' : 'bg-warning-500/50 text-white'
+              }`}>🇬🇧</div>
+              <div className={`flex-1 h-1 ${step !== 'uk_eligibility' ? 'bg-gold-500' : 'bg-navy-700'}`} />
+            </>
+          )}
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step === 'work_mode' ? 'bg-gold-500 text-navy-950' : 'bg-navy-700 text-steel-400'
+            step === 'work_mode' ? 'bg-gold-500 text-navy-950' : 
+            step !== 'uk_eligibility' && step !== 'work_mode' ? 'bg-gold-500/50 text-white' : 'bg-navy-700 text-steel-400'
           }`}>1</div>
-          <div className={`flex-1 h-1 ${step !== 'work_mode' ? 'bg-gold-500' : 'bg-navy-700'}`} />
+          <div className={`flex-1 h-1 ${step === 'umbrella_selection' || step === 'confirmation' ? 'bg-gold-500' : 'bg-navy-700'}`} />
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
             step === 'umbrella_selection' ? 'bg-gold-500 text-navy-950' : 
             step === 'confirmation' && workMode !== 'self_employed' ? 'bg-gold-500/50 text-white' : 'bg-navy-700 text-steel-400'
@@ -280,6 +351,90 @@ Umbrella Contact: ${selectedUmbrella?.contact_email || 'N/A'}`
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-error-600/20 border border-error-500/30 text-error-400 text-sm">
             {error}
+          </div>
+        )}
+
+        {/* Step UK Eligibility (only shown if job requires RTW and tech doesn't have it) */}
+        {step === 'uk_eligibility' && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-warning-500/10 border border-warning-500/30">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">⚠️</span>
+                <div>
+                  <h3 className="text-lg font-medium text-white mb-2">{labels.ukEligibilityTitle}</h3>
+                  <p className="text-sm text-steel-300">{labels.ukEligibilityDesc}</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-steel-400">
+              {language === 'es' ? '¿Cómo vas a gestionar la elegibilidad UK?' : 'How will you handle UK eligibility?'}
+            </p>
+
+            <label className={`block p-4 rounded-xl border-2 cursor-pointer transition-all ${
+              ukEligibilityMode === 'umbrella' 
+                ? 'border-gold-500 bg-gold-500/10' 
+                : 'border-steel-700 hover:border-steel-600'
+            }`}>
+              <input
+                type="radio"
+                name="ukEligibility"
+                value="umbrella"
+                checked={ukEligibilityMode === 'umbrella'}
+                onChange={() => setUkEligibilityMode('umbrella')}
+                className="sr-only"
+              />
+              <div className="flex items-start gap-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                  ukEligibilityMode === 'umbrella' ? 'border-gold-500' : 'border-steel-600'
+                }`}>
+                  {ukEligibilityMode === 'umbrella' && <div className="w-2.5 h-2.5 rounded-full bg-gold-500" />}
+                </div>
+                <div>
+                  <p className="font-medium text-white">{labels.ukUmbrellaOption}</p>
+                  <p className="text-sm text-steel-400 mt-1">{labels.ukUmbrellaDesc}</p>
+                </div>
+              </div>
+            </label>
+
+            <label className={`block p-4 rounded-xl border-2 cursor-pointer transition-all ${
+              ukEligibilityMode === 'self_arranged' 
+                ? 'border-gold-500 bg-gold-500/10' 
+                : 'border-steel-700 hover:border-steel-600'
+            }`}>
+              <input
+                type="radio"
+                name="ukEligibility"
+                value="self_arranged"
+                checked={ukEligibilityMode === 'self_arranged'}
+                onChange={() => setUkEligibilityMode('self_arranged')}
+                className="sr-only"
+              />
+              <div className="flex items-start gap-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                  ukEligibilityMode === 'self_arranged' ? 'border-gold-500' : 'border-steel-600'
+                }`}>
+                  {ukEligibilityMode === 'self_arranged' && <div className="w-2.5 h-2.5 rounded-full bg-gold-500" />}
+                </div>
+                <div>
+                  <p className="font-medium text-white">{labels.ukSelfOption}</p>
+                  <p className="text-sm text-steel-400 mt-1">{labels.ukSelfDesc}</p>
+                </div>
+              </div>
+            </label>
+
+            {/* Acknowledgment checkbox for self_arranged */}
+            {ukEligibilityMode === 'self_arranged' && (
+              <label className="flex items-start gap-3 p-3 rounded-lg bg-navy-800/50 border border-steel-700/30 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ukSelfArrangedAcknowledged}
+                  onChange={(e) => setUkSelfArrangedAcknowledged(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-steel-600 bg-navy-800 text-gold-500 focus:ring-gold-500 focus:ring-offset-0"
+                />
+                <span className="text-sm text-steel-300">{labels.ukSelfAcknowledge}</span>
+              </label>
+            )}
           </div>
         )}
 
@@ -550,7 +705,7 @@ Umbrella Contact: ${selectedUmbrella?.contact_email || 'N/A'}`
 
         {/* Footer Buttons */}
         <div className="flex gap-3 mt-6 pt-4 border-t border-steel-700/30">
-          {step !== 'work_mode' ? (
+          {(step !== 'work_mode' && step !== 'uk_eligibility') || (step === 'work_mode' && needsUkEligibility) ? (
             <button onClick={handleBack} className="btn-ghost flex-1">
               {labels.back}
             </button>
