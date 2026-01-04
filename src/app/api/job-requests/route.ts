@@ -75,19 +75,28 @@ export async function POST(request: Request) {
       .single()
 
     // Send email notification (don't block response if it fails)
+    console.log('Preparing email notification for technician:', technicianProfile?.email)
+    
     if (technicianProfile?.email) {
-      sendJobRequestNotification({
-        technicianEmail: technicianProfile.email,
-        technicianName: technicianProfile.full_name || 'Técnico',
-        companyName: companyData?.company_name || companyProfile?.full_name || 'Una empresa',
-        finalClient: final_client_name,
-        workLocation: work_location,
-        startDate: start_date,
-        endDate: end_date,
-        contractType: contract_type || 'short-term',
-        notes: notes || undefined,
-        requiresRightToWorkUk: requires_right_to_work_uk || false
-      }).catch(err => console.error('Email notification failed:', err))
+      try {
+        const emailResult = await sendJobRequestNotification({
+          technicianEmail: technicianProfile.email,
+          technicianName: technicianProfile.full_name || 'Técnico',
+          companyName: companyData?.company_name || companyProfile?.full_name || 'Una empresa',
+          finalClient: final_client_name,
+          workLocation: work_location,
+          startDate: start_date,
+          endDate: end_date,
+          contractType: contract_type || 'short-term',
+          notes: notes || undefined,
+          requiresRightToWorkUk: requires_right_to_work_uk || false
+        })
+        console.log('Email result:', JSON.stringify(emailResult))
+      } catch (err) {
+        console.error('Email notification failed:', err)
+      }
+    } else {
+      console.log('No email found for technician, skipping notification')
     }
 
     return NextResponse.json({ request: data })
