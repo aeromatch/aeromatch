@@ -16,13 +16,29 @@ interface DashboardViewProps {
 }
 
 // Profile completion checker for technicians
-function getProfileCompletion(technician: any, availabilitySlots: any[], documentsCount: number) {
+function getProfileCompletion(technician: any, availabilitySlots: any[], documentsCount: number, documentTypes: string[]) {
+  // Basic license check
+  const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
+  const hasBasicLicense = basicLicenseTypes.some(type => documentTypes.includes(type))
+  
+  // Aircraft docs check - for each aircraft, need theory + practical
+  const aircraftTypes = technician?.aircraft_types || []
+  let aircraftDocsComplete = true
+  
+  for (const aircraft of aircraftTypes) {
+    const aircraftLower = aircraft.toLowerCase()
+    const hasTheory = documentTypes.includes(`type_${aircraftLower}_theory`)
+    const hasPractical = documentTypes.includes(`type_${aircraftLower}_practical`)
+    if (!hasTheory || !hasPractical) {
+      aircraftDocsComplete = false
+      break
+    }
+  }
+  
   const checks = {
-    licenses: technician?.license_category?.length > 0,
-    aircraft: technician?.aircraft_types?.length > 0,
-    specialties: technician?.specialties?.length > 0,
+    basicLicense: hasBasicLicense,
+    aircraftDocs: aircraftTypes.length === 0 || aircraftDocsComplete,
     availability: availabilitySlots.length > 0,
-    documents: documentsCount > 0,
   }
   
   const completed = Object.values(checks).filter(Boolean).length
@@ -55,66 +71,80 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
   // Dismiss reminders state
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([])
 
-  // Load documents count
+  // Load documents
+  const [documentTypes, setDocumentTypes] = useState<string[]>([])
+  
   useEffect(() => {
     if (isTechnician) {
       supabase
         .from('documents')
-        .select('id', { count: 'exact' })
+        .select('doc_type')
         .eq('technician_id', profile.id)
-        .then(({ count }) => {
-          setDocumentsCount(count || 0)
+        .then(({ data, count }) => {
+          setDocumentsCount(data?.length || 0)
+          setDocumentTypes((data || []).map(d => d.doc_type))
         })
     }
   }, [isTechnician, profile.id])
 
-  // Check and grant premium automatically when profile is complete
+  // Check and grant premium automatically when profile appears complete
   useEffect(() => {
-    if (isTechnician && !premiumChecked && documentsCount > 0) {
-      const completion = getProfileCompletion(technician, availabilitySlots, documentsCount)
+    if (isTechnician && !premiumChecked && documentsCount > 0 && availabilitySlots.length > 0) {
+      // Check basic license
+      const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
+      const hasBasicLicense = basicLicenseTypes.some(type => documentTypes.includes(type))
       
-      // Only check if profile appears complete (has capabilities + docs + availability)
-      if (completion.checks.licenses && completion.checks.documents && completion.checks.availability) {
+      // Check aircraft docs
+      const aircraftTypes = technician?.aircraft_types || []
+      let hasAllAircraftDocs = true
+      
+      for (const aircraft of aircraftTypes) {
+        const aircraftLower = aircraft.toLowerCase()
+        const hasTheory = documentTypes.includes(`type_${aircraftLower}_theory`)
+        const hasPractical = documentTypes.includes(`type_${aircraftLower}_practical`)
+        if (!hasTheory || !hasPractical) {
+          hasAllAircraftDocs = false
+          break
+        }
+      }
+      
+      // If profile appears complete, call API to evaluate and grant premium
+      if (hasBasicLicense && hasAllAircraftDocs) {
         setPremiumChecked(true)
         
-        // Call premium evaluate API
         fetch('/api/premium/evaluate', { method: 'POST' })
           .then(res => res.json())
           .then(data => {
+            console.log('Premium evaluate response:', data)
             if (data.premiumGranted) {
               setPremiumGranted(true)
               setShowPremiumToast(true)
-              // Hide toast after 8 seconds
               setTimeout(() => setShowPremiumToast(false), 8000)
             }
           })
           .catch(err => console.error('Premium check error:', err))
       }
     }
-  }, [isTechnician, technician, availabilitySlots, documentsCount, premiumChecked])
+  }, [isTechnician, technician, availabilitySlots, documentsCount, documentTypes, premiumChecked])
 
   const profileCompletion = isTechnician 
-    ? getProfileCompletion(technician, availabilitySlots, documentsCount)
+    ? getProfileCompletion(technician, availabilitySlots, documentsCount, documentTypes)
     : null
 
   const reminderTexts = {
     es: {
-      completeProfile: '¡Completa tu perfil para que las empresas te encuentren!',
-      addLicenses: 'Añade tus licencias EASA para aparecer en búsquedas',
-      addAircraft: 'Selecciona los tipos de aeronave que dominas',
-      addSpecialties: 'Indica tus especialidades (línea, base, NDT...)',
+      completeProfile: '¡Completa tu perfil para activar Premium GRATIS!',
+      addBasicLicense: 'Sube tu licencia básica (EASA, UK CAA o FAA)',
+      addAircraftDocs: 'Sube documentos teórico + práctico de tus aviones',
       addAvailability: 'Añade tus períodos de disponibilidad',
-      addDocuments: 'Sube tu licencia y CV para verificar tu perfil',
       profileProgress: 'Perfil completado',
       goTo: 'Ir a'
     },
     en: {
-      completeProfile: 'Complete your profile so companies can find you!',
-      addLicenses: 'Add your EASA licenses to appear in searches',
-      addAircraft: 'Select the aircraft types you work on',
-      addSpecialties: 'Indicate your specialties (line, base, NDT...)',
+      completeProfile: 'Complete your profile to activate FREE Premium!',
+      addBasicLicense: 'Upload your basic license (EASA, UK CAA or FAA)',
+      addAircraftDocs: 'Upload theory + practical docs for your aircraft',
       addAvailability: 'Add your availability periods',
-      addDocuments: 'Upload your license and CV to verify your profile',
       profileProgress: 'Profile completed',
       goTo: 'Go to'
     }
@@ -165,33 +195,23 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     
     const reminders = []
     
-    if (!profileCompletion.checks.licenses && !dismissedReminders.includes('licenses')) {
+    if (!profileCompletion.checks.basicLicense && !dismissedReminders.includes('basicLicense')) {
       reminders.push({
-        key: 'licenses',
-        text: rt.addLicenses,
-        link: '/profile/edit',
-        icon: '🎓',
+        key: 'basicLicense',
+        text: rt.addBasicLicense,
+        link: '/profile/documents',
+        icon: '🛡️',
         priority: 1
       })
     }
     
-    if (!profileCompletion.checks.aircraft && !dismissedReminders.includes('aircraft')) {
+    if (!profileCompletion.checks.aircraftDocs && !dismissedReminders.includes('aircraftDocs')) {
       reminders.push({
-        key: 'aircraft',
-        text: rt.addAircraft,
-        link: '/profile/edit',
+        key: 'aircraftDocs',
+        text: rt.addAircraftDocs,
+        link: '/profile/documents',
         icon: '✈️',
         priority: 2
-      })
-    }
-    
-    if (!profileCompletion.checks.specialties && !dismissedReminders.includes('specialties')) {
-      reminders.push({
-        key: 'specialties',
-        text: rt.addSpecialties,
-        link: '/profile/edit',
-        icon: '🔧',
-        priority: 3
       })
     }
     
@@ -201,17 +221,7 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
         text: rt.addAvailability,
         link: '/profile/availability',
         icon: '📅',
-        priority: 4
-      })
-    }
-    
-    if (!profileCompletion.checks.documents && !dismissedReminders.includes('documents')) {
-      reminders.push({
-        key: 'documents',
-        text: rt.addDocuments,
-        link: '/profile/documents',
-        icon: '📄',
-        priority: 5
+        priority: 3
       })
     }
     

@@ -62,26 +62,40 @@ export async function POST() {
     }
 
     // Check profile completion criteria
-    // 1. Technician profile exists with capabilities
+    // 1. Technician profile exists with aircraft types
     const { data: technician } = await supabase
       .from('technicians')
       .select('user_id, license_category, aircraft_types, specialties')
       .eq('user_id', user.id)
       .single()
 
-    const hasCapabilities = technician && (
-      (technician.license_category && technician.license_category.length > 0) ||
-      (technician.aircraft_types && technician.aircraft_types.length > 0) ||
-      (technician.specialties && technician.specialties.length > 0)
-    )
-
-    // 2. Has at least 1 document uploaded
-    const { count: docCount } = await supabase
+    // 2. Get all documents
+    const { data: documents } = await supabase
       .from('documents')
-      .select('id', { count: 'exact', head: true })
+      .select('doc_type')
       .eq('technician_id', user.id)
 
-    const hasDocuments = (docCount || 0) >= 1
+    const docTypes = (documents || []).map(d => d.doc_type)
+
+    // Check for basic license (EASA, UK CAA or FAA)
+    const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
+    const hasBasicLicense = basicLicenseTypes.some(type => docTypes.includes(type))
+
+    // Check aircraft type ratings - for each aircraft selected, must have theory + practical
+    const aircraftTypes = technician?.aircraft_types || []
+    let missingAircraftDocs: string[] = []
+    
+    for (const aircraft of aircraftTypes) {
+      const aircraftLower = aircraft.toLowerCase()
+      const hasTheory = docTypes.includes(`type_${aircraftLower}_theory`)
+      const hasPractical = docTypes.includes(`type_${aircraftLower}_practical`)
+      
+      if (!hasTheory || !hasPractical) {
+        missingAircraftDocs.push(aircraft)
+      }
+    }
+
+    const hasAllAircraftDocs = aircraftTypes.length === 0 || missingAircraftDocs.length === 0
 
     // 3. Has active availability
     const { count: availCount } = await supabase
@@ -92,16 +106,21 @@ export async function POST() {
 
     const hasAvailability = (availCount || 0) >= 1
 
-    const isComplete = hasCapabilities && hasDocuments && hasAvailability
+    const isComplete = hasBasicLicense && hasAllAircraftDocs && hasAvailability
 
     if (!isComplete) {
       return NextResponse.json({ 
         complete: false, 
         premiumGranted: false,
         missing: {
-          capabilities: !hasCapabilities,
-          documents: !hasDocuments,
+          basicLicense: !hasBasicLicense,
+          aircraftDocs: missingAircraftDocs,
           availability: !hasAvailability
+        },
+        debug: {
+          docTypes,
+          aircraftTypes,
+          availCount: availCount || 0
         }
       })
     }
