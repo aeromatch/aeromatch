@@ -153,7 +153,8 @@ export default function SearchPage() {
           contract_type: contractType,
           start_date: dateRange.start.toISOString().split('T')[0],
           end_date: dateRange.end.toISOString().split('T')[0],
-          notes: notes || null
+          notes: notes || null,
+          requires_right_to_work_uk: jobRequiresRightToWorkUk
         })
       })
 
@@ -551,6 +552,39 @@ export default function SearchPage() {
                     className="textarea h-20"
                     placeholder={language === 'es' ? 'Información adicional...' : 'Additional information...'}
                   />
+                </div>
+
+                {/* UK Right to Work requirement */}
+                <div className="p-4 rounded-xl bg-navy-800/50 border border-steel-700/30">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={jobRequiresRightToWorkUk}
+                      onChange={(e) => setJobRequiresRightToWorkUk(e.target.checked)}
+                      className="mt-1 w-4 h-4 rounded border-steel-600 bg-navy-800 text-gold-500 focus:ring-gold-500 focus:ring-offset-0"
+                    />
+                    <div>
+                      <span className="text-white font-medium flex items-center gap-2">
+                        🇬🇧 {language === 'es' ? 'Este trabajo requiere Right to Work UK' : 'This job requires UK Right to Work'}
+                      </span>
+                      <p className="text-xs text-steel-400 mt-1">
+                        {language === 'es' 
+                          ? 'Marca esta opción si el trabajo se ejecutará en UK y requiere elegibilidad laboral legal.'
+                          : 'Check this if the job will be executed in the UK and requires legal work eligibility.'}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Warning if tech doesn't have RTW */}
+                  {jobRequiresRightToWorkUk && selectedTechnician && selectedTechnician.right_to_work_uk !== true && (
+                    <div className="mt-3 p-3 rounded-lg bg-warning-500/10 border border-warning-500/30">
+                      <p className="text-xs text-warning-400">
+                        {language === 'es'
+                          ? '⚠️ Este técnico no tiene Right to Work UK confirmado. Deberá gestionar elegibilidad mediante Umbrella/EoR o sponsorship de visado.'
+                          : '⚠️ This technician does not have confirmed UK Right to Work. They will need to arrange eligibility via Umbrella/EoR or VISA sponsorship.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

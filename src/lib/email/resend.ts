@@ -15,6 +15,7 @@ interface JobRequestEmailData {
   endDate: string
   contractType: string
   notes?: string
+  requiresRightToWorkUk?: boolean
 }
 
 export async function sendJobRequestNotification(data: JobRequestEmailData) {
@@ -27,7 +28,8 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
     startDate,
     endDate,
     contractType,
-    notes
+    notes,
+    requiresRightToWorkUk
   } = data
 
   const contractTypeLabel = contractType === 'short-term' ? 'Corto plazo' : 'Largo plazo'
@@ -120,6 +122,22 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
                   </td>
                 </tr>
               </table>
+              
+              ${requiresRightToWorkUk ? `
+              <!-- UK Right to Work Warning -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; background-color: #422006; border-radius: 12px; border: 1px solid #854d0e;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="color: #fbbf24; font-size: 15px; font-weight: bold; margin: 0 0 10px;">
+                      🇬🇧 ⚠️ Requiere Right to Work UK
+                    </p>
+                    <p style="color: #fcd34d; font-size: 13px; margin: 0;">
+                      Este trabajo requiere elegibilidad laboral legal en UK. Deberás gestionar la elegibilidad mediante Umbrella/EoR o sponsorship de visado. Podrás seleccionar tu método al aceptar la solicitud.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
 
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">

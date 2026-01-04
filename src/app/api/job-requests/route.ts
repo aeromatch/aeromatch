@@ -37,7 +37,8 @@ export async function POST(request: Request) {
       contract_type,
       start_date,
       end_date,
-      notes
+      notes,
+      requires_right_to_work_uk
     } = body
 
     if (!technician_id || !final_client_name || !work_location || !start_date || !end_date) {
@@ -55,7 +56,8 @@ export async function POST(request: Request) {
         start_date,
         end_date,
         notes,
-        status: 'pending'
+        status: 'pending',
+        requires_right_to_work_uk: requires_right_to_work_uk || false
       })
       .select()
       .single()
@@ -83,7 +85,8 @@ export async function POST(request: Request) {
         startDate: start_date,
         endDate: end_date,
         contractType: contract_type || 'short-term',
-        notes: notes || undefined
+        notes: notes || undefined,
+        requiresRightToWorkUk: requires_right_to_work_uk || false
       }).catch(err => console.error('Email notification failed:', err))
     }
 
