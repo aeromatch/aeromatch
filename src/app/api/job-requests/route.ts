@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendJobRequestNotification } from '@/lib/email/resend'
 
 export async function POST(request: Request) {
   try {
@@ -10,16 +11,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Verify user is a company
-    const { data: profile } = await supabase
+    // Verify user is a company and get company name
+    const { data: companyProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, full_name')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'company') {
+    if (companyProfile?.role !== 'company') {
       return NextResponse.json({ error: 'Solo empresas pueden crear solicitudes' }, { status: 403 })
     }
+
+    // Get company name from companies table if available
+    const { data: companyData } = await supabase
+      .from('companies')
+      .select('company_name')
+      .eq('user_id', user.id)
+      .single()
 
     const body = await request.json()
     const {
@@ -55,6 +63,28 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Create request error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Get technician info for email notification
+    const { data: technicianProfile } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', technician_id)
+      .single()
+
+    // Send email notification (don't block response if it fails)
+    if (technicianProfile?.email) {
+      sendJobRequestNotification({
+        technicianEmail: technicianProfile.email,
+        technicianName: technicianProfile.full_name || 'Técnico',
+        companyName: companyData?.company_name || companyProfile?.full_name || 'Una empresa',
+        finalClient: final_client_name,
+        workLocation: work_location,
+        startDate: start_date,
+        endDate: end_date,
+        contractType: contract_type || 'short-term',
+        notes: notes || undefined
+      }).catch(err => console.error('Email notification failed:', err))
     }
 
     return NextResponse.json({ request: data })
