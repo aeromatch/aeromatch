@@ -54,18 +54,18 @@ export async function GET(request: Request) {
       
       const [technicianData, premiumData, docsData, availData] = await Promise.all([
         adminClient.from('technicians').select('user_id, license_category, aircraft_types, specialties').in('user_id', userIds),
-        adminClient.from('premium_grants').select('user_id, expires_at').in('user_id', userIds).eq('grant_type', 'founding_profile_complete'),
-        adminClient.from('documents').select('user_id').in('user_id', userIds),
-        adminClient.from('availability_slots').select('user_id').in('user_id', userIds)
+        adminClient.from('premium_grants').select('technician_id, expires_at').in('technician_id', userIds),
+        adminClient.from('documents').select('technician_id').in('technician_id', userIds),
+        adminClient.from('availability_slots').select('technician_id').in('technician_id', userIds)
       ])
 
       const techMap = new Map(technicianData.data?.map(t => [t.user_id, t]) || [])
-      const premiumMap = new Map(premiumData.data?.map(p => [p.user_id, p]) || [])
+      const premiumMap = new Map(premiumData.data?.map(p => [p.technician_id, p]) || [])
       const docsMap = new Map<string, number>()
       const availMap = new Map<string, number>()
 
-      docsData.data?.forEach(d => docsMap.set(d.user_id, (docsMap.get(d.user_id) || 0) + 1))
-      availData.data?.forEach(a => availMap.set(a.user_id, (availMap.get(a.user_id) || 0) + 1))
+      docsData.data?.forEach(d => docsMap.set(d.technician_id, (docsMap.get(d.technician_id) || 0) + 1))
+      availData.data?.forEach(a => availMap.set(a.technician_id, (availMap.get(a.technician_id) || 0) + 1))
 
       const users = profiles.map(p => {
         const tech = techMap.get(p.id)
@@ -106,17 +106,17 @@ export async function GET(request: Request) {
       
       const [companyData, jobsData] = await Promise.all([
         adminClient.from('companies').select('user_id, company_name, company_type').in('user_id', userIds),
-        adminClient.from('job_requests').select('company_user_id, status').in('company_user_id', userIds)
+        adminClient.from('job_requests').select('company_id, status').in('company_id', userIds)
       ])
 
       const companyMap = new Map(companyData.data?.map(c => [c.user_id, c]) || [])
       const jobsMap = new Map<string, { total: number, accepted: number }>()
 
       jobsData.data?.forEach(j => {
-        const existing = jobsMap.get(j.company_user_id) || { total: 0, accepted: 0 }
+        const existing = jobsMap.get(j.company_id) || { total: 0, accepted: 0 }
         existing.total++
         if (j.status === 'accepted' || j.status === 'completed') existing.accepted++
-        jobsMap.set(j.company_user_id, existing)
+        jobsMap.set(j.company_id, existing)
       })
 
       const users = profiles.map(p => {

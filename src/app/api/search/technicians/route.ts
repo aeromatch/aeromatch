@@ -52,14 +52,14 @@ export async function POST(request: Request) {
       `)
       .eq('is_available', true)
 
-    // Apply filters
+    // Apply filters (right_to_work_uk is NOT a filter - all technicians must appear)
     if (uk_license) {
       query = query.eq('uk_license', true)
     }
 
-    if (right_to_work_uk) {
-      query = query.eq('right_to_work_uk', true)
-    }
+    // NOTE: right_to_work_uk is intentionally NOT filtered here
+    // The job request flag determines if RTW is required, not the search filter
+    // Technicians without RTW UK will show a warning but still appear in results
 
     if (own_tools) {
       query = query.eq('own_tools', true)

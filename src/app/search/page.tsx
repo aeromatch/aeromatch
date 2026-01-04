@@ -38,8 +38,10 @@ export default function SearchPage() {
   const [aircraftTypes, setAircraftTypes] = useState<string[]>([])
   const [specialties, setSpecialties] = useState<string[]>([])
   const [ukLicense, setUkLicense] = useState(false)
-  const [rightToWorkUk, setRightToWorkUk] = useState(false)
   const [ownTools, setOwnTools] = useState(false)
+  
+  // Job requires Right to Work UK (determines warning display, not filtering)
+  const [jobRequiresRightToWorkUk, setJobRequiresRightToWorkUk] = useState(false)
 
   // Results
   const [results, setResults] = useState<TechnicianResult[]>([])
@@ -110,8 +112,8 @@ export default function SearchPage() {
           aircraft_types: aircraftTypes,
           specialties: specialties,
           uk_license: ukLicense,
-          right_to_work_uk: rightToWorkUk,
           own_tools: ownTools
+          // Note: right_to_work_uk is not sent - filtering happens on job flag, not search
         })
       })
 
@@ -314,14 +316,19 @@ export default function SearchPage() {
                     <span className="text-sm text-white">{language === 'es' ? 'Licencia UK CAA' : 'UK CAA License'}</span>
                   </label>
 
-                  <label className="flex items-center gap-3 cursor-pointer p-2 bg-navy-800/30 rounded-lg hover:bg-navy-800/50 transition-colors">
+                  <label className="flex items-center gap-3 cursor-pointer p-2 bg-warning-500/10 border border-warning-500/30 rounded-lg hover:bg-warning-500/20 transition-colors">
                     <input
                       type="checkbox"
-                      checked={rightToWorkUk}
-                      onChange={(e) => setRightToWorkUk(e.target.checked)}
+                      checked={jobRequiresRightToWorkUk}
+                      onChange={(e) => setJobRequiresRightToWorkUk(e.target.checked)}
                       className="checkbox"
                     />
-                    <span className="text-sm text-white">UK Right to Work</span>
+                    <div>
+                      <span className="text-sm text-white">{language === 'es' ? 'Trabajo requiere Right to Work UK' : 'Job requires UK Right to Work'}</span>
+                      <p className="text-xs text-steel-500 mt-0.5">
+                        {language === 'es' ? 'Se mostrará aviso en candidatos sin RTW' : 'Warning will show for candidates without RTW'}
+                      </p>
+                    </div>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer p-2 bg-navy-800/30 rounded-lg hover:bg-navy-800/50 transition-colors">
@@ -421,11 +428,24 @@ export default function SearchPage() {
                             {language === 'es' ? 'Herramientas' : 'Tools'}
                           </span>
                         )}
-                        {tech.right_to_work_uk && (
-                          <span className="chip-success text-xs">UK</span>
+                        {tech.right_to_work_uk ? (
+                          <span className="chip-success text-xs">UK RTW ✓</span>
+                        ) : jobRequiresRightToWorkUk && (
+                          <span className="chip-warning text-xs">⚠️ No UK RTW</span>
                         )}
                       </div>
                     </div>
+
+                    {/* UK Right to Work Warning */}
+                    {jobRequiresRightToWorkUk && !tech.right_to_work_uk && (
+                      <div className="p-3 rounded-lg bg-warning-500/10 border border-warning-500/30 mb-4">
+                        <p className="text-xs text-warning-400">
+                          {language === 'es'
+                            ? '⚠️ No consta Right to Work UK — la ejecución del contrato UK requiere soporte Umbrella/EoR para facturación MoR, seguro de accidentes (términos del proveedor) o sponsorship de visado.'
+                            : '⚠️ No Right to Work UK — UK contract execution requires Umbrella/EoR support for MoR billing, accident insurance (provider terms) or VISA sponsorship.'}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                       <div>
