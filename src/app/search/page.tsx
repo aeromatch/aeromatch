@@ -428,16 +428,16 @@ export default function SearchPage() {
                             {language === 'es' ? 'Herramientas' : 'Tools'}
                           </span>
                         )}
-                        {tech.right_to_work_uk ? (
+                        {tech.right_to_work_uk === true ? (
                           <span className="chip-success text-xs">UK RTW ✓</span>
-                        ) : jobRequiresRightToWorkUk && (
+                        ) : jobRequiresRightToWorkUk ? (
                           <span className="chip-warning text-xs">⚠️ No UK RTW</span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
-                    {/* UK Right to Work Warning */}
-                    {jobRequiresRightToWorkUk && !tech.right_to_work_uk && (
+                    {/* UK Right to Work Warning - shown when job requires RTW and tech doesn't have it */}
+                    {jobRequiresRightToWorkUk && tech.right_to_work_uk !== true && (
                       <div className="p-3 rounded-lg bg-warning-500/10 border border-warning-500/30 mb-4">
                         <p className="text-xs text-warning-400">
                           {language === 'es'
