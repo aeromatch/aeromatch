@@ -49,8 +49,7 @@ export async function POST() {
     const { data: existingGrant } = await supabase
       .from('premium_grants')
       .select('id, expires_at')
-      .eq('user_id', user.id)
-      .eq('grant_type', 'founding_profile_complete')
+      .eq('technician_id', user.id)
       .single()
 
     if (existingGrant) {
@@ -66,7 +65,7 @@ export async function POST() {
     // 1. Technician profile exists with capabilities
     const { data: technician } = await supabase
       .from('technicians')
-      .select('id, license_category, aircraft_types, specialties')
+      .select('user_id, license_category, aircraft_types, specialties')
       .eq('user_id', user.id)
       .single()
 
@@ -80,7 +79,7 @@ export async function POST() {
     const { count: docCount } = await supabase
       .from('documents')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
+      .eq('technician_id', user.id)
 
     const hasDocuments = (docCount || 0) >= 1
 
@@ -88,7 +87,7 @@ export async function POST() {
     const { count: availCount } = await supabase
       .from('availability_slots')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
+      .eq('technician_id', user.id)
       .gte('end_date', now.toISOString().split('T')[0])
 
     const hasAvailability = (availCount || 0) >= 1
@@ -115,18 +114,9 @@ export async function POST() {
     const { error: insertError } = await adminClient
       .from('premium_grants')
       .insert({
-        user_id: user.id,
-        grant_type: 'founding_profile_complete',
-        expires_at: expiresAt.toISOString(),
-        snapshot: {
-          cutoff_date: cutoffDateStr,
-          granted_at: now.toISOString(),
-          had_capabilities: hasCapabilities,
-          had_documents: hasDocuments,
-          had_availability: hasAvailability,
-          doc_count: docCount,
-          avail_count: availCount
-        }
+        technician_id: user.id,
+        reason: 'founding_profile_complete',
+        expires_at: expiresAt.toISOString()
       })
 
     if (insertError) {

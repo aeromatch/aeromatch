@@ -13,6 +13,9 @@ interface Metrics {
   totalCompleted: number
   totalRatings: number
   totalFoundingPremium: number
+  techsWithDocs: number
+  techsWithAvailability: number
+  totalDocuments: number
 }
 
 interface Technician {
@@ -153,14 +156,37 @@ export default function AdminPage() {
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {activeTab === 'metrics' && metrics && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <MetricCard label="Technicians" value={metrics.totalTechnicians} />
-            <MetricCard label="Companies" value={metrics.totalCompanies} />
-            <MetricCard label="Job Requests" value={metrics.totalJobRequests} />
-            <MetricCard label="Accepted" value={metrics.totalAccepted} />
-            <MetricCard label="Completed" value={metrics.totalCompleted} />
-            <MetricCard label="Ratings" value={metrics.totalRatings} />
-            <MetricCard label="Founding Premium" value={metrics.totalFoundingPremium} highlight />
+          <div className="space-y-6">
+            {/* Main metrics */}
+            <div>
+              <h3 className="text-steel-400 text-sm font-medium mb-3">Usuarios</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <MetricCard label="Técnicos" value={metrics.totalTechnicians} />
+                <MetricCard label="Empresas" value={metrics.totalCompanies} />
+                <MetricCard label="Premium Activos" value={metrics.totalFoundingPremium} highlight />
+              </div>
+            </div>
+
+            {/* Profile completion metrics */}
+            <div>
+              <h3 className="text-steel-400 text-sm font-medium mb-3">Completitud de Perfiles</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <MetricCard label="Con Documentos" value={metrics.techsWithDocs} subtitle={`de ${metrics.totalTechnicians}`} />
+                <MetricCard label="Con Disponibilidad" value={metrics.techsWithAvailability} subtitle={`de ${metrics.totalTechnicians}`} />
+                <MetricCard label="Total Documentos" value={metrics.totalDocuments} />
+              </div>
+            </div>
+
+            {/* Job metrics */}
+            <div>
+              <h3 className="text-steel-400 text-sm font-medium mb-3">Actividad de Trabajos</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <MetricCard label="Solicitudes" value={metrics.totalJobRequests} />
+                <MetricCard label="Aceptadas" value={metrics.totalAccepted} />
+                <MetricCard label="Completadas" value={metrics.totalCompleted} />
+                <MetricCard label="Valoraciones" value={metrics.totalRatings} />
+              </div>
+            </div>
           </div>
         )}
 
@@ -246,11 +272,14 @@ export default function AdminPage() {
   )
 }
 
-function MetricCard({ label, value, highlight }: { label: string, value: number, highlight?: boolean }) {
+function MetricCard({ label, value, highlight, subtitle }: { label: string, value: number, highlight?: boolean, subtitle?: string }) {
   return (
     <div className={`p-6 rounded-xl border ${highlight ? 'border-gold-500/50 bg-gold-500/5' : 'border-steel-700 bg-navy-800/30'}`}>
       <p className="text-steel-400 text-sm mb-1">{label}</p>
-      <p className={`text-3xl font-bold ${highlight ? 'text-gold-400' : 'text-white'}`}>{value}</p>
+      <div className="flex items-baseline gap-2">
+        <p className={`text-3xl font-bold ${highlight ? 'text-gold-400' : 'text-white'}`}>{value}</p>
+        {subtitle && <span className="text-steel-500 text-sm">{subtitle}</span>}
+      </div>
     </div>
   )
 }

@@ -33,6 +33,8 @@ export async function GET() {
 
     const adminClient = getAdminClient()
 
+    const today = new Date().toISOString().split('T')[0]
+
     // Fetch all metrics in parallel
     const [
       techniciansResult,
@@ -41,7 +43,10 @@ export async function GET() {
       acceptedJobsResult,
       completedJobsResult,
       ratingsResult,
-      premiumGrantsResult
+      premiumGrantsResult,
+      techsWithDocsResult,
+      techsWithAvailResult,
+      totalDocsResult
     ] = await Promise.all([
       // Total technicians
       adminClient.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'technician'),
@@ -51,13 +56,24 @@ export async function GET() {
       adminClient.from('job_requests').select('id', { count: 'exact', head: true }),
       // Accepted jobs
       adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
-      // Completed jobs
-      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+      // Completed jobs (rated)
+      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('rated', true),
       // Total ratings
       adminClient.from('job_ratings').select('id', { count: 'exact', head: true }),
       // Founding premium grants
-      adminClient.from('premium_grants').select('id', { count: 'exact', head: true }).eq('grant_type', 'founding_profile_complete')
+      adminClient.from('premium_grants').select('id', { count: 'exact', head: true }).eq('reason', 'founding_profile_complete'),
+      // Technicians with at least 1 document
+      adminClient.from('documents').select('technician_id', { count: 'exact', head: false }),
+      // Availability slots active
+      adminClient.from('availability_slots').select('technician_id', { count: 'exact', head: false }).gte('end_date', today),
+      // Total documents
+      adminClient.from('documents').select('id', { count: 'exact', head: true })
     ])
+
+    // Count unique technicians with docs
+    const uniqueTechsWithDocs = new Set((techsWithDocsResult.data || []).map((d: any) => d.technician_id)).size
+    // Count unique technicians with availability
+    const uniqueTechsWithAvail = new Set((techsWithAvailResult.data || []).map((a: any) => a.technician_id)).size
 
     return NextResponse.json({
       totalTechnicians: techniciansResult.count || 0,
@@ -66,7 +82,10 @@ export async function GET() {
       totalAccepted: acceptedJobsResult.count || 0,
       totalCompleted: completedJobsResult.count || 0,
       totalRatings: ratingsResult.count || 0,
-      totalFoundingPremium: premiumGrantsResult.count || 0
+      totalFoundingPremium: premiumGrantsResult.count || 0,
+      techsWithDocs: uniqueTechsWithDocs,
+      techsWithAvailability: uniqueTechsWithAvail,
+      totalDocuments: totalDocsResult.count || 0
     })
 
   } catch (error: any) {
