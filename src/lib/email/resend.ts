@@ -167,7 +167,7 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'AeroMatch <solicitudes@aeromatch.eu>',
+      from: 'aeroMatch <matchrequest@aeromatch.eu>',
       to: technicianEmail,
       subject: `🛫 Nueva solicitud de trabajo de ${companyName}`,
       html: htmlContent,
