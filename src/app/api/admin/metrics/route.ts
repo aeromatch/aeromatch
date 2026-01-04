@@ -60,8 +60,8 @@ export async function GET() {
       adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('rated', true),
       // Total ratings
       adminClient.from('job_ratings').select('id', { count: 'exact', head: true }),
-      // Founding premium grants
-      adminClient.from('premium_grants').select('id', { count: 'exact', head: true }).eq('reason', 'founding_profile_complete'),
+      // Founding premium grants (both types: founding_member and founding_profile_complete)
+      adminClient.from('premium_grants').select('id', { count: 'exact', head: true }).in('reason', ['founding_member', 'founding_profile_complete']),
       // Technicians with at least 1 document
       adminClient.from('documents').select('technician_id', { count: 'exact', head: false }),
       // Availability slots active
