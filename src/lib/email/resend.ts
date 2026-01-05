@@ -58,15 +58,15 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(180deg, #263666 0%, #1A2642 100%); padding: 35px 30px; text-align: center; border-bottom: 3px solid #C9A24D;">
-              <!-- Logo as styled text (email-safe) -->
-              <table cellpadding="0" cellspacing="0" style="margin: 0 auto 12px;">
-                <tr>
-                  <td style="font-family: Arial, sans-serif; font-size: 36px; font-weight: bold;">
-                    <span style="color: #C9A24D;">aero</span><span style="color: #FFFFFF;">Match</span>
-                  </td>
-                </tr>
-              </table>
+            <td style="background: linear-gradient(180deg, #263666 0%, #1A2642 100%); padding: 30px; text-align: center; border-bottom: 3px solid #C9A24D;">
+              <!-- Logo Image -->
+              <img 
+                src="${process.env.NEXT_PUBLIC_APP_URL || 'https://app.aeromatch.eu'}/logo-email.svg" 
+                alt="AeroMatch" 
+                width="200" 
+                height="62"
+                style="display: block; margin: 0 auto 15px; max-width: 100%;"
+              />
               <p style="margin: 0; color: #8899AA; font-size: 14px; letter-spacing: 1px;">
                 Nueva oportunidad de trabajo
               </p>
