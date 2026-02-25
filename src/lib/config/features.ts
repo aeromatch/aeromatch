@@ -74,25 +74,45 @@ export const PRELAUNCH_COPY = {
 export const TESTIMONIALS = {
   es: [
     {
-      quote: 'Me gusta porque solo me contactan cuando marco disponibilidad. Tengo la documentación organizada y lista para enviarla en segundos, y el tema de las umbrellas me da tranquilidad si sale algo fuera.',
-      role: 'B1.1 – A320/B737 – Spain',
+      quote: 'Me parece una herramienta perfecta para aprovechar los días libres y vivir una experiencia diferente sin dejar tu puesto fijo. Tener el perfil preparado y la documentación organizada te permite reaccionar rápido si surge algo interesante, y además es una forma realista de ganar experiencia y generar ingresos extra.',
+      role: 'José María — B1.1 A320/B737 — España',
       icon: '✈️',
     },
     {
-      quote: 'Reducimos el tiempo de selección porque solo vemos perfiles alineados con nuestras fechas y necesidades técnicas. No tenemos que pedir documentación uno a uno.',
-      role: 'MRO Maintenance Manager – EU',
+      quote: 'Ahora es mucho más fácil tener todo preparado según mi disponibilidad. Desde la plataforma puedo organizar mi perfil y la documentación sin líos de correos ni archivos sueltos. Es cómodo y ordenado, que al final es lo que necesitamos.',
+      role: 'Leo — B2 Aviónica — España',
+      icon: '✈️',
+    },
+    {
+      quote: 'Tener el perfil técnico preparado y la documentación organizada en un solo lugar me da tranquilidad. Si algún día surge una oportunidad interesante, sé que puedo reaccionar rápido sin empezar desde cero.',
+      role: 'B1.1 — A320/B737 — España',
+      icon: '✈️',
+    },
+    {
+      quote: 'La posibilidad de ver técnicos disponibles por fechas y con documentación estructurada facilita mucho el proceso. Poder centralizar disponibilidad y requisitos técnicos en una sola plataforma tiene sentido para proyectos puntuales.',
+      role: 'MRO Maintenance Manager — EU',
       icon: '🏢',
     },
   ],
   en: [
     {
-      quote: 'I like it because I only get contacted when I mark availability. My documentation is organized and ready to send in seconds, and the umbrella options give me peace of mind for jobs abroad.',
-      role: 'B1.1 – A320/B737 – Spain',
+      quote: 'It seems like a perfect tool to make the most of days off and have a different experience without leaving your permanent position. Having your profile ready and documentation organized allows you to react quickly if something interesting comes up, plus it\'s a realistic way to gain experience and generate extra income.',
+      role: 'José María — B1.1 A320/B737 — Spain',
       icon: '✈️',
     },
     {
-      quote: 'We reduced selection time because we only see profiles aligned with our dates and technical needs. No need to request documentation one by one.',
-      role: 'MRO Maintenance Manager – EU',
+      quote: 'It\'s now much easier to have everything ready according to my availability. From the platform I can organize my profile and documentation without email chaos or scattered files. It\'s convenient and organized, which is what we ultimately need.',
+      role: 'Leo — B2 Avionics — Spain',
+      icon: '✈️',
+    },
+    {
+      quote: 'Having my technical profile ready and documentation organized in one place gives me peace of mind. If an interesting opportunity ever comes up, I know I can react quickly without starting from scratch.',
+      role: 'B1.1 — A320/B737 — Spain',
+      icon: '✈️',
+    },
+    {
+      quote: 'The ability to see available technicians by dates and with structured documentation makes the process much easier. Being able to centralize availability and technical requirements on a single platform makes sense for specific projects.',
+      role: 'MRO Maintenance Manager — EU',
       icon: '🏢',
     },
   ],
