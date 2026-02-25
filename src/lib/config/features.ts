@@ -46,22 +46,22 @@ export const FEATURE_FLAGS = {
  */
 export const PRELAUNCH_COPY = {
   es: {
-    banner: 'Pre-Launch: estamos incorporando perfiles verificados. Activaremos planes cuando haya masa crítica. Los early adopters tendrán beneficios cuando se activen.',
+    banner: 'Pre-Launch: estamos incorporando perfiles verificados. Todos los perfiles que entran en esta fase tendrán beneficios cuando comiencen los planes de pago.',
     badge: '🚀 Pre-Lanzamiento',
     communityBuilding: 'Comunidad en construcción. Sé de los primeros en completar tu perfil.',
     ctaTechnician: 'Completar perfil técnico',
     ctaDocuments: 'Subir documentación',
     ctaAvailability: 'Marcar disponibilidad',
-    pricingComingSoon: 'Los planes de pago se activarán pronto. Mientras tanto, completa tu perfil para asegurar beneficios de early adopter.',
+    pricingComingSoon: 'Los planes de pago se activarán pronto. Mientras tanto, completa tu perfil para asegurar beneficios de pre-lanzamiento.',
   },
   en: {
-    banner: 'Pre-Launch: onboarding verified profiles. Plans activate once the network reaches operational scale. Early adopters will receive benefits when plans go live.',
+    banner: 'Pre-Launch: onboarding verified profiles. All profiles joining in this phase will receive benefits when paid plans begin.',
     badge: '🚀 Pre-Launch',
     communityBuilding: 'Community in progress. Be among the first to complete your profile.',
     ctaTechnician: 'Complete technician profile',
     ctaDocuments: 'Upload documentation',
     ctaAvailability: 'Set availability',
-    pricingComingSoon: 'Paid plans will activate soon. Meanwhile, complete your profile to secure early adopter benefits.',
+    pricingComingSoon: 'Paid plans will activate soon. Meanwhile, complete your profile to secure pre-launch benefits.',
   },
 } as const
 
@@ -74,24 +74,24 @@ export const PRELAUNCH_COPY = {
 export const TESTIMONIALS = {
   es: [
     {
-      quote: 'Por fin una plataforma donde las empresas me contactan directamente. Sin intermediarios, sin esperar semanas.',
+      quote: 'Me gusta porque solo me contactan cuando marco disponibilidad. Tengo la documentación organizada y a disposición de la empresa que me solicite, y el tema de las umbrellas me da tranquilidad si sale algo fuera.',
       role: 'Técnico B1 (España)',
       icon: '✈️',
     },
     {
-      quote: 'Buscábamos técnicos cualificados urgentemente. En AeroMatch encontramos perfiles verificados y disponibles al instante.',
+      quote: 'Nos facilita encontrar técnicos disponibles en fechas concretas sin empezar el proceso desde cero. La documentación organizada y el filtro por disponibilidad nos ahorra tiempo en cada proyecto.',
       role: 'Recruiter MRO (EU)',
       icon: '🏢',
     },
   ],
   en: [
     {
-      quote: 'Finally a platform where companies contact me directly. No middlemen, no waiting weeks.',
+      quote: 'I like it because I only get contacted when I mark availability. My documentation is organized and ready for any company that requests it, and the umbrella options give me peace of mind for jobs abroad.',
       role: 'B1 Technician (Spain)',
       icon: '✈️',
     },
     {
-      quote: 'We urgently needed qualified technicians. On AeroMatch we found verified and instantly available profiles.',
+      quote: 'It helps us find available technicians for specific dates without starting from scratch. Organized documentation and availability filters save us time on every project.',
       role: 'MRO Recruiter (EU)',
       icon: '🏢',
     },

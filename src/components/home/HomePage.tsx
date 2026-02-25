@@ -149,10 +149,10 @@ No paperwork. No middlemen. No commissions.`,
       title: language === 'es' ? 'Preguntas frecuentes' : 'Frequently asked questions',
       items: [
         {
-          q: language === 'es' ? '¿Cuánto cuesta registrarse?' : 'How much does it cost to register?',
+          q: language === 'es' ? '¿Cuánto cuesta?' : 'How much does it cost?',
           a: language === 'es'
-            ? 'Registrarse es completamente gratis para técnicos. Crea tu perfil, sube tus documentos y marca tu disponibilidad sin coste. Los planes premium con funcionalidades avanzadas se activarán más adelante.'
-            : 'Registration is completely free for technicians. Create your profile, upload your documents and set your availability at no cost. Premium plans with advanced features will be activated later.',
+            ? 'Gratis. Tanto para técnicos como para empresas. Crea tu perfil, sube tus documentos y marca tu disponibilidad sin coste. Los planes premium con funcionalidades avanzadas se activarán más adelante.'
+            : 'Free. For both technicians and companies. Create your profile, upload your documents and set your availability at no cost. Premium plans with advanced features will be activated later.',
         },
         {
           q: language === 'es' ? '¿Cómo verificáis las licencias?' : 'How do you verify licenses?',
@@ -167,10 +167,10 @@ No paperwork. No middlemen. No commissions.`,
             : 'NO. We are a direct connection platform. Technicians and companies negotiate contracts and conditions directly. No commissions on contracts.',
         },
         {
-          q: language === 'es' ? '¿Qué beneficios tienen los early adopters?' : 'What benefits do early adopters get?',
+          q: language === 'es' ? '¿Qué beneficios tienen los registrados en pre-lanzamiento?' : 'What benefits do pre-launch users get?',
           a: language === 'es'
-            ? 'Los técnicos que completen su perfil durante el pre-lanzamiento recibirán beneficios exclusivos cuando se activen los planes de pago. Además, los perfiles verificados tendrán prioridad en las búsquedas de empresas.'
-            : 'Technicians who complete their profile during pre-launch will receive exclusive benefits when paid plans are activated. Additionally, verified profiles will have priority in company searches.',
+            ? 'Todos los perfiles que se registren durante la fase de pre-lanzamiento recibirán beneficios exclusivos cuando se activen los planes de pago. Además, los perfiles verificados tendrán prioridad en las búsquedas de empresas.'
+            : 'All profiles registered during the pre-launch phase will receive exclusive benefits when paid plans are activated. Additionally, verified profiles will have priority in company searches.',
         },
         {
           q: language === 'es' ? '¿Puedo usar AeroMatch si no tengo Right to Work UK?' : 'Can I use AeroMatch without UK Right to Work?',
