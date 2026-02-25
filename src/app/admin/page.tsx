@@ -41,14 +41,45 @@ interface Company {
   acceptedJobs: number
 }
 
+interface VerificationTechnician {
+  id: string
+  email: string
+  fullName: string
+  verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected'
+  availabilityStatus: string
+  verifiedAt: string | null
+  verificationNotes: string | null
+  licenseCategory: string[]
+  aircraftTypes: string[]
+  isAvailable: boolean
+  documents: {
+    id: string
+    docType: string
+    status: string
+    storagePath: string
+    expiresOn: string | null
+    createdAt: string
+  }[]
+  docsCount: number
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
-  const [activeTab, setActiveTab] = useState<'metrics' | 'technicians' | 'companies'>('metrics')
+  const [activeTab, setActiveTab] = useState<'metrics' | 'verification' | 'technicians' | 'companies'>('metrics')
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [technicians, setTechnicians] = useState<Technician[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
+  
+  // Verification tab state
+  const [verificationList, setVerificationList] = useState<VerificationTechnician[]>([])
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'pending' | 'unverified' | 'verified'>('all')
+  const [selectedTech, setSelectedTech] = useState<VerificationTechnician | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyNotes, setVerifyNotes] = useState('')
+  const [viewingDoc, setViewingDoc] = useState<{ url: string; type: string } | null>(null)
+  const [loadingDoc, setLoadingDoc] = useState<string | null>(null)
 
   useEffect(() => {
     checkAuth()
@@ -59,8 +90,9 @@ export default function AdminPage() {
       if (activeTab === 'metrics') fetchMetrics()
       if (activeTab === 'technicians') fetchTechnicians()
       if (activeTab === 'companies') fetchCompanies()
+      if (activeTab === 'verification') fetchVerificationList()
     }
-  }, [authorized, activeTab])
+  }, [authorized, activeTab, verificationFilter])
 
   const checkAuth = async () => {
     const supabase = createClient()
@@ -105,6 +137,86 @@ export default function AdminPage() {
     }
   }
 
+  const fetchVerificationList = async () => {
+    const res = await fetch(`/api/admin/verification?filter=${verificationFilter}`)
+    if (res.ok) {
+      const data = await res.json()
+      setVerificationList(data.technicians || [])
+    }
+  }
+
+  const handleViewDocument = async (docId: string) => {
+    setLoadingDoc(docId)
+    try {
+      const res = await fetch(`/api/admin/documents/${docId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setViewingDoc({ url: data.url, type: data.docType })
+      }
+    } catch (err) {
+      console.error('Error loading document:', err)
+    } finally {
+      setLoadingDoc(null)
+    }
+  }
+
+  const handleVerify = async (status: 'verified' | 'rejected' | 'pending') => {
+    if (!selectedTech) return
+    setVerifying(true)
+
+    try {
+      const res = await fetch('/api/admin/verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          technicianId: selectedTech.id,
+          status,
+          notes: verifyNotes || null,
+        }),
+      })
+
+      if (res.ok) {
+        // Refresh list and close modal
+        fetchVerificationList()
+        setSelectedTech(null)
+        setVerifyNotes('')
+      }
+    } catch (err) {
+      console.error('Error updating verification:', err)
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  const getDocTypeLabel = (docType: string) => {
+    const labels: Record<string, string> = {
+      easa_license: 'Licencia EASA',
+      uk_license: 'Licencia UK CAA',
+      faa_ap: 'FAA A&P',
+      passport: 'Pasaporte',
+      cv: 'CV',
+      medical: 'Certificado Médico',
+      training: 'Certificado Formación',
+    }
+    // Handle aircraft type docs
+    if (docType.startsWith('type_') && docType.endsWith('_theory')) {
+      return `Teórico: ${docType.replace('type_', '').replace('_theory', '').toUpperCase()}`
+    }
+    if (docType.startsWith('type_') && docType.endsWith('_practical')) {
+      return `Práctico: ${docType.replace('type_', '').replace('_practical', '').toUpperCase()}`
+    }
+    return labels[docType] || docType
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'verified': return 'bg-green-500/20 text-green-400 border-green-500/30'
+      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+      case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30'
+      default: return 'bg-steel-700/50 text-steel-400 border-steel-600/30'
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-navy-950 flex items-center justify-center">
@@ -136,7 +248,7 @@ export default function AdminPage() {
       <div className="border-b border-steel-800">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
-            {(['metrics', 'technicians', 'companies'] as const).map(tab => (
+            {(['metrics', 'verification', 'technicians', 'companies'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -146,7 +258,7 @@ export default function AdminPage() {
                     : 'border-transparent text-steel-400 hover:text-white'
                 }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab === 'verification' ? '🔍 Verificación' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -186,6 +298,92 @@ export default function AdminPage() {
                 <MetricCard label="Completadas" value={metrics.totalCompleted} />
                 <MetricCard label="Valoraciones" value={metrics.totalRatings} />
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'verification' && (
+          <div className="space-y-6">
+            {/* Filters */}
+            <div className="flex items-center gap-4">
+              <span className="text-steel-400 text-sm">Filtrar:</span>
+              {(['all', 'pending', 'unverified', 'verified'] as const).map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => setVerificationFilter(filter)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    verificationFilter === filter
+                      ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
+                      : 'bg-navy-800 text-steel-400 border border-steel-700 hover:border-steel-600'
+                  }`}
+                >
+                  {filter === 'all' ? 'Todos' : 
+                   filter === 'pending' ? '⏳ Pendientes' :
+                   filter === 'unverified' ? '❓ Sin verificar' : '✅ Verificados'}
+                </button>
+              ))}
+            </div>
+
+            {/* List */}
+            <div className="space-y-4">
+              {verificationList.length === 0 ? (
+                <div className="text-center py-12 text-steel-500">
+                  No hay técnicos en esta categoría
+                </div>
+              ) : (
+                verificationList.map(tech => (
+                  <div 
+                    key={tech.id}
+                    className="p-5 rounded-xl border border-steel-700 bg-navy-800/30 hover:border-steel-600 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-white font-medium">{tech.fullName || tech.email}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs border ${getStatusBadgeColor(tech.verificationStatus)}`}>
+                            {tech.verificationStatus === 'verified' ? '✅ Verificado' :
+                             tech.verificationStatus === 'pending' ? '⏳ Pendiente' :
+                             tech.verificationStatus === 'rejected' ? '❌ Rechazado' : '❓ Sin verificar'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-steel-400">{tech.email}</p>
+                        
+                        {/* Licenses & Aircraft */}
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {tech.licenseCategory?.map(lic => (
+                            <span key={lic} className="px-2 py-0.5 bg-gold-500/10 border border-gold-500/30 rounded text-xs text-gold-400">
+                              {lic}
+                            </span>
+                          ))}
+                          {tech.aircraftTypes?.slice(0, 3).map(ac => (
+                            <span key={ac} className="px-2 py-0.5 bg-navy-700 border border-steel-600 rounded text-xs text-steel-300">
+                              {ac}
+                            </span>
+                          ))}
+                          {tech.aircraftTypes?.length > 3 && (
+                            <span className="text-xs text-steel-500">+{tech.aircraftTypes.length - 3} más</span>
+                          )}
+                        </div>
+
+                        {/* Documents count */}
+                        <p className="text-sm text-steel-500 mt-2">
+                          📄 {tech.docsCount} documento{tech.docsCount !== 1 ? 's' : ''} subido{tech.docsCount !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSelectedTech(tech)
+                          setVerifyNotes(tech.verificationNotes || '')
+                        }}
+                        className="btn-primary"
+                      >
+                        Revisar
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -268,6 +466,184 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+
+      {/* Verification Modal */}
+      {selectedTech && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-navy-900 border border-steel-700 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-steel-700 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-white">{selectedTech.fullName || selectedTech.email}</h2>
+                <p className="text-sm text-steel-400">{selectedTech.email}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedTech(null)}
+                className="text-steel-400 hover:text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Current Status */}
+              <div className="mb-6 p-4 rounded-xl bg-navy-800/50 border border-steel-700/50">
+                <div className="flex items-center gap-4">
+                  <span className="text-steel-400 text-sm">Estado actual:</span>
+                  <span className={`px-3 py-1 rounded-full text-sm border ${getStatusBadgeColor(selectedTech.verificationStatus)}`}>
+                    {selectedTech.verificationStatus === 'verified' ? '✅ Verificado' :
+                     selectedTech.verificationStatus === 'pending' ? '⏳ Pendiente' :
+                     selectedTech.verificationStatus === 'rejected' ? '❌ Rechazado' : '❓ Sin verificar'}
+                  </span>
+                  {selectedTech.verifiedAt && (
+                    <span className="text-xs text-steel-500">
+                      desde {new Date(selectedTech.verifiedAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Licenses & Aircraft */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-steel-400 mb-2">Licencias y Aeronaves</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTech.licenseCategory?.map(lic => (
+                    <span key={lic} className="px-2 py-1 bg-gold-500/10 border border-gold-500/30 rounded text-sm text-gold-400">
+                      {lic}
+                    </span>
+                  ))}
+                  {selectedTech.aircraftTypes?.map(ac => (
+                    <span key={ac} className="px-2 py-1 bg-navy-700 border border-steel-600 rounded text-sm text-steel-300">
+                      {ac}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Documents */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-steel-400 mb-3">
+                  Documentos ({selectedTech.documents.length})
+                </h4>
+                {selectedTech.documents.length === 0 ? (
+                  <p className="text-steel-500 text-sm">No ha subido documentos</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedTech.documents.map(doc => (
+                      <div 
+                        key={doc.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-navy-800 border border-steel-700/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">📄</span>
+                          <div>
+                            <p className="text-white text-sm font-medium">{getDocTypeLabel(doc.docType)}</p>
+                            <p className="text-xs text-steel-500">
+                              Subido: {new Date(doc.createdAt).toLocaleDateString()}
+                              {doc.expiresOn && ` • Expira: ${new Date(doc.expiresOn).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleViewDocument(doc.id)}
+                          disabled={loadingDoc === doc.id}
+                          className="btn-secondary text-sm py-1.5"
+                        >
+                          {loadingDoc === doc.id ? '...' : '👁️ Ver'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div className="mb-6">
+                <label className="text-sm font-medium text-steel-400 mb-2 block">
+                  Notas de verificación (opcional)
+                </label>
+                <textarea
+                  value={verifyNotes}
+                  onChange={(e) => setVerifyNotes(e.target.value)}
+                  placeholder="Añade notas sobre la verificación..."
+                  className="w-full px-4 py-3 bg-navy-800 border border-steel-700 rounded-lg text-white text-sm focus:border-gold-500 focus:outline-none"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer - Actions */}
+            <div className="p-6 border-t border-steel-700 bg-navy-900/50">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleVerify('rejected')}
+                  disabled={verifying}
+                  className="flex-1 py-3 px-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-medium hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                >
+                  ❌ Rechazar
+                </button>
+                <button
+                  onClick={() => handleVerify('pending')}
+                  disabled={verifying}
+                  className="flex-1 py-3 px-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-medium hover:bg-yellow-500/20 transition-colors disabled:opacity-50"
+                >
+                  ⏳ Pendiente
+                </button>
+                <button
+                  onClick={() => handleVerify('verified')}
+                  disabled={verifying}
+                  className="flex-1 py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 font-medium hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                >
+                  ✅ Verificar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewingDoc && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          onClick={() => setViewingDoc(null)}
+        >
+          <div 
+            className="bg-navy-900 border border-steel-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-steel-700 flex items-center justify-between">
+              <h3 className="text-white font-medium">{getDocTypeLabel(viewingDoc.type)}</h3>
+              <div className="flex items-center gap-3">
+                <a 
+                  href={viewingDoc.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gold-400 hover:text-gold-300 text-sm"
+                >
+                  Abrir en nueva pestaña ↗
+                </a>
+                <button 
+                  onClick={() => setViewingDoc(null)}
+                  className="text-steel-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="h-[70vh] bg-navy-950">
+              <iframe 
+                src={viewingDoc.url} 
+                className="w-full h-full"
+                title="Document viewer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -291,4 +667,3 @@ function StatusBadge({ ok }: { ok: boolean }) {
     <span className="text-steel-500">✗</span>
   )
 }
-
