@@ -53,6 +53,10 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
       gdpr: language === 'es' ? 'Datos protegidos bajo GDPR' : 'Data protected under GDPR',
       builtBy: language === 'es' ? 'Built by técnicos aeronáuticos activos' : 'Built by active aircraft technicians',
     },
+    // Pre-launch pricing context
+    pricingContext: language === 'es' 
+      ? 'Gratis durante la fase Pre-Launch. Planes Premium y Recruiter próximamente.'
+      : 'Free during Pre-Launch. Premium and Recruiter plans coming soon.',
     // Community Building Message (replaces counters during pre-launch)
     communityBuilding: {
       title: language === 'es' ? 'Únete a la comunidad' : 'Join the community',
@@ -88,8 +92,8 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
       companySteps: [
         {
           num: '1',
-          title: language === 'es' ? 'Crea tu cuenta' : 'Create your account',
-          desc: language === 'es' ? 'Datos de empresa' : 'Company details',
+          title: language === 'es' ? '2 min · Datos de empresa' : '2 min · Company details',
+          desc: language === 'es' ? 'Información de empresa + requisitos del proyecto' : 'Company info + project requirements',
         },
         {
           num: '2',
@@ -330,6 +334,11 @@ No paperwork. No middlemen. No commissions.`,
                 <span>{content.trust.builtBy}</span>
               </div>
             </div>
+
+            {/* Pre-launch pricing context */}
+            <p className="mt-6 text-sm text-steel-500">
+              {content.pricingContext}
+            </p>
           </div>
         </div>
 
@@ -500,7 +509,7 @@ No paperwork. No middlemen. No commissions.`,
               </div>
               <button
                 onClick={handleCompanyCta}
-                className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 font-medium transition-colors"
+                className="btn-secondary-lg mt-8"
               >
                 {content.hero.ctaCompany}
               </button>

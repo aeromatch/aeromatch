@@ -74,25 +74,25 @@ export const PRELAUNCH_COPY = {
 export const TESTIMONIALS = {
   es: [
     {
-      quote: 'Me gusta porque solo me contactan cuando marco disponibilidad. Tengo la documentación organizada y a disposición de la empresa que me solicite, y el tema de las umbrellas me da tranquilidad si sale algo fuera.',
-      role: 'Técnico B1 (España)',
+      quote: 'Me gusta porque solo me contactan cuando marco disponibilidad. Tengo la documentación organizada y lista para enviarla en segundos, y el tema de las umbrellas me da tranquilidad si sale algo fuera.',
+      role: 'B1.1 – A320/B737 – Spain',
       icon: '✈️',
     },
     {
-      quote: 'Nos facilita encontrar técnicos disponibles en fechas concretas sin empezar el proceso desde cero. La documentación organizada y el filtro por disponibilidad nos ahorra tiempo en cada proyecto.',
-      role: 'Recruiter MRO (EU)',
+      quote: 'Reducimos el tiempo de selección porque solo vemos perfiles alineados con nuestras fechas y necesidades técnicas. No tenemos que pedir documentación uno a uno.',
+      role: 'MRO Maintenance Manager – EU',
       icon: '🏢',
     },
   ],
   en: [
     {
-      quote: 'I like it because I only get contacted when I mark availability. My documentation is organized and ready for any company that requests it, and the umbrella options give me peace of mind for jobs abroad.',
-      role: 'B1 Technician (Spain)',
+      quote: 'I like it because I only get contacted when I mark availability. My documentation is organized and ready to send in seconds, and the umbrella options give me peace of mind for jobs abroad.',
+      role: 'B1.1 – A320/B737 – Spain',
       icon: '✈️',
     },
     {
-      quote: 'It helps us find available technicians for specific dates without starting from scratch. Organized documentation and availability filters save us time on every project.',
-      role: 'MRO Recruiter (EU)',
+      quote: 'We reduced selection time because we only see profiles aligned with our dates and technical needs. No need to request documentation one by one.',
+      role: 'MRO Maintenance Manager – EU',
       icon: '🏢',
     },
   ],
