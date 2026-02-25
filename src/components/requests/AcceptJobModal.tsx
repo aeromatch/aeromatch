@@ -34,14 +34,18 @@ interface AcceptJobModalProps {
   jobRequest: JobRequest
   onAccepted: () => void
   technicianHasRightToWorkUK?: boolean
+  technicianVerificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected'
 }
 
 type WorkMode = 'self_employed' | 'umbrella' | 'umbrella_with_insurance'
 type UkEligibilityMode = 'not_required' | 'umbrella' | 'self_arranged'
 
-export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, technicianHasRightToWorkUK }: AcceptJobModalProps) {
+export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, technicianHasRightToWorkUK, technicianVerificationStatus }: AcceptJobModalProps) {
   const { language } = useLanguage()
   const supabase = createClient()
+  
+  // Check if technician is verified (can accept offers)
+  const isVerified = technicianVerificationStatus === 'verified'
   
   // Check if UK eligibility step is needed
   const needsUkEligibility = jobRequest.requires_right_to_work_uk && technicianHasRightToWorkUK !== true
@@ -108,6 +112,17 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, techni
     ukSelfAcknowledge: language === 'es' 
       ? 'Confirmo que gestionaré Right to Work UK / sponsorship de visado de forma independiente.'
       : 'I confirm I will arrange Right to Work UK / VISA sponsorship independently.',
+    // Verification blocking
+    verificationRequired: language === 'es' ? 'Verificación requerida' : 'Verification required',
+    verificationBlockedTitle: language === 'es' ? 'Completa tu verificación para aceptar ofertas' : 'Complete verification to accept offers',
+    verificationBlockedDesc: language === 'es' 
+      ? 'Para aceptar ofertas de trabajo, necesitas subir tus documentos y obtener la verificación AMX. Esto protege tanto a técnicos como a empresas.'
+      : 'To accept job offers, you need to upload your documents and obtain AMX verification. This protects both technicians and companies.',
+    uploadDocuments: language === 'es' ? 'Subir documentos' : 'Upload documents',
+    verificationPending: language === 'es' ? 'Tu verificación está pendiente de revisión' : 'Your verification is pending review',
+    verificationPendingDesc: language === 'es' 
+      ? 'Estamos revisando tus documentos. Te notificaremos cuando tu perfil esté verificado.'
+      : 'We are reviewing your documents. We will notify you when your profile is verified.',
   }
 
   const workModeLabels: Record<WorkMode, string> = {
@@ -309,6 +324,65 @@ Note: MoR billing and any insurance are handled by the provider under their own 
   }
 
   if (!isOpen) return null
+
+  // Block acceptance if not verified
+  if (!isVerified) {
+    const isPending = technicianVerificationStatus === 'pending'
+    
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-white">{labels.verificationRequired}</h2>
+            <button onClick={onClose} className="text-steel-500 hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* Verification blocked content */}
+          <div className="text-center">
+            <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${
+              isPending ? 'bg-yellow-500/10 border-2 border-yellow-500/30' : 'bg-warning-500/10 border-2 border-warning-500/30'
+            }`}>
+              {isPending ? (
+                <svg className="w-10 h-10 text-yellow-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-10 h-10 text-warning-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              )}
+            </div>
+            
+            <h3 className="text-lg font-semibold text-white mb-3">
+              {isPending ? labels.verificationPending : labels.verificationBlockedTitle}
+            </h3>
+            <p className="text-steel-400 text-sm mb-6">
+              {isPending ? labels.verificationPendingDesc : labels.verificationBlockedDesc}
+            </p>
+            
+            <div className="space-y-3">
+              {!isPending && (
+                <a href="/profile/documents" className="btn-primary-filled w-full justify-center">
+                  {labels.uploadDocuments}
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              )}
+              <button onClick={onClose} className="btn-ghost w-full justify-center">
+                {labels.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>

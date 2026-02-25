@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { createClient } from '@/lib/supabase/client'
 import { SubscriptionSection } from '@/components/billing/SubscriptionSection'
+import { VERIFICATION_BADGES } from '@/lib/config/features'
 
 interface DashboardViewProps {
   profile: any
@@ -14,6 +15,8 @@ interface DashboardViewProps {
   availabilitySlots: any[]
   pendingRequests: any[]
 }
+
+type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected'
 
 // Profile completion checker for technicians
 function getProfileCompletion(technician: any, availabilitySlots: any[], documentsCount: number, documentTypes: string[]) {
@@ -45,6 +48,150 @@ function getProfileCompletion(technician: any, availabilitySlots: any[], documen
   const total = Object.keys(checks).length
   
   return { checks, completed, total, percentage: Math.round((completed / total) * 100) }
+}
+
+// Verification Progress Widget Component
+function VerificationProgressWidget({ 
+  language, 
+  profileComplete, 
+  documentsCount, 
+  verificationStatus 
+}: { 
+  language: string
+  profileComplete: boolean
+  documentsCount: number
+  verificationStatus: VerificationStatus
+}) {
+  const steps = [
+    {
+      id: 'profile',
+      label: language === 'es' ? 'Perfil' : 'Profile',
+      description: language === 'es' ? 'Información básica completa' : 'Basic info complete',
+      completed: profileComplete,
+      link: '/profile/edit',
+    },
+    {
+      id: 'documents',
+      label: language === 'es' ? 'Documentos' : 'Documents',
+      description: language === 'es' ? 'Licencias y certificados' : 'Licenses and certificates',
+      completed: documentsCount > 0,
+      link: '/profile/documents',
+    },
+    {
+      id: 'verification',
+      label: language === 'es' ? 'Verificación AMX' : 'AMX Verification',
+      description: verificationStatus === 'verified' 
+        ? (language === 'es' ? '¡Perfil verificado!' : 'Profile verified!')
+        : verificationStatus === 'pending'
+        ? (language === 'es' ? 'En revisión' : 'Under review')
+        : (language === 'es' ? 'Pendiente de documentos' : 'Awaiting documents'),
+      completed: verificationStatus === 'verified',
+      pending: verificationStatus === 'pending',
+      link: '/profile/documents',
+    },
+  ]
+
+  const completedSteps = steps.filter(s => s.completed).length
+  const isFullyVerified = verificationStatus === 'verified'
+
+  // If fully verified, show compact success state
+  if (isFullyVerified) {
+    return (
+      <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center">
+          <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <div>
+          <p className="font-semibold text-green-400">{VERIFICATION_BADGES[language as 'es' | 'en'].verified}</p>
+          <p className="text-sm text-steel-400">
+            {language === 'es' 
+              ? 'Puedes aceptar ofertas y aparecer en búsquedas prioritarias' 
+              : 'You can accept offers and appear in priority searches'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-5 rounded-xl bg-navy-800/50 border border-steel-700/30">
+      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        {language === 'es' ? 'Progreso de verificación' : 'Verification Progress'}
+      </h3>
+      
+      {/* Steps */}
+      <div className="flex items-start gap-4">
+        {steps.map((step, idx) => (
+          <div key={step.id} className="flex-1 relative">
+            {/* Connector line */}
+            {idx < steps.length - 1 && (
+              <div className={`absolute top-5 left-[calc(50%+20px)] right-0 h-0.5 ${
+                step.completed ? 'bg-green-500' : 'bg-steel-700'
+              }`} />
+            )}
+            
+            <Link 
+              href={step.link}
+              className="group flex flex-col items-center text-center"
+            >
+              {/* Step circle */}
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2 transition-all ${
+                step.completed 
+                  ? 'bg-green-500/20 border-green-500 text-green-400' 
+                  : step.pending 
+                  ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400 animate-pulse'
+                  : 'bg-navy-800 border-steel-600 text-steel-400 group-hover:border-gold-500'
+              }`}>
+                {step.completed ? (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : step.pending ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <span className="text-sm font-medium">{idx + 1}</span>
+                )}
+              </div>
+              
+              {/* Step label */}
+              <p className={`text-sm font-medium mb-1 ${
+                step.completed ? 'text-green-400' : step.pending ? 'text-yellow-400' : 'text-white'
+              }`}>
+                {step.label}
+              </p>
+              <p className="text-xs text-steel-500">
+                {step.description}
+              </p>
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      {/* Info message */}
+      <div className="mt-4 pt-4 border-t border-steel-700/30">
+        <p className="text-xs text-steel-400 flex items-start gap-2">
+          <svg className="w-4 h-4 text-gold-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {verificationStatus === 'pending' 
+            ? (language === 'es' 
+                ? 'Tu documentación está siendo revisada. Te notificaremos cuando esté verificada.'
+                : 'Your documentation is being reviewed. We will notify you when verified.')
+            : (language === 'es' 
+                ? 'Completa los pasos para desbloquear la aceptación de ofertas y aparecer primero en búsquedas.'
+                : 'Complete the steps to unlock offer acceptance and appear first in searches.')
+          }
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function DashboardView({ profile, technician, company, availabilitySlots, pendingRequests }: DashboardViewProps) {
@@ -265,6 +412,18 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
             {isTechnician ? t.dashboard.technicianSubtitle : t.dashboard.companySubtitle}
           </p>
         </div>
+
+        {/* Verification Progress Widget - For technicians */}
+        {isTechnician && (
+          <div className="mb-8">
+            <VerificationProgressWidget 
+              language={language}
+              profileComplete={profileCompletion ? profileCompletion.percentage >= 100 : false}
+              documentsCount={documentsCount}
+              verificationStatus={(technician?.verification_status || 'unverified') as VerificationStatus}
+            />
+          </div>
+        )}
 
         {/* Profile Completion Banner - Only for technicians with incomplete profile */}
         {isTechnician && profileCompletion && profileCompletion.percentage < 100 && (

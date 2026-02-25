@@ -5,6 +5,8 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { useSubscription } from '@/lib/billing/useSubscription'
 import { getPlansByRole, formatPrice, Plan, PlanRole } from '@/lib/billing/plans'
 import { createClient } from '@/lib/supabase/client'
+import { FEATURE_FLAGS, PRELAUNCH_COPY } from '@/lib/config/features'
+import Link from 'next/link'
 
 interface SubscriptionSectionProps {
   userRole: PlanRole
@@ -306,12 +308,30 @@ export function SubscriptionSection({ userRole, userEmail }: SubscriptionSection
             </span>
           </div>
 
-          <button 
-            onClick={() => setShowPlans(true)}
-            className="btn-primary-filled w-full justify-center"
-          >
-            {labels.upgrade}
-          </button>
+          {/* During pre-launch, show profile completion CTA instead of upgrade */}
+          {FEATURE_FLAGS.HIDE_PRICING ? (
+            <div className="p-4 bg-gold-500/5 border border-gold-500/20 rounded-xl">
+              <p className="text-sm text-steel-400 mb-3">
+                {PRELAUNCH_COPY[language as 'es' | 'en'].pricingComingSoon}
+              </p>
+              <Link 
+                href={userRole === 'technician' ? '/profile/documents' : '/search'}
+                className="btn-primary w-full justify-center"
+              >
+                {userRole === 'technician' 
+                  ? PRELAUNCH_COPY[language as 'es' | 'en'].ctaDocuments
+                  : (language === 'es' ? 'Buscar técnicos' : 'Search technicians')
+                }
+              </Link>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setShowPlans(true)}
+              className="btn-primary-filled w-full justify-center"
+            >
+              {labels.upgrade}
+            </button>
+          )}
         </div>
       )}
     </div>

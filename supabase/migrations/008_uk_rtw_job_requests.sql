@@ -13,3 +13,5 @@ ADD COLUMN IF NOT EXISTS uk_eligibility_acknowledged BOOLEAN DEFAULT false;
 COMMENT ON COLUMN job_requests.requires_right_to_work_uk IS 'Whether this job requires legal Right to Work in the UK';
 COMMENT ON COLUMN job_acceptance_workflow.uk_eligibility_mode IS 'How the technician will handle UK eligibility: not_required (has RTW), umbrella (via provider), self_arranged (will arrange independently)';
 
+
+

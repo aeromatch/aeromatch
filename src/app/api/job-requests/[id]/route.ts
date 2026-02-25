@@ -47,6 +47,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
+    // BACKEND ENFORCEMENT: Block acceptance if technician is not verified
+    if (status === 'accepted' && profile?.role === 'technician') {
+      const { data: techData } = await supabase
+        .from('technicians')
+        .select('verification_status')
+        .eq('user_id', user.id)
+        .single()
+
+      if (techData?.verification_status !== 'verified') {
+        return NextResponse.json({ 
+          error: 'Debes completar la verificación AMX para aceptar ofertas. Sube tus documentos para verificar tu perfil.',
+          error_code: 'VERIFICATION_REQUIRED'
+        }, { status: 403 })
+      }
+    }
+
     // Update status
     const { data, error } = await supabase
       .from('job_requests')

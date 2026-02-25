@@ -4,6 +4,12 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage, LanguageSwitch } from '@/lib/i18n/LanguageContext'
+import { 
+  FEATURE_FLAGS, 
+  PRELAUNCH_COPY, 
+  TESTIMONIALS,
+  COMPANY_PRESTEP 
+} from '@/lib/config/features'
 
 interface HomePageProps {
   isLoggedIn: boolean
@@ -12,14 +18,19 @@ interface HomePageProps {
 export function HomePage({ isLoggedIn }: HomePageProps) {
   const { language } = useLanguage()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [showCompanyPrestep, setShowCompanyPrestep] = useState(false)
+
+  // Get pre-launch copy
+  const preLaunch = PRELAUNCH_COPY[language]
+  const testimonials = TESTIMONIALS[language]
+  const companyPrestep = COMPANY_PRESTEP[language]
 
   // All labels with ES/EN
   const content = {
-    // Early Access Banner
-    earlyAccess: {
-      badge: language === 'es' ? '🎁 Oferta Lanzamiento' : '🎁 Launch Offer',
-      benefit: language === 'es' ? 'Premium 12 meses GRATIS por perfil completo antes del 20 de enero (perfil técnico + documentos + disponibilidad)' : 'FREE 12 months Premium for complete profile before January 20 (technician profile + documents + availability)',
-      counter: language === 'es' ? '24 técnicos ya registrados' : '24 technicians already registered',
+    // Pre-Launch Banner (replaces expired "Jan 20" offer)
+    preLaunchBanner: {
+      badge: preLaunch.badge,
+      message: preLaunch.banner,
     },
     // Header
     nav: {
@@ -33,7 +44,7 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
       subheadline: language === 'es' 
         ? 'Regístrate una vez. Define tu disponibilidad. Recibe ofertas directas. Sin intermediarios.'
         : 'Register once. Set your availability. Receive direct offers. No middlemen.',
-      ctaTechnician: language === 'es' ? 'Crear mi perfil gratis →' : 'Create my free profile →',
+      ctaTechnician: preLaunch.ctaTechnician,
       ctaCompany: language === 'es' ? 'Buscar técnicos ahora →' : 'Search technicians now →',
     },
     // Trust Badges
@@ -42,12 +53,10 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
       gdpr: language === 'es' ? 'Datos protegidos bajo GDPR' : 'Data protected under GDPR',
       builtBy: language === 'es' ? 'Built by técnicos aeronáuticos activos' : 'Built by active aircraft technicians',
     },
-    // Social Proof
-    socialProof: {
-      title: language === 'es' ? 'La comunidad crece' : 'The community grows',
-      technicians: language === 'es' ? 'técnicos aeronáuticos registrados' : 'registered aircraft technicians',
-      profileComplete: language === 'es' ? 'con perfil completado' : 'with completed profile',
-      companies: language === 'es' ? 'empresas registradas' : 'registered companies',
+    // Community Building Message (replaces counters during pre-launch)
+    communityBuilding: {
+      title: language === 'es' ? 'Únete a la comunidad' : 'Join the community',
+      message: preLaunch.communityBuilding,
     },
     // How It Works
     howItWorks: {
@@ -62,25 +71,25 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
         },
         {
           num: '2',
+          title: language === 'es' ? 'Sube documentación' : 'Upload documents',
+          desc: language === 'es' ? 'Verificamos tu perfil' : 'We verify your profile',
+        },
+        {
+          num: '3',
           title: language === 'es' ? 'Define disponibilidad' : 'Set availability',
           desc: language === 'es' ? 'Cuándo estás libre' : 'When you\'re available',
         },
         {
-          num: '3',
-          title: language === 'es' ? 'Recibe contactos' : 'Receive contacts',
-          desc: language === 'es' ? 'Empresas te escriben directamente' : 'Companies reach out directly',
-        },
-        {
           num: '4',
-          title: language === 'es' ? 'Tú decides' : 'You decide',
-          desc: language === 'es' ? 'Aceptas o rechazas según te convenga' : 'Accept or decline as suits you',
+          title: language === 'es' ? 'Recibe ofertas' : 'Receive offers',
+          desc: language === 'es' ? 'Empresas te contactan directamente' : 'Companies reach out directly',
         },
       ],
       companySteps: [
         {
           num: '1',
-          title: language === 'es' ? 'Publica tu necesidad' : 'Post your need',
-          desc: language === 'es' ? 'Tipo de técnico + Fechas' : 'Technician type + Dates',
+          title: language === 'es' ? 'Crea tu cuenta' : 'Create your account',
+          desc: language === 'es' ? 'Datos de empresa' : 'Company details',
         },
         {
           num: '2',
@@ -131,92 +140,43 @@ A place where technicians and companies meet in real time.
 No paperwork. No middlemen. No commissions.`,
       signature: language === 'es' ? 'Built by un técnico, para técnicos.' : 'Built by a technician, for technicians.',
     },
-    // Pricing
-    pricing: {
-      title: language === 'es' ? 'Precios transparentes' : 'Transparent pricing',
-      subtitle: language === 'es' ? 'Sin sorpresas. Sin comisiones ocultas.' : 'No surprises. No hidden fees.',
-      forTechnicians: language === 'es' ? 'Para Técnicos' : 'For Technicians',
-      forCompanies: language === 'es' ? 'Para Empresas' : 'For Companies',
-      free: language === 'es' ? 'GRATIS' : 'FREE',
-      month: language === 'es' ? '/mes' : '/month',
-      mostPopular: language === 'es' ? 'Más popular' : 'Most popular',
-      techPlans: {
-        basic: {
-          name: language === 'es' ? 'Plan Básico' : 'Basic Plan',
-          price: language === 'es' ? 'GRATIS' : 'FREE',
-          features: language === 'es' 
-            ? ['Perfil completo', '10 documentos verificados', 'Búsquedas ilimitadas', 'Contacto directo con empresas']
-            : ['Complete profile', '10 verified documents', 'Unlimited searches', 'Direct contact with companies'],
-        },
-        premium: {
-          name: language === 'es' ? 'Plan Premium' : 'Premium Plan',
-          price: '3,99€',
-          features: language === 'es'
-            ? ['Todo lo de básico +', 'Verificación prioritaria (48h)', 'Badge "Verificado Premium"', 'Sugerencias de Umbrella Partners', 'Soporte prioritario']
-            : ['Everything in basic +', 'Priority verification (48h)', '"Verified Premium" badge', 'Umbrella Partners suggestions', 'Priority support'],
-        },
-      },
-      companyPlans: [
-        {
-          name: 'Starter',
-          price: '49,99€',
-          features: language === 'es'
-            ? ['Hasta 5 contactos/mes', 'Búsqueda básica', 'Perfil de empresa básico']
-            : ['Up to 5 contacts/month', 'Basic search', 'Basic company profile'],
-        },
-        {
-          name: 'Professional',
-          price: '139,99€',
-          popular: true,
-          features: language === 'es'
-            ? ['Hasta 20 contactos/mes', 'Filtros avanzados', 'Perfil destacado', 'Soporte prioritario']
-            : ['Up to 20 contacts/month', 'Advanced filters', 'Featured profile', 'Priority support'],
-        },
-        {
-          name: 'Enterprise',
-          price: '199,99€',
-          features: language === 'es'
-            ? ['Contactos ilimitados', 'API access', 'Gestor de cuenta dedicado', 'Onboarding personalizado']
-            : ['Unlimited contacts', 'API access', 'Dedicated account manager', 'Personalized onboarding'],
-        },
-      ],
-      freeLimit: language === 'es' 
-        ? 'Sin plan de pago: máximo 5 contrataciones totales (lifetime limit)'
-        : 'Without paid plan: maximum 5 total hires (lifetime limit)',
+    // Testimonials Section
+    testimonials: {
+      title: language === 'es' ? 'Lo que dicen' : 'What they say',
     },
-    // FAQ
+    // FAQ (updated without expired offer mention)
     faq: {
       title: language === 'es' ? 'Preguntas frecuentes' : 'Frequently asked questions',
       items: [
         {
-          q: language === 'es' ? '¿Cuánto cuesta?' : 'How much does it cost?',
+          q: language === 'es' ? '¿Cuánto cuesta registrarse?' : 'How much does it cost to register?',
           a: language === 'es'
-            ? 'Técnicos: Gratis (perfil + 10 primeros documentos). Premium opcional: 3,99€/mes. Empresas: Desde 49,99€/mes según necesidades.'
-            : 'Technicians: Free (profile + first 10 documents). Optional premium: €3.99/month. Companies: From €49.99/month depending on needs.',
+            ? 'Registrarse es completamente gratis para técnicos. Crea tu perfil, sube tus documentos y marca tu disponibilidad sin coste. Los planes premium con funcionalidades avanzadas se activarán más adelante.'
+            : 'Registration is completely free for technicians. Create your profile, upload your documents and set your availability at no cost. Premium plans with advanced features will be activated later.',
         },
         {
           q: language === 'es' ? '¿Cómo verificáis las licencias?' : 'How do you verify licenses?',
           a: language === 'es'
-            ? 'Revisamos manualmente cada documento subido contra las bases de datos oficiales de EASA/FAA/UK CAA. Los documentos verificados muestran un badge verde en el perfil.'
-            : 'We manually review each uploaded document against official EASA/FAA/UK CAA databases. Verified documents show a green badge on the profile.',
+            ? 'Revisamos manualmente cada documento subido contra las bases de datos oficiales de EASA/FAA/UK CAA. Los documentos verificados muestran un badge verde en el perfil. Los técnicos verificados aparecen primero en las búsquedas.'
+            : 'We manually review each uploaded document against official EASA/FAA/UK CAA databases. Verified documents show a green badge on the profile. Verified technicians appear first in searches.',
         },
         {
           q: language === 'es' ? '¿Sois una agencia de colocación?' : 'Are you a recruitment agency?',
           a: language === 'es'
-            ? 'NO. Somos una plataforma de conexión directa. Vosotros negociáis contratos y condiciones directamente. Sin comisiones sobre contratos.'
-            : 'NO. We are a direct connection platform. You negotiate contracts and conditions directly. No commissions on contracts.',
+            ? 'NO. Somos una plataforma de conexión directa. Técnicos y empresas negocian contratos y condiciones directamente. Sin comisiones sobre contratos.'
+            : 'NO. We are a direct connection platform. Technicians and companies negotiate contracts and conditions directly. No commissions on contracts.',
         },
         {
-          q: language === 'es' ? '¿Qué pasa si no encuentro trabajo/técnicos?' : 'What if I don\'t find work/technicians?',
+          q: language === 'es' ? '¿Qué beneficios tienen los early adopters?' : 'What benefits do early adopters get?',
           a: language === 'es'
-            ? 'Puedes estar registrado sin coste hasta que encuentres match. Solo pagas por funcionalidades premium.'
-            : 'You can stay registered at no cost until you find a match. You only pay for premium features.',
+            ? 'Los técnicos que completen su perfil durante el pre-lanzamiento recibirán beneficios exclusivos cuando se activen los planes de pago. Además, los perfiles verificados tendrán prioridad en las búsquedas de empresas.'
+            : 'Technicians who complete their profile during pre-launch will receive exclusive benefits when paid plans are activated. Additionally, verified profiles will have priority in company searches.',
         },
         {
-          q: language === 'es' ? '¿Qué incluye la oferta de lanzamiento?' : 'What does the launch offer include?',
+          q: language === 'es' ? '¿Puedo usar AeroMatch si no tengo Right to Work UK?' : 'Can I use AeroMatch without UK Right to Work?',
           a: language === 'es'
-            ? 'Perfil completo antes del 20 enero → 12 meses de Premium GRATIS (valor 47,88€). Incluye documentos ilimitados, verificación prioritaria y badge Premium.'
-            : 'Complete profile before January 20 → 12 months of FREE Premium (value €47.88). Includes unlimited documents, priority verification and Premium badge.',
+            ? 'Sí. AeroMatch opera en toda Europa y trabajos fuera de UK no requieren Right to Work UK. Para trabajos en UK sin RTW, te sugerimos Umbrella Partners que pueden gestionar visados o facturación mediante EoR (Employer of Record).'
+            : 'Yes. AeroMatch operates across Europe and jobs outside the UK don\'t require UK Right to Work. For UK jobs without RTW, we suggest Umbrella Partners who can handle visas or billing through EoR (Employer of Record).',
         },
       ],
     },
@@ -224,8 +184,8 @@ No paperwork. No middlemen. No commissions.`,
     cta: {
       title: language === 'es' ? '¿Listo para conectar?' : 'Ready to connect?',
       subtitle: language === 'es' 
-        ? 'Únete a la comunidad de profesionales que ya usan AeroMatch.'
-        : 'Join the community of professionals already using AeroMatch.',
+        ? 'Completa tu perfil y empieza a recibir ofertas directas.'
+        : 'Complete your profile and start receiving direct offers.',
     },
     // Footer
     footer: {
@@ -235,17 +195,24 @@ No paperwork. No middlemen. No commissions.`,
     },
   }
 
+  // Handle company CTA with optional pre-step
+  const handleCompanyCta = () => {
+    if (FEATURE_FLAGS.ENABLE_COMPANY_PRESTEP) {
+      setShowCompanyPrestep(true)
+    } else {
+      window.location.href = '/auth?mode=signup&role=company'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-navy-950">
-      {/* Early Access Banner */}
+      {/* Pre-Launch Banner (replaces expired Jan 20 offer) */}
       <div className="bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950">
         <div className="max-w-6xl mx-auto px-4 py-2.5">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm font-medium">
-            <span className="font-bold">{content.earlyAccess.badge}</span>
+            <span className="font-bold whitespace-nowrap">{content.preLaunchBanner.badge}</span>
             <span className="hidden sm:inline">→</span>
-            <span>{content.earlyAccess.benefit}</span>
-            <span className="hidden md:inline text-navy-950/70">|</span>
-            <span className="hidden md:inline text-navy-950/90">{content.earlyAccess.counter}</span>
+            <span className="text-center sm:text-left">{content.preLaunchBanner.message}</span>
           </div>
         </div>
       </div>
@@ -330,13 +297,16 @@ No paperwork. No middlemen. No commissions.`,
                 className="btn-primary-filled-lg group"
               >
                 {content.hero.ctaTechnician}
+                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </Link>
-              <Link
-                href="/auth?mode=signup&role=company"
+              <button
+                onClick={handleCompanyCta}
                 className="btn-secondary-lg"
               >
                 {content.hero.ctaCompany}
-              </Link>
+              </button>
             </div>
 
             {/* Trust Badges */}
@@ -371,99 +341,7 @@ No paperwork. No middlemen. No commissions.`,
         </div>
       </section>
 
-      {/* Social Proof Section */}
-      <section className="py-16 bg-navy-900/50 border-y border-steel-800/30">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <h2 className="text-center text-sm font-semibold text-steel-500 uppercase tracking-wider mb-10">
-            {content.socialProof.title}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">24</div>
-              <div className="text-steel-400">{content.socialProof.technicians}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">5</div>
-              <div className="text-steel-400">{content.socialProof.profileComplete}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-gold-400 mb-2">2</div>
-              <div className="text-steel-400">{content.socialProof.companies}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-24">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-16">
-            {content.howItWorks.title}
-          </h2>
-
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-            {/* For Technicians */}
-            <div>
-              <h3 className="text-xl font-semibold text-gold-400 mb-8 flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                {content.howItWorks.forTechnicians}
-              </h3>
-              <div className="space-y-6">
-                {content.howItWorks.techSteps.map((step, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 font-bold">
-                      {step.num}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-medium mb-1">{step.title}</h4>
-                      <p className="text-steel-400 text-sm">{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link
-                href="/auth?mode=signup&role=technician"
-                className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 font-medium transition-colors"
-              >
-                {content.hero.ctaTechnician}
-              </Link>
-            </div>
-
-            {/* For Companies */}
-            <div>
-              <h3 className="text-xl font-semibold text-gold-400 mb-8 flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                {content.howItWorks.forCompanies}
-              </h3>
-              <div className="space-y-6">
-                {content.howItWorks.companySteps.map((step, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 font-bold">
-                      {step.num}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-medium mb-1">{step.title}</h4>
-                      <p className="text-steel-400 text-sm">{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link
-                href="/auth?mode=signup&role=company"
-                className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 font-medium transition-colors"
-              >
-                {content.hero.ctaCompany}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why AeroMatch - Storytelling */}
+      {/* Why AeroMatch - Storytelling (MOVED UP - now section #2) */}
       <section className="py-24 bg-navy-900/30">
         <div className="max-w-3xl mx-auto px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-12">
@@ -496,123 +374,143 @@ No paperwork. No middlemen. No commissions.`,
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-24">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              {content.pricing.title}
-            </h2>
-            <p className="text-steel-400 text-lg">
-              {content.pricing.subtitle}
-            </p>
-          </div>
-
-          {/* Technician Pricing */}
-          <div className="mb-16">
-            <h3 className="text-xl font-semibold text-gold-400 mb-8 text-center">
-              {content.pricing.forTechnicians}
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              {/* Basic Plan */}
-              <div className="bg-navy-800/50 border border-steel-700/30 rounded-2xl p-6">
-                <h4 className="text-lg font-semibold text-white mb-2">{content.pricing.techPlans.basic.name}</h4>
-                <div className="text-3xl font-bold text-gold-400 mb-6">{content.pricing.techPlans.basic.price}</div>
-                <ul className="space-y-3">
-                  {content.pricing.techPlans.basic.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-steel-300">
-                      <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/auth?mode=signup&role=technician" className="btn-secondary w-full mt-6 justify-center">
-                  {content.hero.ctaTechnician}
-                </Link>
-              </div>
-
-              {/* Premium Plan */}
-              <div className="bg-gradient-to-b from-gold-500/10 to-transparent border border-gold-500/30 rounded-2xl p-6 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold-500 text-navy-950 text-xs font-bold px-3 py-1 rounded-full">
-                  {content.pricing.mostPopular}
-                </div>
-                <h4 className="text-lg font-semibold text-white mb-2">{content.pricing.techPlans.premium.name}</h4>
-                <div className="text-3xl font-bold text-gold-400 mb-6">
-                  {content.pricing.techPlans.premium.price}
-                  <span className="text-base font-normal text-steel-400">{content.pricing.month}</span>
-                </div>
-                <ul className="space-y-3">
-                  {content.pricing.techPlans.premium.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-steel-300">
-                      <svg className="w-5 h-5 text-gold-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/auth?mode=signup&role=technician" className="btn-primary-filled w-full mt-6 justify-center">
-                  {content.hero.ctaTechnician}
-                </Link>
-              </div>
+      {/* Community Building Section (replaces counters during pre-launch) */}
+      {FEATURE_FLAGS.SHOW_COMMUNITY_BUILDING_MESSAGE && !FEATURE_FLAGS.SHOW_PUBLIC_COUNTERS && (
+        <section className="py-16 bg-navy-900/50 border-y border-steel-800/30">
+          <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+            <div className="inline-flex items-center gap-2 bg-gold-500/10 border border-gold-500/30 rounded-full px-4 py-2 mb-6">
+              <span className="text-gold-400">🚀</span>
+              <span className="text-gold-400 font-medium text-sm">
+                {language === 'es' ? 'Fase de Pre-Lanzamiento' : 'Pre-Launch Phase'}
+              </span>
             </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              {content.communityBuilding.title}
+            </h2>
+            <p className="text-lg text-steel-400 max-w-2xl mx-auto mb-8">
+              {content.communityBuilding.message}
+            </p>
+            <Link
+              href="/auth?mode=signup&role=technician"
+              className="btn-primary-filled inline-flex items-center gap-2"
+            >
+              {preLaunch.ctaTechnician}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
           </div>
+        </section>
+      )}
 
-          {/* Company Pricing */}
-          <div>
-            <h3 className="text-xl font-semibold text-gold-400 mb-8 text-center">
-              {content.pricing.forCompanies}
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {content.pricing.companyPlans.map((plan, idx) => (
+      {/* Testimonials Section (social proof) */}
+      {FEATURE_FLAGS.SHOW_TESTIMONIALS && (
+        <section className="py-20">
+          <div className="max-w-5xl mx-auto px-6 lg:px-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-12">
+              {content.testimonials.title}
+            </h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {testimonials.map((testimonial, idx) => (
                 <div 
-                  key={idx} 
-                  className={`rounded-2xl p-6 relative ${
-                    plan.popular 
-                      ? 'bg-gradient-to-b from-gold-500/10 to-transparent border border-gold-500/30' 
-                      : 'bg-navy-800/50 border border-steel-700/30'
-                  }`}
+                  key={idx}
+                  className="bg-navy-800/50 border border-steel-700/30 rounded-2xl p-6 relative"
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold-500 text-navy-950 text-xs font-bold px-3 py-1 rounded-full">
-                      {content.pricing.mostPopular}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center text-2xl flex-shrink-0">
+                      {testimonial.icon}
                     </div>
-                  )}
-                  <h4 className="text-lg font-semibold text-white mb-2">{plan.name}</h4>
-                  <div className="text-3xl font-bold text-gold-400 mb-6">
-                    {plan.price}
-                    <span className="text-base font-normal text-steel-400">{content.pricing.month}</span>
+                    <div>
+                      <p className="text-steel-300 leading-relaxed mb-4 italic">
+                        "{testimonial.quote}"
+                      </p>
+                      <p className="text-sm text-gold-400 font-medium">
+                        — {testimonial.role}
+                      </p>
+                    </div>
                   </div>
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, fidx) => (
-                      <li key={fidx} className="flex items-start gap-3 text-steel-300">
-                        <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.popular ? 'text-gold-500' : 'text-green-500'}`} fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link 
-                    href="/auth?mode=signup&role=company" 
-                    className={`w-full mt-6 justify-center ${plan.popular ? 'btn-primary-filled' : 'btn-secondary'}`}
-                  >
-                    {content.hero.ctaCompany}
-                  </Link>
                 </div>
               ))}
             </div>
-            <p className="text-center text-steel-500 text-sm mt-6">
-              {content.pricing.freeLimit}
-            </p>
+          </div>
+        </section>
+      )}
+
+      {/* How It Works Section */}
+      <section className="py-24 bg-navy-900/30">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-16">
+            {content.howItWorks.title}
+          </h2>
+
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+            {/* For Technicians */}
+            <div>
+              <h3 className="text-xl font-semibold text-gold-400 mb-8 flex items-center gap-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {content.howItWorks.forTechnicians}
+              </h3>
+              <div className="space-y-6">
+                {content.howItWorks.techSteps.map((step, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 font-bold">
+                      {step.num}
+                    </div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">{step.title}</h4>
+                      <p className="text-steel-400 text-sm">{step.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href="/auth?mode=signup&role=technician"
+                className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 font-medium transition-colors"
+              >
+                {preLaunch.ctaTechnician}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* For Companies */}
+            <div>
+              <h3 className="text-xl font-semibold text-gold-400 mb-8 flex items-center gap-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                {content.howItWorks.forCompanies}
+              </h3>
+              <div className="space-y-6">
+                {content.howItWorks.companySteps.map((step, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 font-bold">
+                      {step.num}
+                    </div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">{step.title}</h4>
+                      <p className="text-steel-400 text-sm">{step.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={handleCompanyCta}
+                className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 font-medium transition-colors"
+              >
+                {content.hero.ctaCompany}
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-navy-900/30">
+      <section className="py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-12">
             {content.faq.title}
@@ -638,11 +536,15 @@ No paperwork. No middlemen. No commissions.`,
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                {openFaq === idx && (
+                <div 
+                  className={`overflow-hidden transition-all duration-300 ${
+                    openFaq === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
                   <div className="px-6 pb-4">
                     <p className="text-steel-300 leading-relaxed">{item.a}</p>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
@@ -650,7 +552,7 @@ No paperwork. No middlemen. No commissions.`,
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section className="py-24 bg-navy-900/30">
         <div className="max-w-4xl mx-auto px-6 lg:px-8">
           <div className="cta-card text-center">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
@@ -664,14 +566,14 @@ No paperwork. No middlemen. No commissions.`,
                 href="/auth?mode=signup&role=technician"
                 className="btn-primary-filled-lg"
               >
-                {content.hero.ctaTechnician}
+                {preLaunch.ctaTechnician}
               </Link>
-              <Link
-                href="/auth?mode=signup&role=company"
+              <button
+                onClick={handleCompanyCta}
                 className="btn-secondary-lg"
               >
                 {content.hero.ctaCompany}
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -693,6 +595,61 @@ No paperwork. No middlemen. No commissions.`,
           </div>
         </div>
       </footer>
+
+      {/* Company Pre-Step Modal */}
+      {showCompanyPrestep && FEATURE_FLAGS.ENABLE_COMPANY_PRESTEP && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCompanyPrestep(false)}
+        >
+          <div 
+            className="bg-navy-900 border border-steel-700/50 rounded-2xl max-w-lg w-full p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+
+            <h3 className="text-2xl font-bold text-white text-center mb-2">
+              {companyPrestep.title}
+            </h3>
+            <p className="text-steel-400 text-center mb-8">
+              {companyPrestep.subtitle}
+            </p>
+
+            {/* Benefits */}
+            <ul className="space-y-4 mb-8">
+              {companyPrestep.benefits.map((benefit, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-gold-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-steel-300">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Actions */}
+            <div className="space-y-3">
+              <Link
+                href="/auth?mode=signup&role=company"
+                className="btn-primary-filled w-full justify-center"
+              >
+                {companyPrestep.cta}
+              </Link>
+              <button
+                onClick={() => setShowCompanyPrestep(false)}
+                className="btn-ghost w-full justify-center text-steel-400"
+              >
+                {companyPrestep.back}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

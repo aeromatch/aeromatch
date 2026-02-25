@@ -8,6 +8,7 @@ import { AvailabilityCalendar } from '@/components/availability/AvailabilityCale
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { AircraftMultiSelect } from '@/components/profile/AircraftMultiSelect'
 import { LICENSE_CATEGORIES, SPECIALTIES } from '@/lib/aircraftCatalog'
+import { VERIFICATION_BADGES } from '@/lib/config/features'
 
 interface TechnicianResult {
   user_id: string
@@ -20,6 +21,10 @@ interface TechnicianResult {
   languages: string[]
   freshness: 'fresh' | 'warning' | 'stale'
   last_confirmed?: string
+  // Verification fields
+  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
+  availability_status: 'hidden' | 'available_unverified' | 'available_verified'
+  is_verified: boolean
 }
 
 export default function SearchPage() {
@@ -413,17 +418,39 @@ export default function SearchPage() {
                   <div key={tech.user_id} className="card-action p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-navy-800 border border-steel-700/50 flex items-center justify-center">
-                          <span className="text-sm font-mono text-steel-400">
-                            {tech.tech_id.substring(0, 2)}
-                          </span>
+                        <div className={`w-10 h-10 rounded-lg border flex items-center justify-center ${
+                          tech.is_verified 
+                            ? 'bg-green-500/10 border-green-500/50' 
+                            : 'bg-navy-800 border-steel-700/50'
+                        }`}>
+                          {tech.is_verified ? (
+                            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <span className="text-sm font-mono text-steel-400">
+                              {tech.tech_id.substring(0, 2)}
+                            </span>
+                          )}
                         </div>
                         <div>
-                          <p className="text-xs font-mono text-steel-500">ID: {tech.tech_id}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-mono text-steel-500">ID: {tech.tech_id}</p>
+                            {/* Verification Badge */}
+                            {tech.is_verified ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-xs text-green-400 font-medium">
+                                ✓ {VERIFICATION_BADGES[language].verified}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-400">
+                                {VERIFICATION_BADGES[language].pending}
+                              </span>
+                            )}
+                          </div>
                           {getFreshnessIndicator(tech.freshness)}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 justify-end">
                         {tech.own_tools && (
                           <span className="chip-success text-xs">
                             {language === 'es' ? 'Herramientas' : 'Tools'}

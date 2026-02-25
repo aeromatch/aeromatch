@@ -174,3 +174,5 @@ export function getPartnersForCountry(country: string): UmbrellaPartner[] {
   return UMBRELLA_PARTNERS.filter(p => p.countries.includes(country))
 }
 
+
+

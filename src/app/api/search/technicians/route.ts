@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     }
 
     // Find technicians with matching availability
+    // Include verification status for ranking (verified first)
     let query = supabase
       .from('technicians')
       .select(`
@@ -48,9 +49,13 @@ export async function POST(request: Request) {
         own_tools,
         right_to_work_uk,
         uk_license,
-        languages
+        languages,
+        verification_status,
+        availability_status
       `)
       .eq('is_available', true)
+      // Only show technicians who are visible (not hidden)
+      .in('availability_status', ['available_unverified', 'available_verified'])
 
     // Apply filters (right_to_work_uk is NOT a filter - all technicians must appear)
     if (uk_license) {
@@ -151,12 +156,21 @@ export async function POST(request: Request) {
         uk_license: t.uk_license,
         languages: t.languages,
         freshness,
-        last_updated: createdAt
+        last_updated: createdAt,
+        // Include verification status for UI badges
+        verification_status: t.verification_status || 'unverified',
+        availability_status: t.availability_status || 'available_unverified',
+        is_verified: t.verification_status === 'verified'
       }
     })
 
-    // Sort by freshness (fresh first, then warning, then stale)
+    // Sort by: 1) Verification (verified first), 2) Freshness
     results.sort((a, b) => {
+      // Verified technicians always come first
+      if (a.is_verified && !b.is_verified) return -1
+      if (!a.is_verified && b.is_verified) return 1
+      
+      // Then sort by freshness
       const order = { fresh: 0, warning: 1, stale: 2 }
       return order[a.freshness] - order[b.freshness]
     })

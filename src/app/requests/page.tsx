@@ -113,10 +113,10 @@ export default function RequestsPage() {
 
     // Load requests based on role
     if (profileData?.role === 'technician') {
-      // Load technician data to check right_to_work_uk
+      // Load technician data to check right_to_work_uk and verification_status
       const { data: techData } = await supabase
         .from('technicians')
-        .select('right_to_work_uk')
+        .select('right_to_work_uk, verification_status, availability_status')
         .eq('user_id', user.id)
         .single()
       
@@ -486,6 +486,7 @@ export default function RequestsPage() {
           jobRequest={selectedRequest}
           onAccepted={handleAccepted}
           technicianHasRightToWorkUK={technicianData?.right_to_work_uk === true}
+          technicianVerificationStatus={technicianData?.verification_status || 'unverified'}
         />
       )}
 
