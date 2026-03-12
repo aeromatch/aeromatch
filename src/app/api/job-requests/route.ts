@@ -68,16 +68,27 @@ export async function POST(request: Request) {
     }
 
     // Get technician info for email notification
-    const { data: technicianProfile } = await supabase
+    console.log('🔍 Looking up technician profile for email notification...')
+    console.log('  Technician ID:', technician_id)
+    
+    const { data: technicianProfile, error: profileError } = await supabase
       .from('profiles')
       .select('email, full_name')
       .eq('id', technician_id)
       .single()
 
+    if (profileError) {
+      console.error('❌ Error fetching technician profile:', profileError)
+    }
+
+    console.log('📋 Technician profile found:', {
+      email: technicianProfile?.email || 'NOT FOUND',
+      name: technicianProfile?.full_name || 'NOT FOUND'
+    })
+
     // Send email notification (don't block response if it fails)
-    console.log('Preparing email notification for technician:', technicianProfile?.email)
-    
     if (technicianProfile?.email) {
+      console.log('📧 Initiating email send to:', technicianProfile.email)
       try {
         const emailResult = await sendJobRequestNotification({
           technicianEmail: technicianProfile.email,
@@ -91,12 +102,17 @@ export async function POST(request: Request) {
           notes: notes || undefined,
           requiresRightToWorkUk: requires_right_to_work_uk || false
         })
-        console.log('Email result:', JSON.stringify(emailResult))
-      } catch (err) {
-        console.error('Email notification failed:', err)
+        console.log('📧 Email result:', JSON.stringify(emailResult, null, 2))
+        
+        if (!emailResult.success) {
+          console.error('❌ Email send failed:', emailResult.error)
+        }
+      } catch (err: any) {
+        console.error('❌ Email notification exception:', err?.message || err)
       }
     } else {
-      console.log('No email found for technician, skipping notification')
+      console.error('❌ NO EMAIL FOUND for technician ID:', technician_id)
+      console.error('  This means the technician profile has no email in the database')
     }
 
     return NextResponse.json({ request: data })

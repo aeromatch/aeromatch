@@ -113,3 +113,5 @@ COMMENT ON COLUMN technicians.verified_at IS
 COMMENT ON COLUMN technicians.verification_notes IS 
 'Internal notes from admin about verification status (e.g., rejection reason)';
 
+
+

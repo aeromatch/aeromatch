@@ -180,15 +180,23 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
 
   // Skip if Resend is not configured
   if (!resend) {
-    console.log('❌ Email skipped: RESEND_API_KEY not configured')
-    console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY)
-    return { success: false, error: 'Email service not configured' }
+    console.error('❌ EMAIL FAILED: RESEND_API_KEY not configured in environment')
+    console.error('  RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY)
+    console.error('  NODE_ENV:', process.env.NODE_ENV)
+    return { success: false, error: 'Email service not configured - RESEND_API_KEY missing' }
   }
 
-  console.log('📧 Attempting to send email...')
+  // Validate email address
+  if (!technicianEmail || !technicianEmail.includes('@')) {
+    console.error('❌ EMAIL FAILED: Invalid technician email:', technicianEmail)
+    return { success: false, error: 'Invalid technician email address' }
+  }
+
+  console.log('📧 Attempting to send email via Resend...')
   console.log('  To:', technicianEmail)
   console.log('  From: aeroMatch <matchrequest@aeromatch.eu>')
   console.log('  Subject:', `🛫 Nueva solicitud de trabajo de ${companyName}`)
+  console.log('  API Key prefix:', process.env.RESEND_API_KEY?.substring(0, 10) + '...')
 
   try {
     const { data, error } = await resend.emails.send({
