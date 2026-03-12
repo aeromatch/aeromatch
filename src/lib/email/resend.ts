@@ -200,7 +200,7 @@ export async function sendJobRequestNotification(data: JobRequestEmailData) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'aeroMatch <matchrequest@aeromatch.eu>',
+      from: process.env.RESEND_FROM_EMAIL || 'aeroMatch <onboarding@resend.dev>',
       to: technicianEmail,
       subject: `🛫 Nueva solicitud de trabajo de ${companyName}`,
       html: htmlContent,
