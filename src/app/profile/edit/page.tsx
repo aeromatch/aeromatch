@@ -34,6 +34,8 @@ export default function EditProfilePage() {
   const [languages, setLanguages] = useState<string[]>([])
   const [visibilityAnonymous, setVisibilityAnonymous] = useState(true)
   const [isAvailable, setIsAvailable] = useState(true)
+  const [contractTypePreference, setContractTypePreference] = useState<'short-term' | 'long-term' | 'both'>('both')
+  const [yearsExperience, setYearsExperience] = useState<number | ''>()
 
   useEffect(() => {
     loadProfile()
@@ -74,6 +76,8 @@ export default function EditProfilePage() {
         setLanguages(techData.languages || [])
         setVisibilityAnonymous(techData.visibility_anonymous ?? true)
         setIsAvailable(techData.is_available ?? true)
+        setContractTypePreference(techData.contract_type_preference || 'both')
+        setYearsExperience(techData.years_experience || '')
       }
     }
 
@@ -118,7 +122,9 @@ export default function EditProfilePage() {
             driving_license: drivingLicense,
             languages: languages,
             visibility_anonymous: visibilityAnonymous,
-            is_available: isAvailable
+            is_available: isAvailable,
+            contract_type_preference: contractTypePreference,
+            years_experience: yearsExperience || null
           })
           .eq('user_id', user.id)
 
@@ -169,6 +175,13 @@ export default function EditProfilePage() {
     security: language === 'es' ? 'Seguridad' : 'Security',
     changePassword: language === 'es' ? 'Cambiar Contraseña' : 'Change Password',
     changePasswordDesc: language === 'es' ? 'Actualiza tu contraseña de acceso' : 'Update your access password',
+    contractPreference: language === 'es' ? 'Preferencia de contrato' : 'Contract preference',
+    contractPreferenceDesc: language === 'es' ? '¿Qué tipo de contratos te interesan?' : 'What type of contracts interest you?',
+    shortTerm: language === 'es' ? 'Corto plazo' : 'Short-term',
+    longTerm: language === 'es' ? 'Largo plazo' : 'Long-term',
+    both: language === 'es' ? 'Ambos' : 'Both',
+    yearsExperience: language === 'es' ? 'Años de experiencia' : 'Years of experience',
+    yearsExperienceDesc: language === 'es' ? 'Experiencia total en mantenimiento aeronáutico' : 'Total experience in aviation maintenance',
   }
 
   return (
@@ -243,6 +256,52 @@ export default function EditProfilePage() {
                     />
                     <div className="w-14 h-7 bg-steel-700 peer-focus:ring-2 peer-focus:ring-gold-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-success-500"></div>
                   </label>
+                </div>
+              </div>
+
+              {/* Contract Preference & Experience */}
+              <div className="card p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {labels.contractPreference}
+                </h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-steel-400 mb-3">{labels.contractPreferenceDesc}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { key: 'short-term', label: labels.shortTerm },
+                        { key: 'long-term', label: labels.longTerm },
+                        { key: 'both', label: labels.both },
+                      ].map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => setContractTypePreference(option.key as typeof contractTypePreference)}
+                          className={contractTypePreference === option.key ? 'chip-selected' : 'chip-blue-selectable'}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-steel-700/40">
+                    <label className="label">{labels.yearsExperience}</label>
+                    <p className="text-xs text-steel-500 mb-2">{labels.yearsExperienceDesc}</p>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      value={yearsExperience}
+                      onChange={(e) => setYearsExperience(e.target.value ? parseInt(e.target.value) : '')}
+                      className="input max-w-[120px]"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -45,6 +45,28 @@ const GENERAL_CERTIFICATES = [
   { key: 'sms', label: 'SMS Training' },
 ]
 
+// Additional documents (optional, shared only when accepting offers)
+const ADDITIONAL_DOCUMENTS = [
+  { 
+    key: 'logbook', 
+    label: { es: 'Logbook', en: 'Logbook' },
+    description: { 
+      es: 'Registro de horas y trabajos realizados. Se compartirá solo cuando aceptes una oferta.', 
+      en: 'Record of hours and work performed. Shared only when you accept an offer.' 
+    },
+    icon: '📖'
+  },
+  { 
+    key: 'cv', 
+    label: { es: 'CV / Currículum', en: 'CV / Resume' },
+    description: { 
+      es: 'Tu currículum profesional. Se compartirá solo cuando aceptes una oferta.', 
+      en: 'Your professional resume. Shared only when you accept an offer.' 
+    },
+    icon: '📄'
+  },
+]
+
 export default function DocumentsPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -57,7 +79,7 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'licenses' | 'ratings' | 'certificates'>('licenses')
+  const [activeTab, setActiveTab] = useState<'licenses' | 'ratings' | 'certificates' | 'additional'>('licenses')
   const [selectedExtras, setSelectedExtras] = useState<{[aircraft: string]: string[]}>({})
   const [customExtraText, setCustomExtraText] = useState<{[key: string]: string}>({})
 
@@ -277,11 +299,12 @@ export default function DocumentsPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-steel-700/40 pb-4">
+        <div className="flex gap-2 mb-6 border-b border-steel-700/40 pb-4 flex-wrap">
           {[
             { key: 'licenses', label: language === 'es' ? 'Licencias' : 'Licenses', icon: '🛡️' },
             { key: 'ratings', label: language === 'es' ? 'Habilitaciones' : 'Type Ratings', icon: '✈️' },
             { key: 'certificates', label: language === 'es' ? 'Certificados' : 'Certificates', icon: '📋' },
+            { key: 'additional', label: language === 'es' ? 'Adicionales' : 'Additional', icon: '📎' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -588,6 +611,83 @@ export default function DocumentsPage() {
                         onChange={(e) => {
                           const file = e.target.files?.[0]
                           if (file) handleUpload(`cert_${cert.key}`, file)
+                        }}
+                      />
+                      {isUploading ? t.common.processing : doc ? t.documents.update : t.documents.upload}
+                    </label>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Additional Documents Tab (Logbook + CV) */}
+        {activeTab === 'additional' && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-navy-800/50 border border-steel-700/30 mb-6">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">🔒</span>
+                <div>
+                  <p className="text-white font-medium">
+                    {language === 'es' ? 'Documentos privados' : 'Private documents'}
+                  </p>
+                  <p className="text-sm text-steel-400 mt-1">
+                    {language === 'es' 
+                      ? 'Estos documentos son opcionales y permanecen ocultos para las empresas hasta que aceptes una oferta de trabajo. Una vez aceptada, la empresa podrá acceder a ellos.'
+                      : 'These documents are optional and remain hidden from companies until you accept a job offer. Once accepted, the company will be able to access them.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {ADDITIONAL_DOCUMENTS.map((docType) => {
+              const doc = getDocumentForType(docType.key)
+              const isUploading = uploading === docType.key
+
+              return (
+                <div key={docType.key} className="card p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${
+                        doc?.status === 'verified' 
+                          ? 'bg-gold-500/15 border-2 border-gold-500/50' 
+                          : doc 
+                            ? 'bg-steel-700/30 border-2 border-steel-600/50' 
+                            : 'bg-navy-800 border-2 border-steel-700/50'
+                      }`}>
+                        {docType.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-white">
+                            {docType.label[language as 'es' | 'en']}
+                          </h3>
+                          <span className="text-xs text-steel-500 italic">
+                            ({language === 'es' ? 'opcional' : 'optional'})
+                          </span>
+                        </div>
+                        <p className="text-xs text-steel-500 mt-0.5 max-w-md">
+                          {docType.description[language as 'es' | 'en']}
+                        </p>
+                        {doc && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {getStatusBadge(doc.status)}
+                            <span className="text-xs text-steel-500">{doc.file_name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <label className={`btn-secondary text-sm cursor-pointer ${isUploading ? 'opacity-50' : ''}`}>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        disabled={isUploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleUpload(docType.key, file)
                         }}
                       />
                       {isUploading ? t.common.processing : doc ? t.documents.update : t.documents.upload}

@@ -9,6 +9,7 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { AircraftMultiSelect } from '@/components/profile/AircraftMultiSelect'
 import { LICENSE_CATEGORIES, SPECIALTIES } from '@/lib/aircraftCatalog'
 import { VERIFICATION_BADGES } from '@/lib/config/features'
+import { AMXSummaryModal } from '@/components/search/AMXSummaryModal'
 
 interface TechnicianResult {
   user_id: string
@@ -25,6 +26,9 @@ interface TechnicianResult {
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
   availability_status: 'hidden' | 'available_unverified' | 'available_verified'
   is_verified: boolean
+  // Contract preference
+  contract_type_preference?: 'short-term' | 'long-term' | 'both'
+  years_experience?: number
 }
 
 export default function SearchPage() {
@@ -45,6 +49,9 @@ export default function SearchPage() {
   const [ukLicense, setUkLicense] = useState(false)
   const [ownTools, setOwnTools] = useState(false)
   
+  // Contract type filter
+  const [contractTypeFilter, setContractTypeFilter] = useState<'all' | 'short-term' | 'long-term'>('all')
+  
   // Job requires Right to Work UK (determines warning display, not filtering)
   const [jobRequiresRightToWorkUk, setJobRequiresRightToWorkUk] = useState(false)
 
@@ -59,6 +66,10 @@ export default function SearchPage() {
   const [workLocation, setWorkLocation] = useState('')
   const [contractType, setContractType] = useState<'short-term' | 'long-term'>('short-term')
   const [notes, setNotes] = useState('')
+
+  // AMX Summary modal
+  const [showAMXModal, setShowAMXModal] = useState(false)
+  const [amxTechnician, setAMXTechnician] = useState<TechnicianResult | null>(null)
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -117,7 +128,8 @@ export default function SearchPage() {
           aircraft_types: aircraftTypes,
           specialties: specialties,
           uk_license: ukLicense,
-          own_tools: ownTools
+          own_tools: ownTools,
+          contract_type: contractTypeFilter !== 'all' ? contractTypeFilter : undefined
           // Note: right_to_work_uk is not sent - filtering happens on job flag, not search
         })
       })
@@ -136,6 +148,11 @@ export default function SearchPage() {
   const handleRequestAvailability = (tech: TechnicianResult) => {
     setSelectedTechnician(tech)
     setShowRequestModal(true)
+  }
+
+  const handleViewAMXSummary = (tech: TechnicianResult) => {
+    setAMXTechnician(tech)
+    setShowAMXModal(true)
   }
 
   const submitRequest = async () => {
@@ -305,6 +322,27 @@ export default function SearchPage() {
                         className={specialties.includes(spec) ? 'chip-selected' : 'chip-blue-selectable'}
                       >
                         {spec}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contract Type Filter */}
+                <div>
+                  <label className="label">{language === 'es' ? 'Tipo de contrato' : 'Contract type'}</label>
+                  <div className="flex gap-2">
+                    {[
+                      { key: 'all', label: language === 'es' ? 'Todos' : 'All' },
+                      { key: 'short-term', label: language === 'es' ? 'Corto plazo' : 'Short-term' },
+                      { key: 'long-term', label: language === 'es' ? 'Largo plazo' : 'Long-term' },
+                    ].map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => setContractTypeFilter(option.key as typeof contractTypeFilter)}
+                        className={contractTypeFilter === option.key ? 'chip-selected' : 'chip-selectable'}
+                      >
+                        {option.label}
                       </button>
                     ))}
                   </div>
@@ -504,15 +542,26 @@ export default function SearchPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleRequestAvailability(tech)}
-                      className="btn-primary w-full"
-                    >
-                      {language === 'es' ? 'Solicitar Disponibilidad' : 'Request Availability'}
-                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleViewAMXSummary(tech)}
+                        className="btn-secondary flex-1"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        {language === 'es' ? 'Ver AMX' : 'View AMX'}
+                      </button>
+                      <button
+                        onClick={() => handleRequestAvailability(tech)}
+                        className="btn-primary flex-1"
+                      >
+                        {language === 'es' ? 'Solicitar' : 'Request'}
+                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -632,6 +681,19 @@ export default function SearchPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* AMX Summary Modal */}
+        {amxTechnician && (
+          <AMXSummaryModal
+            isOpen={showAMXModal}
+            onClose={() => {
+              setShowAMXModal(false)
+              setAMXTechnician(null)
+            }}
+            technicianId={amxTechnician.user_id}
+            techId={amxTechnician.tech_id}
+          />
         )}
       </div>
     </AppLayout>

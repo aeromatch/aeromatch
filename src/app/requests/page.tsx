@@ -52,6 +52,11 @@ export default function RequestsPage() {
   const [ratingModalOpen, setRatingModalOpen] = useState(false)
   const [ratingRequest, setRatingRequest] = useState<JobRequest | null>(null)
 
+  // Delete confirmation modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [requestToDelete, setRequestToDelete] = useState<JobRequest | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   const labels = {
     title: language === 'es' ? 'Solicitudes Recibidas' : 'Received Requests',
     titleCompany: language === 'es' ? 'Mis Solicitudes' : 'My Requests',
@@ -70,6 +75,7 @@ export default function RequestsPage() {
     pending: language === 'es' ? 'Pendiente' : 'Pending',
     accepted: language === 'es' ? 'Aceptada' : 'Accepted',
     rejected: language === 'es' ? 'Rechazada' : 'Rejected',
+    cancelled: language === 'es' ? 'Cancelada' : 'Cancelled',
     workMode: language === 'es' ? 'Modalidad' : 'Work Mode',
     selfEmployed: language === 'es' ? 'Autónomo' : 'Self-employed',
     umbrella: language === 'es' ? 'Umbrella' : 'Umbrella',
@@ -84,6 +90,12 @@ export default function RequestsPage() {
       : '⚠️ UK Work Eligibility Required. This job requires legal Right to Work in the UK to execute the contract. AeroMatch does NOT sponsor VISAs or provide insurance directly at this stage. You must arrange eligibility via:\n• Umbrella/EoR (MoR billing + insurance under provider terms), OR\n• VISA sponsorship / Right to Work UK independently.',
     ukRtw: language === 'es' ? 'Right to Work UK' : 'UK Right to Work',
     required: language === 'es' ? 'Requerido' : 'Required',
+    deleteRequest: language === 'es' ? 'Eliminar solicitud' : 'Delete request',
+    deleteConfirmTitle: language === 'es' ? '¿Eliminar solicitud?' : 'Delete request?',
+    deleteConfirmText: language === 'es' ? 'Esta acción no se puede deshacer. La solicitud será cancelada.' : 'This action cannot be undone. The request will be cancelled.',
+    delete: language === 'es' ? 'Eliminar' : 'Delete',
+    cancel: language === 'es' ? 'Cancelar' : 'Cancel',
+    cannotDeleteAccepted: language === 'es' ? 'No se puede eliminar una solicitud aceptada' : 'Cannot delete an accepted request',
   }
 
   const workModeLabels: Record<string, string> = {
@@ -266,6 +278,44 @@ export default function RequestsPage() {
     return endDate < today
   }
 
+  // Handle delete click (company only)
+  const handleDeleteClick = (request: JobRequest) => {
+    setRequestToDelete(request)
+    setDeleteModalOpen(true)
+  }
+
+  // Confirm delete
+  const confirmDelete = async () => {
+    if (!requestToDelete) return
+
+    setDeleting(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/job-requests/${requestToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error)
+
+      // Update local state - remove or mark as cancelled
+      setRequests(requests.filter(r => r.id !== requestToDelete.id))
+      setDeleteModalOpen(false)
+      setRequestToDelete(null)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // Check if request can be deleted
+  const canDeleteRequest = (request: JobRequest) => {
+    // Only pending and rejected requests can be deleted
+    return request.status === 'pending' || request.status === 'rejected'
+  }
+
   const getStatusBadge = (request: JobRequest) => {
     // Check if should show as completed (end date passed)
     if (request.status === 'accepted') {
@@ -287,6 +337,8 @@ export default function RequestsPage() {
         return <span className="chip-warning">{labels.pending}</span>
       case 'rejected':
         return <span className="chip-error">{labels.rejected}</span>
+      case 'cancelled':
+        return <span className="chip text-steel-500">{labels.cancelled}</span>
       default:
         return <span className="chip">{request.status}</span>
     }
@@ -466,9 +518,30 @@ export default function RequestsPage() {
                   </div>
                 )}
 
-                <p className="text-xs text-steel-600 mt-4">
-                  {labels.created}: {new Date(request.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-GB')}
-                </p>
+                {/* Delete button for companies */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-steel-700/30">
+                  <p className="text-xs text-steel-600">
+                    {labels.created}: {new Date(request.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-GB')}
+                  </p>
+                  
+                  {!isTechnician && canDeleteRequest(request) && (
+                    <button
+                      onClick={() => handleDeleteClick(request)}
+                      className="text-xs text-steel-500 hover:text-error-400 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      {labels.deleteRequest}
+                    </button>
+                  )}
+                  
+                  {!isTechnician && request.status === 'accepted' && (
+                    <span className="text-xs text-steel-600 italic">
+                      {labels.cannotDeleteAccepted}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -502,6 +575,53 @@ export default function RequestsPage() {
           jobTitle={ratingRequest.final_client_name}
           onSubmit={handleSubmitRating}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && requestToDelete && (
+        <div className="modal-overlay" onClick={() => setDeleteModalOpen(false)}>
+          <div className="modal p-6 max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full bg-error-500/10 flex items-center justify-center">
+                <svg className="w-6 h-6 text-error-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">{labels.deleteConfirmTitle}</h3>
+                <p className="text-sm text-steel-400">{labels.deleteConfirmText}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-navy-800/50 border border-steel-700/30 mb-6">
+              <p className="text-white font-medium">{requestToDelete.final_client_name}</p>
+              <p className="text-sm text-steel-400">{requestToDelete.work_location}</p>
+              <p className="text-xs text-steel-500 mt-1">
+                {new Date(requestToDelete.start_date).toLocaleDateString()} - {new Date(requestToDelete.end_date).toLocaleDateString()}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setDeleteModalOpen(false)
+                  setRequestToDelete(null)
+                }}
+                className="btn-secondary flex-1"
+                disabled={deleting}
+              >
+                {labels.cancel}
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-error-600 hover:bg-error-500 text-white font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? labels.processing : labels.delete}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AppLayout>
   )

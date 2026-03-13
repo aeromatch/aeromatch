@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       specialties,
       uk_license,
       right_to_work_uk,
-      own_tools
+      own_tools,
+      contract_type  // 'short-term' | 'long-term' | undefined
     } = body
 
     if (!start_date || !end_date) {
@@ -51,7 +52,9 @@ export async function POST(request: Request) {
         uk_license,
         languages,
         verification_status,
-        availability_status
+        availability_status,
+        contract_type_preference,
+        years_experience
       `)
       .eq('is_available', true)
       // Only show technicians who are visible (not hidden)
@@ -123,6 +126,15 @@ export async function POST(request: Request) {
       )
     }
 
+    // Filter by contract type preference
+    // Show technicians who prefer the requested type OR prefer 'both'
+    if (contract_type && (contract_type === 'short-term' || contract_type === 'long-term')) {
+      filteredTechnicians = filteredTechnicians.filter(t => {
+        const pref = t.contract_type_preference || 'both'
+        return pref === contract_type || pref === 'both'
+      })
+    }
+
     // Calculate freshness based on created_at and sort results
     const now = Date.now()
     const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000
@@ -160,7 +172,10 @@ export async function POST(request: Request) {
         // Include verification status for UI badges
         verification_status: t.verification_status || 'unverified',
         availability_status: t.availability_status || 'available_unverified',
-        is_verified: t.verification_status === 'verified'
+        is_verified: t.verification_status === 'verified',
+        // Contract preference
+        contract_type_preference: t.contract_type_preference || 'both',
+        years_experience: t.years_experience
       }
     })
 
