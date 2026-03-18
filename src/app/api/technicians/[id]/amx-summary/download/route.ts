@@ -25,15 +25,18 @@ export async function GET(
 
     const serviceClient = getServiceClient()
 
-    // Check if user is a company
+    // Check if user is a company OR the technician themselves
     const { data: profile } = await serviceClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'company') {
-      return NextResponse.json({ error: 'Only companies can download summaries' }, { status: 403 })
+    const isCompany = profile?.role === 'company'
+    const isOwnProfile = user.id === technicianId
+
+    if (!isCompany && !isOwnProfile) {
+      return NextResponse.json({ error: 'Only companies or the technician can download this summary' }, { status: 403 })
     }
 
     // Get technician data

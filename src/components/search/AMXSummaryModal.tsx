@@ -89,8 +89,18 @@ export function AMXSummaryModal({ isOpen, onClose, technicianId, techId }: AMXSu
     setDownloading(true)
     try {
       const response = await fetch(`/api/technicians/${technicianId}/amx-summary/download`)
+      
       if (!response.ok) {
-        throw new Error('Failed to download')
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          alert(language === 'es' 
+            ? `Error al descargar: ${errorData.error || 'Error desconocido'}` 
+            : `Download error: ${errorData.error || 'Unknown error'}`)
+        } else {
+          alert(language === 'es' ? 'Error al descargar el PDF' : 'Failed to download PDF')
+        }
+        return
       }
       
       const blob = await response.blob()
@@ -102,8 +112,11 @@ export function AMXSummaryModal({ isOpen, onClose, technicianId, techId }: AMXSu
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Download error:', err)
+      alert(language === 'es' 
+        ? `Error: ${err.message || 'No se pudo descargar'}` 
+        : `Error: ${err.message || 'Could not download'}`)
     } finally {
       setDownloading(false)
     }
