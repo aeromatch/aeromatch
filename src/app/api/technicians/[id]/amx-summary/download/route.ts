@@ -184,10 +184,10 @@ async function generateCompanySummaryPdf(data: SummaryData): Promise<Uint8Array>
   })
 
   // Verification status
-  const statusText = data.isVerified ? '✓ AMX Verified' : '○ Pending Verification'
+  const statusText = data.isVerified ? 'AMX Verified' : 'Pending Verification'
   const statusColor = data.isVerified ? COLORS.green : COLORS.yellow
   page.drawText(statusText, {
-    x: width - margin - helvetica.widthOfTextAtSize(statusText, 10),
+    x: width - margin - helveticaBold.widthOfTextAtSize(statusText, 10),
     y: height - 75,
     size: 10,
     font: helveticaBold,
