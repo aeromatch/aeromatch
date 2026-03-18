@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+import { Resend } from 'resend'
 
 // Admin emails from environment
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
+const NOTIFICATION_EMAIL = 'raul@aeromatch.eu'
 
 // Service role client for admin operations
 function getServiceClient() {
@@ -183,29 +185,119 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
-    // Trigger certificate generation when status changes to 'pending'
+    // Generate certificate when status changes to 'pending'
     let certificateGenerated = false
+    let certificateError = null
+    
     if (status === 'pending') {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-        const certRes = await fetch(`${baseUrl}/api/certificates/generate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cookie': request.headers.get('cookie') || '',
-          },
-          body: JSON.stringify({ technicianId }),
-        })
-        
-        if (certRes.ok) {
-          certificateGenerated = true
-          console.log('Certificate generated for technician:', technicianId)
+        // Check if certificate already exists
+        const { data: existingCert } = await serviceClient
+          .from('amx_certificates')
+          .select('id, status')
+          .eq('technician_id', technicianId)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (existingCert && existingCert.status === 'pending') {
+          console.log('Certificate already pending for technician:', technicianId)
         } else {
-          const certError = await certRes.json()
-          console.log('Certificate generation skipped:', certError.error)
+          // Get technician data
+          const { data: technician } = await serviceClient
+            .from('technicians')
+            .select('user_id, license_category, aircraft_types, years_experience, is_available')
+            .eq('user_id', technicianId)
+            .single()
+
+          // Get profile data
+          const { data: profile } = await serviceClient
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', technicianId)
+            .single()
+
+          // Get documents
+          const { data: documents } = await serviceClient
+            .from('documents')
+            .select('doc_type, status, expires_on')
+            .eq('technician_id', technicianId)
+
+          if (technician) {
+            // Generate reference ID
+            const { data: refData } = await serviceClient.rpc('generate_amx_reference_id')
+            const referenceId = refData as string
+
+            // Generate PDF
+            const pdfBytes = await generateCertificatePdf({
+              referenceId,
+              technician: {
+                fullName: profile?.full_name || 'Unknown Technician',
+                licenseCategory: technician.license_category || [],
+                aircraftTypes: technician.aircraft_types || [],
+                yearsExperience: technician.years_experience,
+                isAvailable: technician.is_available || false,
+              },
+              documents: (documents || []).map(d => ({
+                docType: d.doc_type,
+                status: d.status,
+                expiresOn: d.expires_on,
+              })),
+              generatedAt: new Date(),
+            })
+
+            // Upload PDF to Storage
+            const storagePath = `${technicianId}/${referenceId}.pdf`
+            const { error: uploadError } = await serviceClient
+              .storage
+              .from('certificates')
+              .upload(storagePath, Buffer.from(pdfBytes), {
+                contentType: 'application/pdf',
+                upsert: true,
+              })
+
+            if (uploadError) {
+              console.error('Error uploading PDF:', uploadError)
+              certificateError = uploadError.message
+            } else {
+              // Insert certificate record
+              const { error: insertError } = await serviceClient
+                .from('amx_certificates')
+                .insert({
+                  technician_id: technicianId,
+                  reference_id: referenceId,
+                  pdf_storage_path: storagePath,
+                  status: 'pending',
+                })
+
+              if (insertError) {
+                console.error('Error inserting certificate:', insertError)
+                certificateError = insertError.message
+              } else {
+                certificateGenerated = true
+                console.log('Certificate generated:', referenceId)
+
+                // Send notification email
+                if (process.env.RESEND_API_KEY) {
+                  try {
+                    const resend = new Resend(process.env.RESEND_API_KEY)
+                    await resend.emails.send({
+                      from: process.env.RESEND_FROM_EMAIL || 'aeroMatch <onboarding@resend.dev>',
+                      to: NOTIFICATION_EMAIL,
+                      subject: `📋 Nuevo certificado AMX: ${referenceId}`,
+                      html: `<p>Nuevo certificado pendiente de revisión.</p><p><strong>Técnico:</strong> ${profile?.full_name || 'Unknown'}</p><p><strong>Email:</strong> ${profile?.email}</p><p><a href="https://app.aeromatch.eu/admin/certificates">Revisar certificado</a></p>`,
+                    })
+                  } catch (emailErr) {
+                    console.error('Email notification failed:', emailErr)
+                  }
+                }
+              }
+            }
+          }
         }
-      } catch (certErr) {
-        console.error('Error triggering certificate generation:', certErr)
+      } catch (certErr: any) {
+        console.error('Error generating certificate:', certErr)
+        certificateError = certErr.message
       }
     }
 
@@ -213,6 +305,7 @@ export async function POST(request: Request) {
       success: true, 
       message: `Technician ${status === 'verified' ? 'verified' : status}`,
       certificateGenerated,
+      certificateError,
     })
   } catch (error: any) {
     console.error('Admin verification POST error:', error)
