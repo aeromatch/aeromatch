@@ -31,3 +31,4 @@ COMMENT ON COLUMN technicians.years_experience IS
 -- No schema changes needed - just add handling in the app.
 -- =====================================================
 
+

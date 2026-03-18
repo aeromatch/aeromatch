@@ -43,12 +43,22 @@ export default async function MyProfilePage() {
     .gte('end_date', new Date().toISOString().split('T')[0])
     .order('start_date', { ascending: true })
 
+  // Get AMX certificate (most recent one with status 'checked')
+  const { data: certificate } = await supabase
+    .from('amx_certificates')
+    .select('id, reference_id, status, generated_at, checked_at')
+    .eq('technician_id', user.id)
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .single()
+
   return (
     <MyProfileView
       profile={profile}
       technician={technician}
       documents={documents || []}
       availabilitySlots={slots || []}
+      certificate={certificate}
     />
   )
 }

@@ -17,3 +17,4 @@ COMMENT ON COLUMN job_acceptance_workflow.uk_eligibility_mode IS 'How the techni
 
 
 
+

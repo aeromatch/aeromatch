@@ -183,15 +183,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
+    // Trigger certificate generation when status changes to 'pending'
+    let certificateGenerated = false
+    if (status === 'pending') {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        const certRes = await fetch(`${baseUrl}/api/certificates/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': request.headers.get('cookie') || '',
+          },
+          body: JSON.stringify({ technicianId }),
+        })
+        
+        if (certRes.ok) {
+          certificateGenerated = true
+          console.log('Certificate generated for technician:', technicianId)
+        } else {
+          const certError = await certRes.json()
+          console.log('Certificate generation skipped:', certError.error)
+        }
+      } catch (certErr) {
+        console.error('Error triggering certificate generation:', certErr)
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
-      message: `Technician ${status === 'verified' ? 'verified' : status}` 
+      message: `Technician ${status === 'verified' ? 'verified' : status}`,
+      certificateGenerated,
     })
   } catch (error: any) {
     console.error('Admin verification POST error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
 
 
 

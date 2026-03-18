@@ -3,15 +3,25 @@
 import Link from 'next/link'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { CertificateSection } from '@/components/profile/CertificateSection'
+
+interface Certificate {
+  id: string
+  reference_id: string
+  status: 'pending' | 'checked' | 'rejected'
+  generated_at: string
+  checked_at: string | null
+}
 
 interface MyProfileViewProps {
   profile: any
   technician: any
   documents: any[]
   availabilitySlots: any[]
+  certificate?: Certificate | null
 }
 
-export function MyProfileView({ profile, technician, documents, availabilitySlots }: MyProfileViewProps) {
+export function MyProfileView({ profile, technician, documents, availabilitySlots, certificate }: MyProfileViewProps) {
   const { t, language } = useLanguage()
 
   const uploadedDocs = documents.filter(d => d.status === 'uploaded' || d.status === 'verified')
@@ -283,18 +293,8 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
           </div>
         </div>
 
-        {/* Download PDF - Stub */}
-        <div className="card p-5 mt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-white">{t.profile.downloadPdf}</h4>
-              <p className="text-sm text-steel-500">{t.documents.pdfDescription}</p>
-            </div>
-            <button className="btn-secondary opacity-50 cursor-not-allowed" disabled>
-              {t.profile.comingSoon}
-            </button>
-          </div>
-        </div>
+        {/* AMX Certificate Section */}
+        <CertificateSection certificate={certificate || null} />
       </div>
     </AppLayout>
   )
