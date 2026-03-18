@@ -244,6 +244,7 @@ export async function POST(request: Request) {
                 expiresOn: d.expires_on,
               })),
               generatedAt: new Date(),
+              certificateStatus: 'pending',
             })
 
             // Upload PDF to Storage

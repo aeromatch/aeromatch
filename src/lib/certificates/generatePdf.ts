@@ -19,438 +19,330 @@ interface CertificateData {
   technician: TechnicianData
   documents: DocumentData[]
   generatedAt: Date
+  certificateStatus?: 'pending' | 'checked' | 'rejected'
 }
 
 const COLORS = {
-  navy: rgb(0.043, 0.075, 0.169),      // #0B132B
-  navyLight: rgb(0.102, 0.149, 0.259), // #1A2642
-  gold: rgb(0.788, 0.635, 0.302),      // #C9A24D
   white: rgb(1, 1, 1),
-  steel: rgb(0.420, 0.533, 0.604),     // #6B889A
-  steelLight: rgb(0.533, 0.600, 0.667),// #889AAA
-  green: rgb(0.298, 0.686, 0.314),     // #4CAF50
-  greenLight: rgb(0.898, 0.976, 0.898),// #E5F9E5
+  black: rgb(0.1, 0.1, 0.1),
+  darkGray: rgb(0.2, 0.2, 0.2),
+  gray: rgb(0.5, 0.5, 0.5),
+  lightGray: rgb(0.7, 0.7, 0.7),
+  gold: rgb(0.76, 0.6, 0.3),
+  green: rgb(0.2, 0.65, 0.4),
+  lineGray: rgb(0.85, 0.85, 0.85),
 }
 
-const DOC_TYPE_LABELS: Record<string, string> = {
-  easa_license: 'EASA License',
-  uk_license: 'UK CAA License',
-  faa_ap: 'FAA A&P License',
-  passport: 'Passport / ID',
-  cv: 'CV / Resume',
-  medical: 'Medical Certificate',
-  training: 'Training Certificate',
-  logbook: 'Experience Logbook',
-}
+const DOC_CATEGORIES = [
+  { key: 'license', label: 'License', types: ['easa_license', 'uk_license', 'faa_ap'] },
+  { key: 'type_ratings', label: 'Type ratings', types: ['type_'] },
+  { key: 'medical', label: 'Medical certificate', types: ['medical'] },
+  { key: 'passport', label: 'Passport / ID', types: ['passport'] },
+  { key: 'experience', label: 'Experience log', types: ['logbook', 'cv'] },
+]
 
-function getDocTypeLabel(docType: string): string {
-  if (docType.startsWith('type_') && docType.endsWith('_theory')) {
-    const aircraft = docType.replace('type_', '').replace('_theory', '').toUpperCase()
-    return `Type Rating Theory: ${aircraft}`
-  }
-  if (docType.startsWith('type_') && docType.endsWith('_practical')) {
-    const aircraft = docType.replace('type_', '').replace('_practical', '').toUpperCase()
-    return `Type Rating Practical: ${aircraft}`
-  }
-  return DOC_TYPE_LABELS[docType] || docType
-}
-
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case 'verified': return 'Checked'
-    case 'uploaded': return 'Uploaded'
-    case 'pending': return 'Pending'
-    case 'expired': return 'Expired'
-    default: return status
-  }
+function getDocumentCategoryStatus(documents: DocumentData[], types: string[]): string {
+  const matchingDocs = documents.filter(d => 
+    types.some(t => t.endsWith('_') ? d.docType.startsWith(t) : d.docType === t)
+  )
+  
+  if (matchingDocs.length === 0) return 'missing'
+  if (matchingDocs.some(d => d.status === 'verified')) return 'verified'
+  if (matchingDocs.some(d => d.status === 'uploaded')) return 'uploaded'
+  return 'pending'
 }
 
 export async function generateCertificatePdf(data: CertificateData): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create()
-  const page = pdfDoc.addPage([595.28, 841.89]) // A4 size in points
+  const page = pdfDoc.addPage([595.28, 841.89]) // A4
   
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   
   const { width, height } = page.getSize()
-  const margin = 50
-  let y = height - margin
+  const marginLeft = 50
+  const marginRight = 50
+  
+  // White background
+  page.drawRectangle({ x: 0, y: 0, width, height, color: COLORS.white })
 
-  // Background
-  page.drawRectangle({
-    x: 0,
-    y: 0,
-    width,
-    height,
-    color: COLORS.white,
-  })
+  let y = height - 50
 
-  // Header background
-  page.drawRectangle({
-    x: 0,
-    y: height - 140,
-    width,
-    height: 140,
-    color: COLORS.navy,
-  })
-
-  // Logo text "aeroMatch"
-  y = height - 55
-  page.drawText('aero', {
-    x: margin,
-    y,
-    size: 32,
+  // ========== HEADER ==========
+  // Logo "A" triangle shape (simplified as text for now)
+  page.drawText('A', {
+    x: marginLeft,
+    y: y - 5,
+    size: 36,
     font: helveticaBold,
     color: COLORS.gold,
   })
-  page.drawText('Match', {
-    x: margin + 62,
+  
+  // "aeroMatch" text below logo
+  y -= 45
+  page.drawText('aeroMatch', {
+    x: marginLeft,
     y,
-    size: 32,
-    font: helveticaBold,
-    color: COLORS.white,
-  })
-
-  // Title
-  y -= 35
-  page.drawText('Technician Documentation Summary', {
-    x: margin,
-    y,
-    size: 16,
+    size: 11,
     font: helvetica,
-    color: COLORS.steelLight,
+    color: COLORS.gray,
   })
 
-  // Subtitle
-  y -= 18
+  // ========== TITLE SECTION ==========
+  y -= 50
+  page.drawText('Technician Documentation Summary', {
+    x: marginLeft,
+    y,
+    size: 22,
+    font: helveticaBold,
+    color: COLORS.black,
+  })
+
+  y -= 22
   page.drawText('Generated after profile acceptance', {
-    x: margin,
+    x: marginLeft,
+    y,
+    size: 11,
+    font: helvetica,
+    color: COLORS.gray,
+  })
+
+  // Status badge on right side
+  const badgeX = width - marginRight - 80
+  const badgeY = y + 15
+  
+  // "DOCUMENTS STATUS" label
+  page.drawText('DOCUMENTS STATUS', {
+    x: badgeX,
+    y: badgeY + 25,
+    size: 7,
+    font: helveticaBold,
+    color: COLORS.lightGray,
+  })
+  
+  // Status value
+  const statusText = data.certificateStatus === 'checked' ? 'Checked' : 
+                     data.certificateStatus === 'rejected' ? 'Rejected' : 'Pending'
+  const statusColor = data.certificateStatus === 'checked' ? COLORS.green : 
+                      data.certificateStatus === 'rejected' ? rgb(0.8, 0.2, 0.2) : COLORS.gold
+  
+  page.drawText(statusText, {
+    x: badgeX + 20,
+    y: badgeY,
+    size: 12,
+    font: helveticaBold,
+    color: statusColor,
+  })
+
+  // ========== INFO SECTION ==========
+  y -= 50
+  
+  // License
+  page.drawText('License', {
+    x: marginLeft + 20,
     y,
     size: 10,
+    font: helveticaBold,
+    color: COLORS.gray,
+  })
+  y -= 16
+  const licenseText = data.technician.licenseCategory.length > 0 
+    ? `EASA Part-66 ${data.technician.licenseCategory.join(', ')}`
+    : 'Not specified'
+  page.drawText(licenseText, {
+    x: marginLeft + 20,
+    y,
+    size: 11,
     font: helvetica,
-    color: COLORS.steel,
+    color: COLORS.darkGray,
   })
 
-  // Status badge (right side of header)
-  const badgeWidth = 80
-  const badgeHeight = 28
-  const badgeX = width - margin - badgeWidth
-  const badgeY = height - 70
-  
-  page.drawRectangle({
-    x: badgeX,
-    y: badgeY,
-    width: badgeWidth,
-    height: badgeHeight,
-    color: COLORS.greenLight,
-    borderColor: COLORS.green,
-    borderWidth: 1,
+  // Type Ratings
+  y -= 30
+  page.drawText('Type Ratings', {
+    x: marginLeft + 20,
+    y,
+    size: 10,
+    font: helveticaBold,
+    color: COLORS.gray,
   })
-  
-  page.drawText('Pending', {
-    x: badgeX + 18,
-    y: badgeY + 9,
+  y -= 16
+  const typeRatingsText = data.technician.aircraftTypes.length > 0 
+    ? data.technician.aircraftTypes.join(' · ')
+    : 'Not specified'
+  // Truncate if too long
+  const truncatedTypeRatings = typeRatingsText.length > 60 
+    ? typeRatingsText.substring(0, 57) + '...' 
+    : typeRatingsText
+  page.drawText(truncatedTypeRatings, {
+    x: marginLeft + 20,
+    y,
+    size: 11,
+    font: helvetica,
+    color: COLORS.gold,
+  })
+
+  // Experience
+  y -= 30
+  page.drawText('Experience', {
+    x: marginLeft + 20,
+    y,
+    size: 10,
+    font: helveticaBold,
+    color: COLORS.gray,
+  })
+  y -= 16
+  const experienceText = data.technician.yearsExperience 
+    ? `${data.technician.yearsExperience} years`
+    : 'Not specified'
+  page.drawText(experienceText, {
+    x: marginLeft + 20,
+    y,
+    size: 11,
+    font: helvetica,
+    color: COLORS.darkGray,
+  })
+
+  // Availability
+  y -= 30
+  page.drawText('Availability', {
+    x: marginLeft + 20,
+    y,
+    size: 10,
+    font: helveticaBold,
+    color: COLORS.gray,
+  })
+  y -= 16
+  const availabilityText = data.technician.isAvailable ? 'READY TO WORK' : 'Not available'
+  const availabilityColor = data.technician.isAvailable ? COLORS.green : COLORS.gray
+  page.drawText(availabilityText, {
+    x: marginLeft + 20,
+    y,
     size: 11,
     font: helveticaBold,
-    color: COLORS.green,
+    color: availabilityColor,
   })
 
-  // Reference ID and Date (right aligned)
-  y = height - 100
-  const refText = `Reference ID: ${data.referenceId}`
-  const refWidth = helvetica.widthOfTextAtSize(refText, 10)
-  page.drawText(refText, {
-    x: width - margin - refWidth,
-    y,
-    size: 10,
-    font: helveticaBold,
-    color: COLORS.white,
-  })
-
-  y -= 14
-  const dateText = `Date generated: ${data.generatedAt.toLocaleDateString('en-GB')}`
-  const dateWidth = helvetica.widthOfTextAtSize(dateText, 9)
-  page.drawText(dateText, {
-    x: width - margin - dateWidth,
-    y,
-    size: 9,
-    font: helvetica,
-    color: COLORS.steel,
-  })
-
-  // Disclaimer
-  y = height - 165
-  page.drawText('Documents reviewed based on information provided by the technician.', {
-    x: margin,
-    y,
-    size: 9,
-    font: helvetica,
-    color: COLORS.steel,
-  })
-  y -= 12
-  page.drawText('AeroMatch does not replace operator or authority validation.', {
-    x: margin,
-    y,
-    size: 9,
-    font: helvetica,
-    color: COLORS.steel,
-  })
-
-  // Info Cards Section
-  y -= 40
-  const cardWidth = (width - margin * 2 - 20) / 2
-  const cardHeight = 70
-  
-  // License Card
-  drawInfoCard(page, margin, y - cardHeight, cardWidth, cardHeight, 'License', 
-    data.technician.licenseCategory.length > 0 
-      ? `EASA Part-66 ${data.technician.licenseCategory.join(', ')}`
-      : 'Not specified',
-    helvetica, helveticaBold)
-
-  // Type Ratings Card
-  drawInfoCard(page, margin + cardWidth + 20, y - cardHeight, cardWidth, cardHeight, 'Type Ratings',
-    data.technician.aircraftTypes.length > 0
-      ? data.technician.aircraftTypes.slice(0, 4).join(' · ') + (data.technician.aircraftTypes.length > 4 ? ' ...' : '')
-      : 'Not specified',
-    helvetica, helveticaBold)
-
-  y -= cardHeight + 20
-
-  // Experience Card
-  drawInfoCard(page, margin, y - cardHeight, cardWidth, cardHeight, 'Experience',
-    data.technician.yearsExperience 
-      ? `${data.technician.yearsExperience} years`
-      : 'Not specified',
-    helvetica, helveticaBold)
-
-  // Availability Card
-  drawInfoCard(page, margin + cardWidth + 20, y - cardHeight, cardWidth, cardHeight, 'Availability',
-    data.technician.isAvailable ? 'READY TO WORK' : 'Not available',
-    helvetica, helveticaBold, data.technician.isAvailable ? COLORS.green : COLORS.steel)
-
-  y -= cardHeight + 40
-
-  // Documents Overview Section
+  // ========== DOCUMENTS OVERVIEW ==========
+  y -= 50
   page.drawText('Documents overview', {
-    x: margin,
+    x: marginLeft,
     y,
     size: 14,
     font: helveticaBold,
-    color: COLORS.navy,
+    color: COLORS.black,
   })
-
-  y -= 25
-
-  // Document categories for quick overview
-  const docCategories = [
-    { label: 'License', types: ['easa_license', 'uk_license', 'faa_ap'] },
-    { label: 'Type ratings', types: data.technician.aircraftTypes.flatMap(ac => [`type_${ac.toLowerCase().replace(/[^a-z0-9]/g, '_')}_theory`, `type_${ac.toLowerCase().replace(/[^a-z0-9]/g, '_')}_practical`]) },
-    { label: 'Medical certificate', types: ['medical'] },
-    { label: 'Passport / ID', types: ['passport'] },
-    { label: 'Experience log', types: ['logbook', 'cv'] },
-  ]
-
-  // Quick overview chips
-  const chipHeight = 24
-  const chipGap = 10
-  let chipX = margin
-
-  for (const category of docCategories) {
-    const hasDoc = data.documents.some(d => category.types.some(t => d.docType.includes(t) || d.docType === t))
-    const chipWidth = helvetica.widthOfTextAtSize(category.label, 10) + 20
-    
-    if (chipX + chipWidth > width - margin) {
-      chipX = margin
-      y -= chipHeight + 8
-    }
-
-    page.drawRectangle({
-      x: chipX,
-      y: y - chipHeight,
-      width: chipWidth,
-      height: chipHeight,
-      color: hasDoc ? rgb(0.9, 0.95, 0.9) : rgb(0.95, 0.95, 0.95),
-      borderColor: hasDoc ? COLORS.green : COLORS.steel,
-      borderWidth: 0.5,
-    })
-
-    page.drawText(category.label, {
-      x: chipX + 10,
-      y: y - chipHeight + 7,
-      size: 10,
-      font: helvetica,
-      color: hasDoc ? COLORS.green : COLORS.steel,
-    })
-
-    chipX += chipWidth + chipGap
-  }
-
-  y -= chipHeight + 30
-
-  // Documents Table
-  page.drawText('DOCUMENTS STATUS', {
-    x: margin,
-    y,
-    size: 11,
-    font: helveticaBold,
-    color: COLORS.navy,
-  })
-
-  y -= 20
 
   // Table header
-  const col1Width = 300
-  const col2Width = 100
+  y -= 35
+  const colDocument = marginLeft + 60
+  const colStatus = width - marginRight - 100
   
-  page.drawRectangle({
-    x: margin,
-    y: y - 20,
-    width: width - margin * 2,
-    height: 20,
-    color: rgb(0.95, 0.95, 0.95),
-  })
-
   page.drawText('Document', {
-    x: margin + 10,
-    y: y - 14,
-    size: 9,
+    x: colDocument,
+    y,
+    size: 10,
     font: helveticaBold,
-    color: COLORS.navy,
+    color: COLORS.gray,
   })
-
   page.drawText('Status', {
-    x: margin + col1Width + 10,
-    y: y - 14,
-    size: 9,
+    x: colStatus,
+    y,
+    size: 10,
     font: helveticaBold,
-    color: COLORS.navy,
+    color: COLORS.gray,
   })
-
-  y -= 20
 
   // Table rows
-  const rowHeight = 22
-  for (const doc of data.documents.slice(0, 12)) {
-    // Row background (alternating)
-    const rowIndex = data.documents.indexOf(doc)
-    if (rowIndex % 2 === 0) {
-      page.drawRectangle({
-        x: margin,
-        y: y - rowHeight,
-        width: width - margin * 2,
-        height: rowHeight,
-        color: rgb(0.98, 0.98, 0.98),
-      })
-    }
-
+  y -= 10
+  for (const category of DOC_CATEGORIES) {
+    y -= 25
+    
     // Document name
-    page.drawText(getDocTypeLabel(doc.docType), {
-      x: margin + 10,
-      y: y - 15,
-      size: 9,
-      font: helvetica,
-      color: COLORS.navy,
-    })
-
-    // Status
-    const statusColor = doc.status === 'verified' ? COLORS.green : 
-                       doc.status === 'uploaded' ? COLORS.gold : COLORS.steel
-    page.drawText(getStatusLabel(doc.status), {
-      x: margin + col1Width + 10,
-      y: y - 15,
-      size: 9,
-      font: helveticaBold,
-      color: statusColor,
-    })
-
-    y -= rowHeight
-
-    if (y < 80) break // Don't overflow page
-  }
-
-  if (data.documents.length > 12) {
-    y -= 15
-    page.drawText(`+ ${data.documents.length - 12} more documents...`, {
-      x: margin,
+    page.drawText(category.label, {
+      x: colDocument,
       y,
-      size: 9,
+      size: 10,
       font: helvetica,
-      color: COLORS.steel,
+      color: COLORS.darkGray,
+    })
+    
+    // Status
+    const catStatus = getDocumentCategoryStatus(data.documents, category.types)
+    let statusLabel = 'Missing'
+    let statusLabelColor = COLORS.lightGray
+    
+    if (catStatus === 'verified') {
+      statusLabel = 'Checked'
+      statusLabelColor = COLORS.green
+    } else if (catStatus === 'uploaded') {
+      statusLabel = 'Uploaded'
+      statusLabelColor = COLORS.gold
+    } else if (catStatus === 'pending') {
+      statusLabel = 'Pending'
+      statusLabelColor = COLORS.gold
+    }
+    
+    page.drawText(statusLabel, {
+      x: colStatus,
+      y,
+      size: 10,
+      font: helvetica,
+      color: statusLabelColor,
     })
   }
 
-  // Footer
-  page.drawRectangle({
-    x: 0,
-    y: 0,
-    width,
-    height: 40,
-    color: COLORS.navy,
+  // ========== FOOTER ==========
+  // Disclaimer line
+  const disclaimerY = 100
+  page.drawLine({
+    start: { x: marginLeft, y: disclaimerY + 20 },
+    end: { x: width - marginRight, y: disclaimerY + 20 },
+    thickness: 0.5,
+    color: COLORS.lineGray,
   })
 
-  const footerText = `© ${new Date().getFullYear()} AeroMatch · aeromatch.eu`
-  const footerWidth = helvetica.widthOfTextAtSize(footerText, 9)
-  page.drawText(footerText, {
-    x: (width - footerWidth) / 2,
-    y: 15,
+  // Disclaimer text centered
+  const disclaimer1 = 'Documents reviewed based on information provided by the technician.'
+  const disclaimer2 = 'AeroMatch does not replace operator or authority validation.'
+  
+  const disclaimer1Width = helvetica.widthOfTextAtSize(disclaimer1, 9)
+  const disclaimer2Width = helvetica.widthOfTextAtSize(disclaimer2, 9)
+  
+  page.drawText(disclaimer1, {
+    x: (width - disclaimer1Width) / 2,
+    y: disclaimerY,
     size: 9,
     font: helvetica,
-    color: COLORS.steel,
+    color: COLORS.lightGray,
+  })
+  page.drawText(disclaimer2, {
+    x: (width - disclaimer2Width) / 2,
+    y: disclaimerY - 14,
+    size: 9,
+    font: helvetica,
+    color: COLORS.lightGray,
   })
 
-  // Page number
-  page.drawText('-- 1 of 1 --', {
-    x: width - margin - 50,
-    y: 15,
-    size: 8,
+  // Reference ID and Date at bottom left
+  page.drawText(`Reference ID: ${data.referenceId}`, {
+    x: marginLeft,
+    y: 45,
+    size: 9,
     font: helvetica,
-    color: COLORS.steel,
+    color: COLORS.gray,
+  })
+  
+  const dateStr = data.generatedAt.toLocaleDateString('en-GB')
+  page.drawText(`Date generated: ${dateStr}`, {
+    x: marginLeft,
+    y: 30,
+    size: 9,
+    font: helvetica,
+    color: COLORS.gray,
   })
 
   return await pdfDoc.save()
-}
-
-function drawInfoCard(
-  page: any,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  title: string,
-  value: string,
-  font: any,
-  fontBold: any,
-  valueColor = COLORS.navy
-) {
-  // Card background
-  page.drawRectangle({
-    x,
-    y,
-    width,
-    height,
-    color: rgb(0.98, 0.98, 0.98),
-    borderColor: rgb(0.9, 0.9, 0.9),
-    borderWidth: 1,
-  })
-
-  // Title
-  page.drawText(title, {
-    x: x + 15,
-    y: y + height - 22,
-    size: 10,
-    font: font,
-    color: COLORS.steel,
-  })
-
-  // Value
-  page.drawText(value, {
-    x: x + 15,
-    y: y + height - 45,
-    size: 12,
-    font: fontBold,
-    color: valueColor,
-  })
 }
 
 export type { CertificateData, TechnicianData, DocumentData }
