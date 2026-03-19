@@ -26,7 +26,7 @@ export function CertificateSection({ certificate }: CertificateSectionProps) {
       noCertificate: 'Aún no tienes un certificado generado',
       noCertificateDesc: 'Se generará automáticamente cuando tu perfil sea revisado',
       pending: 'Pendiente de revisión',
-      pendingDesc: 'Tu certificado está siendo revisado por el equipo de AeroMatch',
+      pendingDesc: 'Tu certificado está siendo revisado por el equipo de AeroMatch. Ya puedes descargarlo.',
       checked: 'Certificado verificado',
       checkedDesc: 'Tu documentación ha sido verificada. Puedes descargar tu certificado.',
       rejected: 'Certificado rechazado',
@@ -42,7 +42,7 @@ export function CertificateSection({ certificate }: CertificateSectionProps) {
       noCertificate: 'No certificate generated yet',
       noCertificateDesc: 'It will be automatically generated when your profile is reviewed',
       pending: 'Pending review',
-      pendingDesc: 'Your certificate is being reviewed by the AeroMatch team',
+      pendingDesc: 'Your certificate is being reviewed by the AeroMatch team. You can already download it.',
       checked: 'Certificate verified',
       checkedDesc: 'Your documentation has been verified. You can download your certificate.',
       rejected: 'Certificate rejected',
@@ -57,22 +57,26 @@ export function CertificateSection({ certificate }: CertificateSectionProps) {
   const t = labels[language]
 
   const handleDownload = async () => {
-    if (!certificate || certificate.status !== 'checked') return
+    if (!certificate) return
     
     setDownloading(true)
     try {
       const res = await fetch(`/api/certificates/${certificate.id}/download`)
-      if (res.ok) {
-        const data = await res.json()
-        const link = document.createElement('a')
-        link.href = data.downloadUrl
-        link.download = data.fileName
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+      if (!res.ok) {
+        throw new Error('Error downloading certificate')
       }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${certificate.reference_id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Error downloading certificate:', error)
+      alert(language === 'es' ? 'Error al descargar el certificado' : 'Error downloading certificate')
     } finally {
       setDownloading(false)
     }
@@ -173,8 +177,8 @@ export function CertificateSection({ certificate }: CertificateSectionProps) {
           </div>
         </div>
 
-        {/* Download button - only for checked certificates */}
-        {certificate.status === 'checked' && (
+        {/* Download button - available for pending and checked certificates */}
+        {(certificate.status === 'checked' || certificate.status === 'pending') && (
           <button
             onClick={handleDownload}
             disabled={downloading}
