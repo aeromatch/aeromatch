@@ -111,7 +111,7 @@ export async function PATCH(
     try {
       const { data: technician } = await serviceClient
         .from('technicians')
-        .select('user_id, license_category, aircraft_types, years_experience, is_available')
+        .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license')
         .eq('user_id', existingCert.technician_id)
         .single()
 
@@ -134,6 +134,11 @@ export async function PATCH(
             licenseCategory: technician.license_category || [],
             aircraftTypes: technician.aircraft_types || [],
             yearsExperience: technician.years_experience,
+            specialties: technician.specialties || [],
+            languages: technician.languages || [],
+            ownTools: technician.own_tools || false,
+            rightToWorkUk: technician.right_to_work_uk || false,
+            drivingLicense: technician.driving_license || false,
             isAvailable: technician.is_available || false,
           },
           documents: (documents || []).map(d => ({
