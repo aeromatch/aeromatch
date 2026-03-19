@@ -109,8 +109,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   
   // Load images
   const logoImage = await loadImage(pdfDoc, 'logo-certificate.png')
-  const sealChecked = await loadImage(pdfDoc, 'seal-checked.png')
-  const sealPending = await loadImage(pdfDoc, 'seal-pending.png')
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BACKGROUND
@@ -226,19 +224,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     color: COLORS.border,
   })
   y -= 20
-
-  // Status seal (top right area)
-  const sealImage = data.certificateStatus === 'checked' ? sealChecked : sealPending
-  if (sealImage) {
-    const sealHeight = 45
-    const sealWidth = sealHeight * 1.2
-    page.drawImage(sealImage, {
-      x: width - MARGIN - sealWidth,
-      y: height - headerHeight - 75,
-      width: sealWidth,
-      height: sealHeight,
-    })
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECTIONS

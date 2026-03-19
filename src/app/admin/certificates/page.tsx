@@ -84,15 +84,16 @@ export default function AdminCertificatesPage() {
     }
   }
 
-  const handleViewPdf = async (certId: string) => {
+  const handleViewPdf = async (certId: string, referenceId: string) => {
     try {
       const res = await fetch(`/api/certificates/${certId}/download`)
       if (res.ok) {
-        const data = await res.json()
-        setViewingPdf({ url: data.downloadUrl, name: data.fileName })
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        setViewingPdf({ url, name: `${referenceId}.pdf` })
       }
     } catch (error) {
-      console.error('Error getting PDF URL:', error)
+      console.error('Error getting PDF:', error)
     }
   }
 
@@ -100,12 +101,14 @@ export default function AdminCertificatesPage() {
     try {
       const res = await fetch(`/api/certificates/${certId}/download`)
       if (res.ok) {
-        const data = await res.json()
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
-        link.href = data.downloadUrl
-        link.download = data.fileName
+        link.href = url
+        link.download = `${referenceId}.pdf`
         document.body.appendChild(link)
         link.click()
+        window.URL.revokeObjectURL(url)
         document.body.removeChild(link)
       }
     } catch (error) {
@@ -258,7 +261,7 @@ export default function AdminCertificatesPage() {
                   {/* Actions */}
                   <div className="flex flex-col gap-2 ml-4">
                     <button
-                      onClick={() => handleViewPdf(cert.id)}
+                      onClick={() => handleViewPdf(cert.id, cert.reference_id)}
                       className="btn-secondary text-sm py-2"
                     >
                       👁️ View PDF
