@@ -63,6 +63,14 @@ interface VerificationTechnician {
   docsCount: number
 }
 
+interface Certificate {
+  id: string
+  reference_id: string
+  status: 'pending' | 'checked' | 'rejected'
+  generated_at: string
+  checked_at: string | null
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -80,6 +88,11 @@ export default function AdminPage() {
   const [verifyNotes, setVerifyNotes] = useState('')
   const [viewingDoc, setViewingDoc] = useState<{ url: string; type: string } | null>(null)
   const [loadingDoc, setLoadingDoc] = useState<string | null>(null)
+  
+  // Certificate state
+  const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null)
+  const [loadingCertificate, setLoadingCertificate] = useState(false)
+  const [viewingCertPdf, setViewingCertPdf] = useState<string | null>(null)
 
   useEffect(() => {
     checkAuth()
@@ -176,10 +189,15 @@ export default function AdminPage() {
       })
 
       if (res.ok) {
-        // Refresh list and close modal
+        // Refresh list
         fetchVerificationList()
-        setSelectedTech(null)
-        setVerifyNotes('')
+        // Refresh certificate (may have been generated)
+        if (selectedTech) {
+          await fetchCertificateForTech(selectedTech.id)
+        }
+        // Keep modal open to show updated certificate
+        // Update the selected tech status locally
+        setSelectedTech(prev => prev ? { ...prev, verificationStatus: status } : null)
       }
     } catch (err) {
       console.error('Error updating verification:', err)
@@ -214,6 +232,86 @@ export default function AdminPage() {
       case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
       case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30'
       default: return 'bg-steel-700/50 text-steel-400 border-steel-600/30'
+    }
+  }
+
+  const fetchCertificateForTech = async (techId: string) => {
+    setLoadingCertificate(true)
+    setSelectedCertificate(null)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('amx_certificates')
+        .select('id, reference_id, status, generated_at, checked_at')
+        .eq('technician_id', techId)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single()
+      
+      if (!error && data) {
+        setSelectedCertificate(data as Certificate)
+      }
+    } catch (err) {
+      console.error('Error fetching certificate:', err)
+    } finally {
+      setLoadingCertificate(false)
+    }
+  }
+
+  const handleSelectTech = async (tech: VerificationTechnician) => {
+    setSelectedTech(tech)
+    setVerifyNotes(tech.verificationNotes || '')
+    fetchCertificateForTech(tech.id)
+  }
+
+  const handleViewCertPdf = async () => {
+    if (!selectedCertificate) return
+    try {
+      const res = await fetch(`/api/certificates/${selectedCertificate.id}/download`)
+      if (!res.ok) throw new Error('Error fetching PDF')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      setViewingCertPdf(url)
+    } catch (err) {
+      console.error('Error viewing certificate:', err)
+      alert('Error al cargar el certificado')
+    }
+  }
+
+  const handleDownloadCertPdf = async () => {
+    if (!selectedCertificate) return
+    try {
+      const res = await fetch(`/api/certificates/${selectedCertificate.id}/download`)
+      if (!res.ok) throw new Error('Error fetching PDF')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${selectedCertificate.reference_id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Error downloading certificate:', err)
+      alert('Error al descargar el certificado')
+    }
+  }
+
+  const handleUpdateCertStatus = async (newStatus: 'pending' | 'checked' | 'rejected') => {
+    if (!selectedCertificate) return
+    try {
+      const res = await fetch(`/api/certificates/${selectedCertificate.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setSelectedCertificate(prev => prev ? { ...prev, status: newStatus, checked_at: updated.certificate?.checked_at || null } : null)
+      }
+    } catch (err) {
+      console.error('Error updating certificate status:', err)
     }
   }
 
@@ -372,10 +470,7 @@ export default function AdminPage() {
                       </div>
 
                       <button
-                        onClick={() => {
-                          setSelectedTech(tech)
-                          setVerifyNotes(tech.verificationNotes || '')
-                        }}
+                        onClick={() => handleSelectTech(tech)}
                         className="btn-primary"
                       >
                         Revisar
@@ -478,7 +573,10 @@ export default function AdminPage() {
                 <p className="text-sm text-steel-400">{selectedTech.email}</p>
               </div>
               <button 
-                onClick={() => setSelectedTech(null)}
+                onClick={() => {
+                  setSelectedTech(null)
+                  setSelectedCertificate(null)
+                }}
                 className="text-steel-400 hover:text-white"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -557,6 +655,67 @@ export default function AdminPage() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* AMX Certificate Section */}
+              <div className="mb-6 p-4 rounded-xl bg-navy-800/50 border border-steel-700/50">
+                <h4 className="text-sm font-medium text-steel-400 mb-3 flex items-center gap-2">
+                  📜 Certificado AMX
+                </h4>
+                {loadingCertificate ? (
+                  <p className="text-steel-500 text-sm">Cargando...</p>
+                ) : selectedCertificate ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <span className="text-white font-mono text-sm">{selectedCertificate.reference_id}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs border ${
+                        selectedCertificate.status === 'checked' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                        selectedCertificate.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                        'bg-red-500/20 text-red-400 border-red-500/30'
+                      }`}>
+                        {selectedCertificate.status === 'checked' ? '✅ Revisado' :
+                         selectedCertificate.status === 'pending' ? '⏳ Pendiente' : '❌ Rechazado'}
+                      </span>
+                      <span className="text-xs text-steel-500">
+                        Generado: {new Date(selectedCertificate.generated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={handleViewCertPdf}
+                        className="px-3 py-1.5 text-sm bg-navy-700 border border-steel-600 rounded-lg text-steel-300 hover:text-white hover:border-steel-500 transition-colors"
+                      >
+                        👁️ Ver PDF
+                      </button>
+                      <button
+                        onClick={handleDownloadCertPdf}
+                        className="px-3 py-1.5 text-sm bg-navy-700 border border-steel-600 rounded-lg text-steel-300 hover:text-white hover:border-steel-500 transition-colors"
+                      >
+                        ⬇️ Descargar
+                      </button>
+                      {selectedCertificate.status !== 'checked' && (
+                        <button
+                          onClick={() => handleUpdateCertStatus('checked')}
+                          className="px-3 py-1.5 text-sm bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-colors"
+                        >
+                          ✅ Marcar revisado
+                        </button>
+                      )}
+                      {selectedCertificate.status === 'checked' && (
+                        <button
+                          onClick={() => handleUpdateCertStatus('pending')}
+                          className="px-3 py-1.5 text-sm bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 hover:bg-yellow-500/20 transition-colors"
+                        >
+                          ⏳ Volver a pendiente
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-steel-500 text-sm">
+                    No hay certificado generado. Se genera automáticamente al cambiar el estado a "Pendiente" o "Verificado".
+                  </p>
                 )}
               </div>
 
@@ -639,6 +798,50 @@ export default function AdminPage() {
                 src={viewingDoc.url} 
                 className="w-full h-full"
                 title="Document viewer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Certificate PDF Viewer Modal */}
+      {viewingCertPdf && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+          onClick={() => {
+            URL.revokeObjectURL(viewingCertPdf)
+            setViewingCertPdf(null)
+          }}
+        >
+          <div 
+            className="bg-navy-900 border border-steel-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-steel-700 flex items-center justify-between">
+              <h3 className="text-white font-medium">📜 Certificado AMX - {selectedCertificate?.reference_id}</h3>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDownloadCertPdf}
+                  className="text-gold-400 hover:text-gold-300 text-sm"
+                >
+                  ⬇️ Descargar
+                </button>
+                <button 
+                  onClick={() => {
+                    URL.revokeObjectURL(viewingCertPdf)
+                    setViewingCertPdf(null)
+                  }}
+                  className="text-steel-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="h-[70vh] bg-navy-950">
+              <iframe 
+                src={viewingCertPdf} 
+                className="w-full h-full"
+                title="Certificate PDF viewer"
               />
             </div>
           </div>
