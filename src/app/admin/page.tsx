@@ -694,27 +694,16 @@ export default function AdminPage() {
                       >
                         ⬇️ Descargar
                       </button>
-                      {selectedCertificate.status !== 'checked' && (
-                        <button
-                          onClick={() => handleUpdateCertStatus('checked')}
-                          className="px-3 py-1.5 text-sm bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-colors"
-                        >
-                          ✅ Marcar revisado
-                        </button>
-                      )}
-                      {selectedCertificate.status === 'checked' && (
-                        <button
-                          onClick={() => handleUpdateCertStatus('pending')}
-                          className="px-3 py-1.5 text-sm bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 hover:bg-yellow-500/20 transition-colors"
-                        >
-                          ⏳ Volver a pendiente
-                        </button>
-                      )}
                     </div>
+                    {selectedCertificate.status === 'pending' && (
+                      <p className="text-xs text-steel-500 mt-2">
+                        💡 El certificado se marcará como "Revisado" automáticamente al hacer clic en "Verificar"
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-steel-500 text-sm">
-                    No hay certificado generado. Se genera automáticamente al cambiar el estado a "Pendiente" o "Verificado".
+                    No hay certificado generado. Se genera automáticamente al cambiar el estado a "Pendiente".
                   </p>
                 )}
               </div>

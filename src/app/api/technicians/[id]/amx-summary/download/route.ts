@@ -2,12 +2,30 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import fs from 'fs'
+import path from 'path'
 
 function getServiceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+}
+
+async function loadImage(pdfDoc: PDFDocument, imagePath: string): Promise<any> {
+  try {
+    const fullPath = path.join(process.cwd(), 'public', imagePath)
+    if (fs.existsSync(fullPath)) {
+      const imageBytes = fs.readFileSync(fullPath)
+      if (imagePath.endsWith('.png')) {
+        return await pdfDoc.embedPng(imageBytes)
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('Error loading image:', imagePath, error)
+    return null
+  }
 }
 
 export async function GET(
@@ -138,196 +156,267 @@ interface SummaryData {
   generatedAt: Date
 }
 
+// Brand colors (same as certificate)
+const COLORS = {
+  white: rgb(1, 1, 1),
+  navy950: rgb(0.043, 0.075, 0.169),
+  navy900: rgb(0.102, 0.149, 0.259),
+  gold500: rgb(0.788, 0.635, 0.302),
+  gold300: rgb(0.878, 0.773, 0.502),
+  steel600: rgb(0.353, 0.431, 0.541),
+  steel200: rgb(0.761, 0.808, 0.851),
+  steel100: rgb(0.878, 0.902, 0.925),
+  success500: rgb(0.251, 0.569, 0.424),
+  successBg: rgb(0.918, 0.961, 0.937),
+  warning500: rgb(0.831, 0.627, 0.239),
+  warningBg: rgb(0.996, 0.965, 0.906),
+  muted: rgb(0.353, 0.431, 0.541),
+  body: rgb(0.102, 0.149, 0.259),
+  lightBg: rgb(0.957, 0.965, 0.976),
+  border: rgb(0.761, 0.808, 0.851),
+}
+
+const PAGE_WIDTH = 595.28
+const PAGE_HEIGHT = 841.89
+const MARGIN = 26 * 2.83465
+
 async function generateCompanySummaryPdf(data: SummaryData): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create()
-  const page = pdfDoc.addPage([595.28, 841.89]) // A4
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
   
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   
   const { width, height } = page.getSize()
-  const margin = 50
-
-  const COLORS = {
-    navy: rgb(0.043, 0.075, 0.169),
-    gold: rgb(0.788, 0.635, 0.302),
-    white: rgb(1, 1, 1),
-    steel: rgb(0.420, 0.533, 0.604),
-    steelLight: rgb(0.533, 0.600, 0.667),
-    green: rgb(0.298, 0.686, 0.314),
-    yellow: rgb(0.9, 0.7, 0.2),
-    bgLight: rgb(0.98, 0.98, 0.98),
-  }
+  const logoImage = await loadImage(pdfDoc, 'logo-certificate.png')
 
   // Background
   page.drawRectangle({ x: 0, y: 0, width, height, color: COLORS.white })
 
-  // Header
-  page.drawRectangle({ x: 0, y: height - 120, width, height: 120, color: COLORS.navy })
+  // Gold left stripe
+  page.drawRectangle({ x: 0, y: 0, width: 3.5, height, color: COLORS.gold500 })
 
-  let y = height - 50
-  page.drawText('aero', { x: margin, y, size: 28, font: helveticaBold, color: COLORS.gold })
-  page.drawText('Match', { x: margin + 52, y, size: 28, font: helveticaBold, color: COLORS.white })
+  // Navy header
+  const headerHeight = 68
+  page.drawRectangle({ x: 0, y: height - headerHeight, width, height: headerHeight, color: COLORS.navy950 })
 
-  y -= 28
-  page.drawText('Technician Summary', { x: margin, y, size: 14, font: helvetica, color: COLORS.steelLight })
-  page.drawText('(Anonymous Preview)', { x: margin + 130, y, size: 10, font: helvetica, color: COLORS.steel })
+  // Gold line below header
+  page.drawRectangle({ x: 0, y: height - headerHeight - 2, width, height: 2, color: COLORS.gold500 })
 
-  // AMX ID Badge (right side)
-  const badgeText = data.amxId
-  page.drawText(badgeText, {
-    x: width - margin - helveticaBold.widthOfTextAtSize(badgeText, 14),
-    y: height - 55,
-    size: 14,
-    font: helveticaBold,
-    color: COLORS.gold,
-  })
+  // Logo
+  if (logoImage) {
+    const logoH = 30
+    const logoW = logoH * (396 / 123)
+    page.drawImage(logoImage, {
+      x: MARGIN,
+      y: height - headerHeight / 2 - logoH / 2,
+      width: logoW,
+      height: logoH,
+    })
+  } else {
+    page.drawText('aero', { x: MARGIN, y: height - 42, size: 20, font: helveticaBold, color: COLORS.gold500 })
+    page.drawText('Match', { x: MARGIN + 42, y: height - 42, size: 20, font: helveticaBold, color: COLORS.white })
+  }
 
-  // Verification status
-  const statusText = data.isVerified ? 'AMX Verified' : 'Pending Verification'
-  const statusColor = data.isVerified ? COLORS.green : COLORS.yellow
-  page.drawText(statusText, {
-    x: width - margin - helveticaBold.widthOfTextAtSize(statusText, 10),
-    y: height - 75,
-    size: 10,
-    font: helveticaBold,
-    color: statusColor,
-  })
-
-  // Content sections
-  y = height - 155
-
-  // Disclaimer
-  page.drawText('This is an anonymous preview. Full technician details available after job offer acceptance.', {
-    x: margin,
-    y,
-    size: 9,
+  // Header right text
+  page.drawText('TECHNICIAN SUMMARY', {
+    x: width - MARGIN - helvetica.widthOfTextAtSize('TECHNICIAN SUMMARY', 7.5),
+    y: height - 24,
+    size: 7.5,
     font: helvetica,
-    color: COLORS.steel,
+    color: COLORS.steel200,
+  })
+  page.drawText('Anonymous Preview', {
+    x: width - MARGIN - helvetica.widthOfTextAtSize('Anonymous Preview', 7.5),
+    y: height - 37,
+    size: 7.5,
+    font: helvetica,
+    color: COLORS.gold300,
   })
 
-  y -= 35
+  // Content
+  let y = height - headerHeight - 22
 
-  // Section: Licenses
-  drawSection(page, margin, y, 'LICENSES', 
-    data.licenses.length > 0 ? `EASA Part-66 ${data.licenses.join(', ')}` : 'Not specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
+  // AMX ID as title
+  page.drawText(data.amxId, {
+    x: MARGIN,
+    y,
+    size: 19,
+    font: helveticaBold,
+    color: COLORS.navy950,
+  })
+  y -= 20
 
-  // Section: Aircraft Types
-  drawSection(page, margin, y, 'TYPE RATINGS',
-    data.aircraftTypes.length > 0 ? data.aircraftTypes.join(' · ') : 'Not specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
+  // Verification status badge + date
+  const statusText = data.isVerified ? 'AMX Verified' : 'Pending Verification'
+  const statusColor = data.isVerified ? COLORS.success500 : COLORS.warning500
+  const statusBg = data.isVerified ? COLORS.successBg : COLORS.warningBg
 
-  // Section: Experience
-  drawSection(page, margin, y, 'EXPERIENCE',
-    data.yearsExperience ? `${data.yearsExperience} years` : 'Not specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
+  const statusWidth = helveticaBold.widthOfTextAtSize(statusText, 9) + 16
+  page.drawRectangle({ x: MARGIN, y: y - 4, width: statusWidth, height: 16, color: statusBg })
+  page.drawText(statusText, { x: MARGIN + 8, y: y + 2, size: 9, font: helveticaBold, color: statusColor })
 
-  // Section: Specialties
-  drawSection(page, margin, y, 'SPECIALTIES',
-    data.specialties.length > 0 ? data.specialties.join(', ') : 'Not specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
+  const dateStr = data.generatedAt.toLocaleDateString('en-GB')
+  page.drawText(`Generated: ${dateStr}`, {
+    x: width - MARGIN - helvetica.widthOfTextAtSize(`Generated: ${dateStr}`, 8),
+    y,
+    size: 8,
+    font: helvetica,
+    color: COLORS.muted,
+  })
+  y -= 22
 
-  // Section: Languages
-  drawSection(page, margin, y, 'LANGUAGES',
-    data.languages.length > 0 ? data.languages.join(', ') : 'Not specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
+  // Divider
+  page.drawLine({ start: { x: MARGIN, y }, end: { x: width - MARGIN, y }, thickness: 0.5, color: COLORS.border })
+  y -= 8
 
-  // Section: Contract Preference
+  // Anonymous notice
+  page.drawText('Full technician details available after job offer acceptance.', {
+    x: MARGIN,
+    y,
+    size: 8,
+    font: helvetica,
+    color: COLORS.muted,
+  })
+  y -= 22
+
+  // Helper functions
+  const drawSectionLabel = (label: string, yPos: number): number => {
+    page.drawText(label, { x: MARGIN, y: yPos, size: 7, font: helveticaBold, color: COLORS.gold500 })
+    return yPos - 16
+  }
+
+  const drawPills = (items: string[], yPos: number, bgColor: any, textColor: any, borderColor?: any): number => {
+    const pillHeight = 17
+    const paddingX = 9
+    const gapH = 5
+    const gapV = 7
+    let x = MARGIN
+    let currentY = yPos
+
+    for (const item of items) {
+      const textWidth = helvetica.widthOfTextAtSize(item, 8.5)
+      const pillWidth = textWidth + paddingX * 2
+
+      if (x + pillWidth > width - MARGIN) {
+        x = MARGIN
+        currentY -= (pillHeight + gapV)
+      }
+
+      page.drawRectangle({
+        x,
+        y: currentY - 4,
+        width: pillWidth,
+        height: pillHeight,
+        color: bgColor,
+        borderColor: borderColor,
+        borderWidth: borderColor ? 0.6 : 0,
+      })
+
+      page.drawText(item, {
+        x: x + paddingX,
+        y: currentY + 3,
+        size: 8.5,
+        font: helvetica,
+        color: textColor,
+      })
+
+      x += pillWidth + gapH
+    }
+
+    return currentY - pillHeight - 14
+  }
+
+  // LICENCES
+  if (data.licenses.length > 0) {
+    y = drawSectionLabel('LICENCES', y)
+    y = drawPills(data.licenses, y, COLORS.navy950, COLORS.steel100)
+  }
+
+  // TYPE RATINGS
+  if (data.aircraftTypes.length > 0) {
+    y = drawSectionLabel('TYPE RATINGS', y)
+    y = drawPills(data.aircraftTypes, y, COLORS.lightBg, COLORS.navy950, COLORS.border)
+  }
+
+  // EXPERIENCE
+  if (data.yearsExperience) {
+    y = drawSectionLabel('EXPERIENCE', y)
+    page.drawText(`${data.yearsExperience} years`, { x: MARGIN, y, size: 10, font: helvetica, color: COLORS.body })
+    y -= 20
+  }
+
+  // SPECIALTIES
+  if (data.specialties.length > 0) {
+    y = drawSectionLabel('SPECIALTIES', y)
+    y = drawPills(data.specialties, y, rgb(0.933, 0.945, 0.965), COLORS.navy950, COLORS.border)
+  }
+
+  // LANGUAGES
+  if (data.languages.length > 0) {
+    y = drawSectionLabel('LANGUAGES', y)
+    page.drawText(data.languages.join(' - '), { x: MARGIN, y, size: 10, font: helvetica, color: COLORS.body })
+    y -= 20
+  }
+
+  // CONTRACT PREFERENCE
   const contractLabels: Record<string, string> = {
     'short-term': 'Short-term',
     'long-term': 'Long-term',
     'both': 'Both (Short & Long term)',
   }
-  drawSection(page, margin, y, 'CONTRACT PREFERENCE',
-    contractLabels[data.contractPreference] || 'Not specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
+  if (data.contractPreference) {
+    y = drawSectionLabel('CONTRACT PREFERENCE', y)
+    page.drawText(contractLabels[data.contractPreference] || data.contractPreference, {
+      x: MARGIN, y, size: 10, font: helvetica, color: COLORS.body
+    })
+    y -= 20
+  }
 
-  // Operational flags
+  // OPERATIONAL FLAGS
   const flags: string[] = []
   if (data.ownTools) flags.push('Own Tools')
-  if (data.rightToWorkUk) flags.push('UK Right to Work')
+  if (data.rightToWorkUk) flags.push('Right to Work UK')
   if (data.ukLicense) flags.push('UK CAA License')
-  
-  drawSection(page, margin, y, 'OPERATIONAL FLAGS',
-    flags.length > 0 ? flags.join(' · ') : 'None specified',
-    helvetica, helveticaBold, COLORS)
-  y -= 55
 
-  // Documentation status
+  if (flags.length > 0) {
+    y = drawSectionLabel('OPERATIONAL FLAGS', y)
+    y = drawPills(flags, y, COLORS.warningBg, rgb(0.69, 0.49, 0.17), COLORS.warning500)
+  }
+
+  // DOCUMENTATION STATUS
   y -= 10
-  page.drawRectangle({
-    x: margin,
-    y: y - 50,
-    width: width - margin * 2,
-    height: 50,
-    color: COLORS.bgLight,
-    borderColor: rgb(0.9, 0.9, 0.9),
-    borderWidth: 1,
-  })
+  page.drawLine({ start: { x: MARGIN, y }, end: { x: width - MARGIN, y }, thickness: 0.5, color: COLORS.border })
+  y -= 20
 
-  page.drawText('DOCUMENTATION STATUS', {
-    x: margin + 15,
-    y: y - 20,
-    size: 9,
-    font: helveticaBold,
-    color: COLORS.steel,
-  })
+  page.drawText('Documentation status', { x: MARGIN, y, size: 11, font: helveticaBold, color: COLORS.navy950 })
+  y -= 18
 
-  const docStatusText = `${data.documentsVerified} verified · ${data.documentsPending} pending review · ${data.documentsTotal} total`
-  page.drawText(docStatusText, {
-    x: margin + 15,
-    y: y - 38,
-    size: 11,
-    font: helvetica,
-    color: COLORS.navy,
-  })
+  const docStatusText = `${data.documentsVerified} verified - ${data.documentsPending} pending - ${data.documentsTotal} total`
+  page.drawText(docStatusText, { x: MARGIN, y, size: 10, font: helvetica, color: COLORS.body })
 
   // Footer
-  page.drawRectangle({ x: 0, y: 0, width, height: 50, color: COLORS.navy })
-  
-  const footerText = `Generated ${data.generatedAt.toLocaleDateString('en-GB')} · AeroMatch · aeromatch.eu`
-  const footerWidth = helvetica.widthOfTextAtSize(footerText, 9)
-  page.drawText(footerText, {
-    x: (width - footerWidth) / 2,
-    y: 20,
-    size: 9,
+  const footerHeight = 44
+  page.drawRectangle({ x: 0, y: 0, width, height: footerHeight, color: COLORS.lightBg })
+  page.drawLine({ start: { x: 0, y: footerHeight }, end: { x: width, y: footerHeight }, thickness: 0.5, color: COLORS.border })
+
+  const disclaimer = 'Anonymous summary. Full details available after technician accepts job offer.'
+  page.drawText(disclaimer, {
+    x: (width - helvetica.widthOfTextAtSize(disclaimer, 7)) / 2,
+    y: 25,
+    size: 7,
     font: helvetica,
-    color: COLORS.steel,
+    color: COLORS.muted,
+  })
+
+  page.drawText(`${data.amxId}`, { x: MARGIN, y: 10, size: 7, font: helvetica, color: COLORS.steel600 })
+  page.drawText('aeromatch.eu', {
+    x: width - MARGIN - helveticaBold.widthOfTextAtSize('aeromatch.eu', 7),
+    y: 10,
+    size: 7,
+    font: helveticaBold,
+    color: COLORS.gold500,
   })
 
   return await pdfDoc.save()
-}
-
-function drawSection(
-  page: any,
-  x: number,
-  y: number,
-  label: string,
-  value: string,
-  font: any,
-  fontBold: any,
-  colors: any
-) {
-  page.drawText(label, {
-    x,
-    y,
-    size: 9,
-    font: fontBold,
-    color: colors.steel,
-  })
-  
-  page.drawText(value.substring(0, 80) + (value.length > 80 ? '...' : ''), {
-    x,
-    y: y - 18,
-    size: 12,
-    font: font,
-    color: colors.navy,
-  })
 }

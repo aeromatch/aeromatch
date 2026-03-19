@@ -307,10 +307,43 @@ export async function POST(request: Request) {
       }
     }
 
+    // When verified, also mark the certificate as checked
+    let certificateChecked = false
+    if (status === 'verified') {
+      try {
+        const { data: cert } = await serviceClient
+          .from('amx_certificates')
+          .select('id, status')
+          .eq('technician_id', technicianId)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (cert && cert.status !== 'checked') {
+          const { error: certUpdateError } = await serviceClient
+            .from('amx_certificates')
+            .update({
+              status: 'checked',
+              checked_at: new Date().toISOString(),
+              checked_by: user.id,
+            })
+            .eq('id', cert.id)
+
+          if (!certUpdateError) {
+            certificateChecked = true
+            console.log('Certificate marked as checked:', cert.id)
+          }
+        }
+      } catch (certErr) {
+        console.error('Error updating certificate status:', certErr)
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: `Technician ${status === 'verified' ? 'verified' : status}`,
       certificateGenerated,
+      certificateChecked,
       certificateError,
     })
   } catch (error: any) {
