@@ -298,23 +298,6 @@ export default function AdminPage() {
     }
   }
 
-  const handleUpdateCertStatus = async (newStatus: 'pending' | 'checked' | 'rejected') => {
-    if (!selectedCertificate) return
-    try {
-      const res = await fetch(`/api/certificates/${selectedCertificate.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      })
-      if (res.ok) {
-        const updated = await res.json()
-        setSelectedCertificate(prev => prev ? { ...prev, status: newStatus, checked_at: updated.certificate?.checked_at || null } : null)
-      }
-    } catch (err) {
-      console.error('Error updating certificate status:', err)
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-navy-950 flex items-center justify-center">

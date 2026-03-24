@@ -198,9 +198,9 @@ async function sendAdminNotification(data: {
       <p style="margin: 0;"><strong>Email:</strong> ${data.technicianEmail}</p>
     </div>
     
-    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://app.aeromatch.eu'}/admin/certificates" 
+    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://app.aeromatch.eu'}/admin" 
        style="display: inline-block; background: #C9A24D; color: #0B132B; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold;">
-      Revisar Certificado
+      Revisar en admin (Verificación)
     </a>
     
     <p style="color: #999; font-size: 12px; margin: 20px 0 0;">

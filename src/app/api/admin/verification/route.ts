@@ -295,7 +295,7 @@ export async function POST(request: Request) {
                       from: process.env.RESEND_FROM_EMAIL || 'aeroMatch <onboarding@resend.dev>',
                       to: NOTIFICATION_EMAIL,
                       subject: `📋 Nuevo certificado AMX: ${referenceId}`,
-                      html: `<p>Nuevo certificado pendiente de revisión.</p><p><strong>Técnico:</strong> ${profile?.full_name || 'Unknown'}</p><p><strong>Email:</strong> ${profile?.email}</p><p><a href="https://app.aeromatch.eu/admin/certificates">Revisar certificado</a></p>`,
+                      html: `<p>Nuevo certificado pendiente de revisión.</p><p><strong>Técnico:</strong> ${profile?.full_name || 'Unknown'}</p><p><strong>Email:</strong> ${profile?.email}</p><p><a href="https://app.aeromatch.eu/admin">Panel admin (Verificación)</a></p>`,
                     })
                   } catch (emailErr) {
                     console.error('Email notification failed:', emailErr)

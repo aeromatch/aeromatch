@@ -427,6 +427,17 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     }
   }
 
+  // Con certificado AMX verificado (checked), el PDF debe mostrar "Checked" en cada ítem
+  // (no depender de que cada fila en `documents` esté en verified).
+  const certificateAmxVerified = data.certificateStatus === 'checked'
+  const effectiveDocStatusForPdf = (raw: string): string => {
+    if (certificateAmxVerified) {
+      if (raw === 'rejected' || raw === 'expired') return raw
+      return 'verified'
+    }
+    return raw
+  }
+
   const drawnDocs = new Set<string>()
   
   // First draw in preferred order
@@ -434,7 +445,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     const doc = docGroups.get(docName)
     if (doc && !drawnDocs.has(docName)) {
       drawnDocs.add(docName)
-      const config = getStatusConfig(doc.status)
+      const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
 
       page.drawText(doc.name, {
         x: MARGIN,
@@ -475,7 +486,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   for (const [docName, doc] of docGroups) {
     if (!drawnDocs.has(docName)) {
       drawnDocs.add(docName)
-      const config = getStatusConfig(doc.status)
+      const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
 
       page.drawText(doc.name, {
         x: MARGIN,
