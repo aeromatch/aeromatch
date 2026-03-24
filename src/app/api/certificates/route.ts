@@ -22,17 +22,26 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') // pending, checked, rejected, or all
+    const technicianIdParam = searchParams.get('technician_id')
     const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')
 
     const serviceClient = getServiceClient()
 
-    // Admin can see all certificates, technician can only see their own
+    if (technicianIdParam) {
+      if (!isAdmin && technicianIdParam !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
+    // Admin can see all certificates, technician can only see their own (unless technician_id targets self)
     let query = serviceClient
       .from('amx_certificates')
       .select('*')
       .order('generated_at', { ascending: false })
 
-    if (!isAdmin) {
+    if (technicianIdParam) {
+      query = query.eq('technician_id', technicianIdParam).limit(1)
+    } else if (!isAdmin) {
       query = query.eq('technician_id', user.id)
     }
 

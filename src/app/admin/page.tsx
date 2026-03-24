@@ -239,17 +239,25 @@ export default function AdminPage() {
     setLoadingCertificate(true)
     setSelectedCertificate(null)
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('amx_certificates')
-        .select('id, reference_id, status, generated_at, checked_at')
-        .eq('technician_id', techId)
-        .order('generated_at', { ascending: false })
-        .limit(1)
-        .single()
-      
-      if (!error && data) {
-        setSelectedCertificate(data as Certificate)
+      const res = await fetch(
+        `/api/certificates?technician_id=${encodeURIComponent(techId)}`,
+        { credentials: 'include' }
+      )
+      if (!res.ok) {
+        console.error('Certificate fetch failed', res.status)
+        return
+      }
+      const data = await res.json()
+      const list = data.certificates || []
+      if (list.length > 0) {
+        const c = list[0]
+        setSelectedCertificate({
+          id: c.id,
+          reference_id: c.reference_id,
+          status: c.status,
+          generated_at: c.generated_at,
+          checked_at: c.checked_at ?? null,
+        })
       }
     } catch (err) {
       console.error('Error fetching certificate:', err)
@@ -685,9 +693,19 @@ export default function AdminPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-steel-500 text-sm">
-                    No hay certificado generado. Se genera automáticamente al cambiar el estado a "Pendiente".
-                  </p>
+                  <div className="space-y-3">
+                    <p className="text-steel-400 text-sm">
+                      Aún no hay certificado AMX. Pulsa <strong className="text-steel-300">Pendiente</strong> para generarlo; después podrás <strong className="text-steel-300">ver y descargar el PDF</strong> aquí (mismo PDF que en el perfil del técnico).
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => selectedTech && fetchCertificateForTech(selectedTech.id)}
+                      disabled={loadingCertificate}
+                      className="px-3 py-1.5 text-sm bg-navy-700 border border-steel-600 rounded-lg text-steel-300 hover:text-white hover:border-steel-500 transition-colors disabled:opacity-50"
+                    >
+                      {loadingCertificate ? '…' : '🔄 Comprobar de nuevo'}
+                    </button>
+                  </div>
                 )}
               </div>
 
