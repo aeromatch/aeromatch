@@ -25,7 +25,6 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
   const { t, language } = useLanguage()
 
   const uploadedDocs = documents.filter(d => d.status === 'uploaded' || d.status === 'verified')
-  const verifiedDocs = documents.filter(d => d.status === 'verified')
   
   // Check if has at least one basic license (minimum requirement)
   const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
@@ -34,8 +33,19 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
   // Documents are complete if user has at least one basic license uploaded
   const documentsComplete = hasBasicLicense
 
-  // Check if profile is verified (has verified docs)
-  const isVerified = verifiedDocs.length > 0
+  // AMX verificado: fuente de verdad = technicians.verification_status o certificado revisado por admin
+  const vs = technician?.verification_status || 'unverified'
+  const isVerified = vs === 'verified' || certificate?.status === 'checked'
+  const isRejected = vs === 'rejected'
+  const isPendingReview = vs === 'pending'
+
+  const verificationTitle = isVerified
+    ? t.profile.verified
+    : isRejected
+      ? t.documents.status.rejected
+      : isPendingReview
+        ? t.documents.status.inReview
+        : t.profile.pending
 
   return (
     <AppLayout userEmail={profile?.email} userRole={profile?.role}>
@@ -57,11 +67,17 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
               isVerified 
                 ? 'bg-success-500/20 border-2 border-success-500/50' 
-                : 'bg-warning-500/10 border-2 border-warning-500/30'
+                : isRejected
+                  ? 'bg-red-500/10 border-2 border-red-500/40'
+                  : 'bg-warning-500/10 border-2 border-warning-500/30'
             }`}>
               {isVerified ? (
                 <svg className="w-7 h-7 text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              ) : isRejected ? (
+                <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : (
                 <svg className="w-7 h-7 text-warning-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,7 +87,7 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
             </div>
             <div>
               <p className="text-lg font-semibold text-white">
-                {isVerified ? t.profile.verified : t.profile.pending}
+                {verificationTitle}
               </p>
               <p className="text-sm text-steel-400">
                 {t.profile.verification}
