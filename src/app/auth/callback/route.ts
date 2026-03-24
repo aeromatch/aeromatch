@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { dispatchTechnicianWelcomeIfNeeded } from '@/lib/email/dispatchTechnicianWelcome'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -35,6 +36,15 @@ export async function GET(request: NextRequest) {
     // Check if this is a recovery (password reset) flow
     if (type === 'recovery') {
       return NextResponse.redirect(`${origin}/reset-password`)
+    }
+
+    // Tras confirmar email / OAuth: sesión válida; enviar bienvenida al técnico si aplica
+    if (data?.user?.id) {
+      try {
+        await dispatchTechnicianWelcomeIfNeeded(data.user.id)
+      } catch (welcomeErr) {
+        console.error('Welcome email dispatch:', welcomeErr)
+      }
     }
 
     // For OAuth/regular login - check if user has a profile with role

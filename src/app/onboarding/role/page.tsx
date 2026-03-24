@@ -95,6 +95,13 @@ export default function RoleSelectionPage() {
 
       if (error) throw error
 
+      if (role === 'technician') {
+        void fetch(`${window.location.origin}/api/account/send-welcome-email`, {
+          method: 'POST',
+          credentials: 'include',
+        }).catch(() => {})
+      }
+
       // Redirect to role-specific onboarding
       router.push(role === 'technician' ? '/onboarding/technician' : '/onboarding/company')
     } catch (err) {

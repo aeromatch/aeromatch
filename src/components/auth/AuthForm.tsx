@@ -107,6 +107,11 @@ export function AuthForm() {
 
           if (profileError) {
             console.error('Profile error:', profileError)
+          } else if (role === 'technician') {
+            void fetch(`${window.location.origin}/api/account/send-welcome-email`, {
+              method: 'POST',
+              credentials: 'include',
+            }).catch(() => {})
           }
 
           setMessage(language === 'es' 
