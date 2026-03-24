@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+import {
+  promoteTechnicianDocumentsToVerified,
+  regenerateAmxCertificateStoragePdf,
+} from '@/lib/certificates/finalizeAmxVerification'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
 
@@ -107,60 +110,37 @@ export async function PATCH(
       updateData.checked_by = null
     }
 
-    // Regenerate PDF with new status
-    try {
-      const { data: technician } = await serviceClient
+    // Mismo resultado que "Verificar" en admin: documentos verificados + técnico AMX verified
+    if (status === 'checked') {
+      const { error: promoErr } = await promoteTechnicianDocumentsToVerified(
+        serviceClient,
+        existingCert.technician_id,
+        user.id
+      )
+      if (promoErr) {
+        console.error('promoteTechnicianDocumentsToVerified:', promoErr)
+      }
+
+      const { data: techRow } = await serviceClient
         .from('technicians')
-        .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license')
+        .select('is_available')
         .eq('user_id', existingCert.technician_id)
         .single()
 
-      const { data: profile } = await serviceClient
-        .from('profiles')
-        .select('full_name')
-        .eq('id', existingCert.technician_id)
-        .single()
-
-      const { data: documents } = await serviceClient
-        .from('documents')
-        .select('doc_type, status, expires_on')
-        .eq('technician_id', existingCert.technician_id)
-
-      if (technician) {
-        const pdfBytes = await generateCertificatePdf({
-          referenceId: existingCert.reference_id,
-          technician: {
-            fullName: profile?.full_name || 'Unknown Technician',
-            licenseCategory: technician.license_category || [],
-            aircraftTypes: technician.aircraft_types || [],
-            yearsExperience: technician.years_experience,
-            specialties: technician.specialties || [],
-            languages: technician.languages || [],
-            ownTools: technician.own_tools || false,
-            rightToWorkUk: technician.right_to_work_uk || false,
-            drivingLicense: technician.driving_license || false,
-            isAvailable: technician.is_available || false,
-          },
-          documents: (documents || []).map(d => ({
-            docType: d.doc_type,
-            status: d.status,
-            expiresOn: d.expires_on,
-          })),
-          generatedAt: new Date(existingCert.generated_at),
-          certificateStatus: status,
-        })
-
-        // Update PDF in storage
-        await serviceClient
-          .storage
-          .from('certificates')
-          .upload(existingCert.pdf_storage_path, Buffer.from(pdfBytes), {
-            contentType: 'application/pdf',
-            upsert: true,
-          })
+      const techUpd: Record<string, unknown> = {
+        verification_status: 'verified',
+        verified_at: new Date().toISOString(),
       }
-    } catch (pdfErr) {
-      console.error('Error regenerating PDF:', pdfErr)
+      if (techRow?.is_available) {
+        techUpd.availability_status = 'available_verified'
+      }
+      const { error: techErr } = await serviceClient
+        .from('technicians')
+        .update(techUpd)
+        .eq('user_id', existingCert.technician_id)
+      if (techErr) {
+        console.error('sync technician verified from certificate PATCH:', techErr)
+      }
     }
 
     const { data: certificate, error } = await serviceClient
@@ -173,6 +153,20 @@ export async function PATCH(
     if (error) {
       console.error('Error updating certificate:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const { error: regenErr } = await regenerateAmxCertificateStoragePdf(
+      serviceClient,
+      existingCert.technician_id,
+      status,
+      {
+        reference_id: existingCert.reference_id,
+        pdf_storage_path: existingCert.pdf_storage_path,
+        generated_at: existingCert.generated_at,
+      }
+    )
+    if (regenErr) {
+      console.error('regenerateAmxCertificateStoragePdf:', regenErr)
     }
 
     return NextResponse.json({

@@ -2,6 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+import {
+  promoteTechnicianDocumentsToVerified,
+  regenerateAmxCertificateStoragePdf,
+} from '@/lib/certificates/finalizeAmxVerification'
 import { Resend } from 'resend'
 
 // Admin emails from environment
@@ -307,31 +311,56 @@ export async function POST(request: Request) {
       }
     }
 
-    // When verified, also mark the certificate as checked
+    // When verified: documentos -> verified (PDF "Checked"), certificado -> checked, PDF en Storage
     let certificateChecked = false
     if (status === 'verified') {
       try {
+        const { error: promoErr } = await promoteTechnicianDocumentsToVerified(
+          serviceClient,
+          technicianId,
+          user.id
+        )
+        if (promoErr) {
+          console.error('promoteTechnicianDocumentsToVerified:', promoErr)
+        }
+
         const { data: cert } = await serviceClient
           .from('amx_certificates')
-          .select('id, status')
+          .select('id, status, reference_id, pdf_storage_path, generated_at')
           .eq('technician_id', technicianId)
           .order('generated_at', { ascending: false })
           .limit(1)
-          .single()
+          .maybeSingle()
 
-        if (cert && cert.status !== 'checked') {
-          const { error: certUpdateError } = await serviceClient
-            .from('amx_certificates')
-            .update({
-              status: 'checked',
-              checked_at: new Date().toISOString(),
-              checked_by: user.id,
-            })
-            .eq('id', cert.id)
+        if (cert) {
+          if (cert.status !== 'checked') {
+            const { error: certUpdateError } = await serviceClient
+              .from('amx_certificates')
+              .update({
+                status: 'checked',
+                checked_at: new Date().toISOString(),
+                checked_by: user.id,
+              })
+              .eq('id', cert.id)
 
-          if (!certUpdateError) {
-            certificateChecked = true
-            console.log('Certificate marked as checked:', cert.id)
+            if (!certUpdateError) {
+              certificateChecked = true
+              console.log('Certificate marked as checked:', cert.id)
+            }
+          }
+
+          const { error: regenErr } = await regenerateAmxCertificateStoragePdf(
+            serviceClient,
+            technicianId,
+            'checked',
+            {
+              reference_id: cert.reference_id,
+              pdf_storage_path: cert.pdf_storage_path,
+              generated_at: cert.generated_at,
+            }
+          )
+          if (regenErr) {
+            console.error('regenerateAmxCertificateStoragePdf:', regenErr)
           }
         }
       } catch (certErr) {
