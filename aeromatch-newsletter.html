@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aeroMatch — Novedades de abril</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: #0B132B;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    color: #C2CED9;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrapper {
+    max-width: 620px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    background-color: #0B132B;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 40px 40px 32px;
+    border-bottom: 1px solid #3A4A6B;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .logo-text {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .logo-text span.aero { color: #C9A24D; }
+  .logo-text span.match { color: #FFFFFF; }
+  .header-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #C9A24D;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .header-title {
+    font-size: 26px;
+    font-weight: 600;
+    color: #FFFFFF;
+    line-height: 1.3;
+    margin-bottom: 14px;
+  }
+  .header-sub {
+    font-size: 14px;
+    color: #8899AA;
+    line-height: 1.6;
+  }
+
+  /* INTRO */
+  .intro {
+    padding: 28px 40px 24px;
+    border-bottom: 1px solid #3A4A6B;
+  }
+  .intro p {
+    font-size: 14px;
+    color: #A5B4C4;
+    line-height: 1.75;
+  }
+  .intro p + p { margin-top: 12px; }
+  .intro strong { color: #E0E6EC; font-weight: 500; }
+
+  /* SECTION */
+  .section {
+    padding: 32px 40px;
+    border-bottom: 1px solid #3A4A6B;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 3px;
+  }
+  .badge-live {
+    background-color: rgba(64, 145, 108, 0.15);
+    border: 1px solid rgba(82, 183, 136, 0.35);
+    color: #52B788;
+  }
+  .badge-beta {
+    background-color: rgba(201, 162, 77, 0.12);
+    border: 1px solid rgba(201, 162, 77, 0.35);
+    color: #C9A24D;
+  }
+  .badge-soon {
+    background-color: rgba(55, 138, 221, 0.12);
+    border: 1px solid rgba(55, 138, 221, 0.30);
+    color: #378ADD;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .dot-live { background-color: #52B788; }
+  .dot-beta { background-color: #C9A24D; }
+  .dot-soon { background-color: #378ADD; }
+
+  .section-title {
+    font-size: 13px;
+    color: #6B809A;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  /* FEATURE CARD */
+  .feature {
+    background-color: #1A2642;
+    border: 1px solid #3A4A6B;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .feature:last-child { margin-bottom: 0; }
+  .feature-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .feature-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #E0E6EC;
+    line-height: 1.3;
+  }
+  .feature-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tag-free {
+    background-color: rgba(64, 145, 108, 0.12);
+    border: 1px solid rgba(82, 183, 136, 0.25);
+    color: #52B788;
+  }
+  .tag-pro {
+    background-color: rgba(201, 162, 77, 0.12);
+    border: 1px solid rgba(201, 162, 77, 0.25);
+    color: #C9A24D;
+  }
+  .tag-beta {
+    background-color: rgba(55, 138, 221, 0.10);
+    border: 1px solid rgba(55, 138, 221, 0.25);
+    color: #378ADD;
+  }
+  .feature-desc {
+    font-size: 13px;
+    color: #8899AA;
+    line-height: 1.65;
+  }
+  .feature-highlight {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background-color: rgba(201, 162, 77, 0.07);
+    border-left: 2px solid #C9A24D;
+    border-radius: 0 4px 4px 0;
+    font-size: 12px;
+    color: #A5B4C4;
+    line-height: 1.6;
+  }
+  .feature-highlight-blue {
+    border-left-color: #378ADD;
+    background-color: rgba(55, 138, 221, 0.07);
+  }
+
+  /* STATS BAR */
+  .stats {
+    padding: 24px 40px;
+    border-bottom: 1px solid #3A4A6B;
+    display: flex;
+    gap: 0;
+  }
+  .stat {
+    flex: 1;
+    text-align: center;
+    padding: 0 16px;
+    border-right: 1px solid #3A4A6B;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #C9A24D;
+    line-height: 1;
+    margin-bottom: 5px;
+    letter-spacing: -0.5px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #6B809A;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+
+  /* CTA */
+  .cta-section {
+    padding: 32px 40px;
+    border-bottom: 1px solid #3A4A6B;
+    text-align: center;
+  }
+  .cta-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #E0E6EC;
+    margin-bottom: 8px;
+  }
+  .cta-sub {
+    font-size: 13px;
+    color: #8899AA;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+  .cta-btn {
+    display: inline-block;
+    background-color: transparent;
+    border: 2px solid #C9A24D;
+    color: #D4B366;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 6px;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+  }
+  .cta-btn:hover { background-color: rgba(201, 162, 77, 0.08); }
+
+  /* FOUNDER NOTE */
+  .founder {
+    padding: 28px 40px;
+    border-bottom: 1px solid #3A4A6B;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .founder-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #263666;
+    border: 1px solid #4A5C7A;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #C9A24D;
+  }
+  .founder-text {
+    flex: 1;
+  }
+  .founder-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E0E6EC;
+    margin-bottom: 2px;
+  }
+  .founder-role {
+    font-size: 11px;
+    color: #6B809A;
+    margin-bottom: 10px;
+  }
+  .founder-quote {
+    font-size: 13px;
+    color: #A5B4C4;
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  /* FOOTER */
+  .footer {
+    padding: 24px 40px;
+    text-align: center;
+  }
+  .footer p {
+    font-size: 11px;
+    color: #4A5C7A;
+    line-height: 1.7;
+  }
+  .footer a {
+    color: #6B809A;
+    text-decoration: none;
+  }
+  .footer a:hover { color: #C9A24D; }
+  .footer-divider {
+    width: 32px;
+    height: 1px;
+    background-color: #3A4A6B;
+    margin: 14px auto;
+  }
+
+  @media (max-width: 480px) {
+    .header, .intro, .section, .stats, .cta-section, .founder, .footer {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    .stats { flex-direction: column; gap: 16px; }
+    .stat { border-right: none; border-bottom: 1px solid #3A4A6B; padding-bottom: 16px; }
+    .stat:last-child { border-bottom: none; }
+    .header-title { font-size: 22px; }
+  }
+
+  /* Desktop: use more width automatically */
+  @media (min-width: 900px) {
+    .wrapper { max-width: 820px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <img src="__AEROMATCH_LOGO_URL__" alt="aeroMatch" style="height: 36px; width: auto;" />
+    </div>
+    <div class="header-label">Actualización mensual · Abril 2025</div>
+    <div class="header-title">La plataforma avanza.<br>Tú deberías estar en ella.</div>
+    <div class="header-sub">Todo lo que hay disponible ahora, lo que está en pruebas y lo que llega pronto para los técnicos EASA.</div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="intro">
+    <p>Llevas registrado en aeroMatch, pero puede que no hayas visto todo lo que ya funciona. Este email es para que sepas exactamente en qué punto está la plataforma — sin marketing, con datos reales.</p>
+    <p>La plataforma está creciendo y ya hay empresas buscando técnicos. Pero un perfil sin verificar o sin disponibilidad actualizada <strong>no aparece en ninguna búsqueda</strong>. El técnico que completa su perfil ahora es el primero que ve una empresa cuando entra a buscar.</p>
+  </div>
+
+
+
+  <!-- LIVE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="status-badge badge-live"><span class="dot dot-live"></span>Activo</span>
+      <span class="section-title">Disponible hoy para todos los técnicos</span>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Certificado AMX</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">Sube tus documentos, el equipo los verifica y generas un certificado PDF descargable con tu licencia EASA, ratings y tipo de aeronave. Diseñado para compartir en LinkedIn y adjuntar a candidaturas.</div>
+
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Perfil técnico verificado</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">Perfil completo con experiencia, ratings, disponibilidad y documentación. Las empresas ven primero los perfiles verificados. Sin verificación, no apareces en búsquedas.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Flujo de contratación</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">Recibe ofertas de trabajo directamente de MROs y operadoras. Acepta, rechaza o negocias condiciones dentro de la plataforma. Modo AOG disponible para urgencias.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Valoraciones post-trabajo</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">Cada contrato completado genera una valoración. La reputación es el único criterio de visibilidad — no se puede comprar posición.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Conexión con umbrellas</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">aeroMatch conecta con empresas umbrella para que puedas trabajar como contratista independiente con toda la cobertura legal. Sin necesidad de montar tu propia estructura societaria.</div>
+      <div class="feature-highlight">Si trabajas a través de umbrella, aeroMatch gestiona la conexión. Tú cobras, sin complicaciones administrativas.</div>
+    </div>
+  </div>
+
+  <!-- BETA -->
+  <div class="section">
+    <div class="section-header">
+      <span class="status-badge badge-beta"><span class="dot dot-beta"></span>Beta</span>
+      <span class="section-title">En desarrollo activo — llegando en semanas</span>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Zona de formación y recursos</div>
+        <span class="feature-tag tag-beta">Beta</span>
+      </div>
+      <div class="feature-desc">Espacio dentro de la plataforma con recursos prácticos para técnicos EASA. Ahora mismo hay disponible un simulacro de examen para el A320. Se irán añadiendo más tipos, materiales de estudio descargables y enlaces a cursos recurrentes con fechas y empresas que los ofrecen.</div>
+      <div class="feature-highlight">Si tienes un type rating pendiente o quieres repasar antes de una entrevista técnica, ya tienes algo aquí.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Logbook360</div>
+        <span class="feature-tag tag-beta">Beta</span>
+      </div>
+      <div class="feature-desc">Sube el PDF de tu logbook exportado desde TRAX, AMOS, OASES o HangarM8. La IA analiza el contenido y genera automáticamente un perfil visual con tu experiencia por flota, horas y sistemas ATA.</div>
+      <div class="feature-highlight">Tu logbook, convertido en un dashboard profesional. Sin reescribir nada a mano.</div>
+    </div>
+
+  </div>
+
+  <!-- SOON -->
+  <div class="section">
+    <div class="section-header">
+      <span class="status-badge badge-soon"><span class="dot dot-soon"></span>Próximamente</span>
+      <span class="section-title">En hoja de ruta confirmada</span>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Caducidad de certificados con avisos</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">Notificaciones automáticas cuando tu licencia, type rating o certificado médico esté próximo a vencer. Sin sorpresas.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Panel de métricas para empresas</div>
+        <span class="feature-tag tag-pro">Pro</span>
+      </div>
+      <div class="feature-desc">Las MROs y operadoras podrán ver sus contratos activos, histórico de técnicos y coste por contratación desde un panel centralizado.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Email automático al verificar AMX</div>
+        <span class="feature-tag tag-free">Gratis</span>
+      </div>
+      <div class="feature-desc">Cuando admin verifique tu documentación, recibirás el certificado AMX directamente en tu correo con sugerencia de texto para LinkedIn. Sin tener que buscarlo en la plataforma.</div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-top">
+        <div class="feature-name">Búsqueda proactiva por IA</div>
+        <span class="feature-tag tag-pro">Pro</span>
+      </div>
+      <div class="feature-desc">Cuando una empresa publique una necesidad, la IA notifica simultáneamente a la empresa con los técnicos que encajan y a los técnicos con la oferta. Sin que nadie tenga que buscar activamente.</div>
+      <div class="feature-highlight feature-highlight-blue">La plataforma trabaja en los dos sentidos: conecta empresa y técnico antes de que ninguno de los dos pida nada.</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <div class="cta-title">Completa tu verificación</div>
+    <div class="cta-sub">Los técnicos verificados son los únicos visibles para las empresas que buscan perfiles ahora mismo. El proceso tarda menos de 10 minutos.</div>
+    <a href="https://aeromatch.eu/dashboard" class="cta-btn">Completar mi perfil →</a>
+  </div>
+
+  <!-- FOUNDER NOTE -->
+  <div class="founder">
+    <div class="founder-avatar">RS</div>
+    <div class="founder-text">
+      <div class="founder-name">Raúl Sánchez Burgos</div>
+      <div class="founder-role">Fundador · Técnico B1/B2/C · Air Europa 20 años</div>
+      <div class="founder-quote">"Somos técnicos. Tenemos un día a día muy concreto — documentación, disponibilidad, contratos, formación, oportunidades que aparecen y desaparecen. Mi intención es que aeroMatch sea el sitio donde todo eso confluya. Sin tener que buscarlo en diez sitios distintos."</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>aeroMatch · aeromatch.eu · Las Palmas de Gran Canaria</p>
+    <div class="footer-divider"></div>
+    <p>
+      Recibes este email porque te registraste en aeroMatch.<br>
+      <a href="https://aeromatch.eu/unsubscribe">Darse de baja</a> · <a href="https://aeromatch.eu/dashboard">Ver mi perfil</a>
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
+

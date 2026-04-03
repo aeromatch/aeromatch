@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendAdminJobCompletedNotification } from '@/lib/email/resend'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +17,9 @@ export async function POST(request: NextRequest) {
       jobRequestId, 
       technicianId, 
       overall, 
-      reliability, 
-      skillsMatch, 
+      punctualityAvailability, 
+      documentationCompliance,
+      technicalCompetence, 
       communication, 
       safetyCompliance, 
       privateComment 
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Verify the job request belongs to this company and is completed
     const { data: jobRequest, error: jobError } = await supabase
       .from('job_requests')
-      .select('id, company_id, status, end_date')
+      .select('id, company_id, status, contract_type, start_date, end_date')
       .eq('id', jobRequestId)
       .single()
 
@@ -64,8 +66,9 @@ export async function POST(request: NextRequest) {
         technician_user_id: technicianId,
         company_user_id: user.id,
         overall_rating: overall,
-        reliability_rating: reliability || null,
-        skills_match_rating: skillsMatch || null,
+        reliability_rating: punctualityAvailability || null,
+        documentation_rating: documentationCompliance || null,
+        skills_match_rating: technicalCompetence || null,
         communication_rating: communication || null,
         safety_compliance_rating: safetyCompliance || null,
         private_comment: privateComment || null,
@@ -100,6 +103,21 @@ export async function POST(request: NextRequest) {
         .update({ average_rating: Math.round(avgRating * 10) / 10 })
         .eq('user_id', technicianId)
     }
+
+    const [{ data: techProfile }, { data: companyData }] = await Promise.all([
+      supabase.from('profiles').select('full_name').eq('id', technicianId).single(),
+      supabase.from('companies').select('company_name').eq('user_id', user.id).single()
+    ])
+
+    await sendAdminJobCompletedNotification({
+      requestId: jobRequestId,
+      technicianName: techProfile?.full_name || 'Técnico',
+      companyName: companyData?.company_name || 'Empresa',
+      startDate: jobRequest.start_date,
+      endDate: jobRequest.end_date,
+      contractType: jobRequest.contract_type,
+      ratingSummary: `overall=${overall}, puntualidad=${punctualityAvailability || '-'}, documentacion=${documentationCompliance || '-'}, competencia=${technicalCompetence || '-'}, comunicacion=${communication || '-'}, seguridad=${safetyCompliance || '-'}`
+    })
 
     return NextResponse.json({ success: true })
 

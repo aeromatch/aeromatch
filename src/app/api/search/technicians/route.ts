@@ -54,8 +54,10 @@ export async function POST(request: Request) {
         verification_status,
         availability_status,
         contract_type_preference,
-        years_experience
+        years_experience,
+        average_rating
       `)
+      .eq('profile_active', true)
       .eq('is_available', true)
       // Only show technicians who are visible (not hidden)
       .in('availability_status', ['available_unverified', 'available_verified'])
@@ -135,6 +137,16 @@ export async function POST(request: Request) {
       })
     }
 
+    const technicianIds = filteredTechnicians.map(t => t.user_id)
+    const { data: logbooks } = technicianIds.length > 0
+      ? await supabase
+          .from('documents')
+          .select('technician_id')
+          .eq('doc_type', 'logbook')
+          .in('technician_id', technicianIds)
+      : { data: [] as any[] }
+    const hasLogbookSet = new Set((logbooks || []).map((d: any) => d.technician_id))
+
     // Calculate freshness based on created_at and sort results
     const now = Date.now()
     const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000
@@ -175,7 +187,9 @@ export async function POST(request: Request) {
         is_verified: t.verification_status === 'verified',
         // Contract preference
         contract_type_preference: t.contract_type_preference || 'both',
-        years_experience: t.years_experience
+        years_experience: t.years_experience,
+        average_rating: t.average_rating,
+        has_logbook: hasLogbookSet.has(t.user_id)
       }
     })
 

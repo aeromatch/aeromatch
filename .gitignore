@@ -29,3 +29,9 @@ Thumbs.db
 # Vercel
 .vercel
 
+# Cursor / local agent state
+.agents/
+CLAUDE.md
+AEROMATCH_CONTEXT.md
+skills-lock.json
+

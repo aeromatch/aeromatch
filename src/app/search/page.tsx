@@ -29,6 +29,8 @@ interface TechnicianResult {
   // Contract preference
   contract_type_preference?: 'short-term' | 'long-term' | 'both'
   years_experience?: number
+  average_rating?: number
+  has_logbook?: boolean
 }
 
 export default function SearchPage() {
@@ -37,6 +39,7 @@ export default function SearchPage() {
   const { t, language } = useLanguage()
 
   const [profile, setProfile] = useState<any>(null)
+  const [companyName, setCompanyName] = useState('')
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,6 +69,10 @@ export default function SearchPage() {
   const [workLocation, setWorkLocation] = useState('')
   const [contractType, setContractType] = useState<'short-term' | 'long-term'>('short-term')
   const [notes, setNotes] = useState('')
+  const [offerMessage, setOfferMessage] = useState('')
+  const [selectedTechnicians, setSelectedTechnicians] = useState<TechnicianResult[]>([])
+  const [positionsNeeded, setPositionsNeeded] = useState(1)
+  const [isAog, setIsAog] = useState(false)
 
   // AMX Summary modal
   const [showAMXModal, setShowAMXModal] = useState(false)
@@ -85,11 +92,18 @@ export default function SearchPage() {
         .eq('id', user.id)
         .single()
 
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('company_name')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
       if (profileData?.role !== 'company') {
         setError(language === 'es' ? 'Solo empresas pueden buscar técnicos' : 'Only companies can search technicians')
       }
 
       setProfile(profileData)
+      setCompanyName(companyData?.company_name || '')
       setLoading(false)
     }
     loadProfile()
@@ -147,7 +161,50 @@ export default function SearchPage() {
 
   const handleRequestAvailability = (tech: TechnicianResult) => {
     setSelectedTechnician(tech)
+    setSelectedTechnicians([tech])
+    const finalCompanyName = companyName || profile?.full_name || 'AeroMatch'
+    const generated = language === 'es'
+      ? `Estimado/a técnico,\nNos ponemos en contacto a través de AeroMatch para ofrecerle una oportunidad de trabajo.\n\nQuedamos a su disposición para resolver cualquier duda.\nUn saludo,\n${finalCompanyName}`
+      : `Dear Technician,\nWe are contacting you via AeroMatch to offer a job opportunity.\n\nWe remain available for any questions.\nBest regards,\n${finalCompanyName}`
+    setOfferMessage(profile?.offer_message_template || generated)
     setShowRequestModal(true)
+  }
+
+  const isTechSelected = (techId: string) => selectedTechnicians.some((t) => t.user_id === techId)
+
+  const toggleTechnicianSelection = (tech: TechnicianResult) => {
+    setSelectedTechnicians((prev) => {
+      if (prev.some((t) => t.user_id === tech.user_id)) {
+        return prev.filter((t) => t.user_id !== tech.user_id)
+      }
+      if (prev.length >= 10) return prev
+      return [...prev, tech]
+    })
+  }
+
+  const openMultipleRequestModal = () => {
+    if (selectedTechnicians.length < 2) return
+    setSelectedTechnician(selectedTechnicians[0] || null)
+    const finalCompanyName = companyName || profile?.full_name || 'AeroMatch'
+    const generated = language === 'es'
+      ? `Estimado/a técnico,\nNos ponemos en contacto a través de AeroMatch para ofrecerle una oportunidad de trabajo.\n\nQuedamos a su disposición para resolver cualquier duda.\nUn saludo,\n${finalCompanyName}`
+      : `Dear Technician,\nWe are contacting you via AeroMatch to offer a job opportunity.\n\nWe remain available for any questions.\nBest regards,\n${finalCompanyName}`
+    setOfferMessage(profile?.offer_message_template || generated)
+    setShowRequestModal(true)
+  }
+
+  const moveSelectedTechnician = (index: number, direction: -1 | 1) => {
+    const next = [...selectedTechnicians]
+    const target = index + direction
+    if (target < 0 || target >= next.length) return
+    const temp = next[index]
+    next[index] = next[target]
+    next[target] = temp
+    setSelectedTechnicians(next)
+  }
+
+  const removeSelectedTechnician = (techId: string) => {
+    setSelectedTechnicians((prev) => prev.filter((t) => t.user_id !== techId))
   }
 
   const handleViewAMXSummary = (tech: TechnicianResult) => {
@@ -156,7 +213,7 @@ export default function SearchPage() {
   }
 
   const submitRequest = async () => {
-    if (!selectedTechnician || !finalClientName || !workLocation || !dateRange) {
+    if (selectedTechnicians.length === 0 || !finalClientName || !workLocation || !dateRange) {
       setError(language === 'es' ? 'Por favor completa todos los campos obligatorios' : 'Please complete all required fields')
       return
     }
@@ -169,14 +226,19 @@ export default function SearchPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          technician_id: selectedTechnician.user_id,
+          technician_id: selectedTechnicians[0]?.user_id || selectedTechnician?.user_id || null,
+          technician_ids: selectedTechnicians.map((t) => t.user_id),
           final_client_name: finalClientName,
           work_location: workLocation,
           contract_type: contractType,
           start_date: dateRange.start.toISOString().split('T')[0],
           end_date: dateRange.end.toISOString().split('T')[0],
           notes: notes || null,
-          requires_right_to_work_uk: jobRequiresRightToWorkUk
+          requires_right_to_work_uk: jobRequiresRightToWorkUk,
+          company_offer_message: offerMessage || null,
+          positions_needed: positionsNeeded,
+          is_aog: isAog,
+          required_aircraft_type: aircraftTypes[0] || null,
         })
       })
 
@@ -188,6 +250,14 @@ export default function SearchPage() {
       setFinalClientName('')
       setWorkLocation('')
       setNotes('')
+      setOfferMessage('')
+      if (selectedTechnician) {
+        setSelectedTechnicians((prev) => prev.filter((t) => t.user_id !== selectedTechnician.user_id))
+      } else {
+        setSelectedTechnicians([])
+      }
+      setPositionsNeeded(1)
+      setIsAog(false)
       
       router.push('/requests')
     } catch (err: any) {
@@ -428,6 +498,18 @@ export default function SearchPage() {
                 <h2 className="text-lg font-semibold text-white">
                   {language === 'es' ? 'Resultados' : 'Results'} ({results.length})
                 </h2>
+                {selectedTechnicians.length > 1 && (
+                  <div className="p-3 rounded-lg bg-gold-500/10 border border-gold-500/30 flex items-center justify-between">
+                    <p className="text-sm text-gold-300">
+                      {language === 'es'
+                        ? `${selectedTechnicians.length} técnicos seleccionados`
+                        : `${selectedTechnicians.length} technicians selected`}
+                    </p>
+                    <button onClick={openMultipleRequestModal} className="btn-primary">
+                      {language === 'es' ? 'Solicitud múltiple' : 'Multiple request'}
+                    </button>
+                  </div>
+                )}
                 
                 {/* Warning banner for stale availability */}
                 {results.some(r => r.freshness === 'stale' || r.freshness === 'warning') && (
@@ -489,6 +571,15 @@ export default function SearchPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2 justify-end">
+                        <label className="flex items-center gap-2 text-xs text-steel-300 mr-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isTechSelected(tech.user_id)}
+                            onChange={() => toggleTechnicianSelection(tech)}
+                            className="checkbox"
+                          />
+                          {language === 'es' ? 'Seleccionar' : 'Select'}
+                        </label>
                         {tech.own_tools && (
                           <span className="chip-success text-xs">
                             {language === 'es' ? 'Herramientas' : 'Tools'}
@@ -499,6 +590,12 @@ export default function SearchPage() {
                         ) : jobRequiresRightToWorkUk ? (
                           <span className="chip-warning text-xs">⚠️ No UK RTW</span>
                         ) : null}
+                        {typeof tech.average_rating === 'number' && (
+                          <span className="chip-selected text-xs">⭐ {tech.average_rating.toFixed(1)}</span>
+                        )}
+                        {tech.has_logbook && (
+                          <span className="chip-blue text-xs">Logbook</span>
+                        )}
                       </div>
                     </div>
 
@@ -580,6 +677,55 @@ export default function SearchPage() {
               <div className="space-y-4">
                 <div>
                   <label className="label label-required">
+                    {language === 'es' ? 'Técnicos seleccionados (orden de preferencia)' : 'Selected technicians (preference order)'}
+                  </label>
+                  <div className="space-y-2">
+                    {selectedTechnicians.map((tech, idx) => (
+                      <div key={tech.user_id} className="flex items-center gap-2 p-2 rounded bg-navy-800/40 border border-steel-700/30">
+                        <span className="text-xs text-gold-400 w-8">{idx + 1}º</span>
+                        <span className="text-xs text-white flex-1">ID: {tech.tech_id}</span>
+                        <button type="button" onClick={() => moveSelectedTechnician(idx, -1)} className="btn-ghost !px-2 !py-1">↑</button>
+                        <button type="button" onClick={() => moveSelectedTechnician(idx, 1)} className="btn-ghost !px-2 !py-1">↓</button>
+                        <button type="button" onClick={() => removeSelectedTechnician(tech.user_id)} className="btn-ghost !px-2 !py-1 text-error-400">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">
+                      {language === 'es' ? 'Técnicos necesarios' : 'Technicians needed'}
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={positionsNeeded}
+                      onChange={(e) => setPositionsNeeded(Math.max(1, Math.min(10, Number(e.target.value) || 1)))}
+                      className="input"
+                    />
+                    <p className="text-xs text-steel-500 mt-1">
+                      {language === 'es'
+                        ? `Seleccionados: ${selectedTechnicians.length}`
+                        : `Selected: ${selectedTechnicians.length}`}
+                    </p>
+                  </div>
+                  <div className="flex items-end">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 bg-error-500/10 border border-error-500/30 rounded-lg w-full">
+                      <input
+                        type="checkbox"
+                        checked={isAog}
+                        onChange={(e) => setIsAog(e.target.checked)}
+                        className="checkbox"
+                      />
+                      <span className="text-sm text-white">AOG - Situación de emergencia</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label label-required">
                     {language === 'es' ? 'Cliente final' : 'Final client'}
                   </label>
                   <input
@@ -627,6 +773,18 @@ export default function SearchPage() {
                     onChange={(e) => setNotes(e.target.value)}
                     className="textarea h-20"
                     placeholder={language === 'es' ? 'Información adicional...' : 'Additional information...'}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">
+                    {language === 'es' ? 'Mensaje de oferta' : 'Offer message'}
+                  </label>
+                  <textarea
+                    value={offerMessage}
+                    onChange={(e) => setOfferMessage(e.target.value)}
+                    className="input min-h-[140px]"
+                    placeholder={language === 'es' ? 'Mensaje para el técnico...' : 'Message for technician...'}
                   />
                 </div>
 

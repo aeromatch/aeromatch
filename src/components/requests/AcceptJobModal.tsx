@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -26,6 +27,7 @@ interface JobRequest {
   country_code?: string
   daily_rate_gross?: number
   requires_right_to_work_uk?: boolean
+  is_test?: boolean
 }
 
 interface AcceptJobModalProps {
@@ -35,12 +37,13 @@ interface AcceptJobModalProps {
   onAccepted: () => void
   technicianHasRightToWorkUK?: boolean
   technicianVerificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected'
+  initialPresentationMessage?: string
 }
 
 type WorkMode = 'self_employed' | 'umbrella' | 'umbrella_with_insurance'
 type UkEligibilityMode = 'not_required' | 'umbrella' | 'self_arranged'
 
-export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, technicianHasRightToWorkUK, technicianVerificationStatus }: AcceptJobModalProps) {
+export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, technicianHasRightToWorkUK, technicianVerificationStatus, initialPresentationMessage }: AcceptJobModalProps) {
   const { language } = useLanguage()
   const supabase = createClient()
   
@@ -63,6 +66,33 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, techni
   const [loadingProviders, setLoadingProviders] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [presentationMessage, setPresentationMessage] = useState('')
+  const [showDemoFeedback, setShowDemoFeedback] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) setShowDemoFeedback(false)
+  }, [isOpen])
+
+  const demoFeedbackCopy =
+    language === 'es'
+      ? {
+          title: '¿Te ha gustado cómo funciona?',
+          intro: 'Para recibir ofertas reales como esta solo necesitas:',
+          line1: 'Completar tu perfil',
+          line2: 'Subir tu documentación',
+          line3: 'Mantener tu disponibilidad activa',
+          ctaPrimary: 'Completar mi perfil ahora',
+          ctaSecondary: 'Ya lo haré más tarde',
+        }
+      : {
+          title: 'Did you like how it works?',
+          intro: 'To receive real offers like this you only need to:',
+          line1: 'Complete your profile',
+          line2: 'Upload your documentation',
+          line3: 'Keep your availability active',
+          ctaPrimary: 'Complete my profile now',
+          ctaSecondary: "I'll do it later",
+        }
 
   const labels = {
     title: language === 'es' ? 'Aceptar Trabajo' : 'Accept Job',
@@ -137,6 +167,14 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, techni
       loadUmbrellaProviders()
     }
   }, [isOpen, workMode])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const generated = language === 'es'
+      ? `Estimado/a equipo,\nMe pongo en contacto en respuesta a su solicitud a través de AeroMatch.\nSoy técnico de mantenimiento aeronáutico con experiencia en mantenimiento aeronáutico.\nMi documentación ha sido verificada en la plataforma y está disponible para su revisión.\nQuedo a su disposición para coordinar los detalles del desplazamiento y cualquier información adicional que necesiten.\n\nUn saludo.`
+      : `Dear team,\nI am contacting you in response to your request through AeroMatch.\nI am an aviation maintenance technician.\nMy documentation has been verified on the platform and is available for your review.\nI remain available to coordinate travel details and any additional information you may need.\n\nBest regards.`
+    setPresentationMessage(initialPresentationMessage || generated)
+  }, [isOpen, language, initialPresentationMessage])
 
   const loadUmbrellaProviders = async () => {
     setLoadingProviders(true)
@@ -264,7 +302,10 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, techni
       const response = await fetch(`/api/job-requests/${jobRequest.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'accepted' })
+        body: JSON.stringify({
+          status: 'accepted',
+          technician_presentation_message: presentationMessage || null
+        })
       })
 
       if (!response.ok) {
@@ -272,26 +313,33 @@ export function AcceptJobModal({ isOpen, onClose, jobRequest, onAccepted, techni
         throw new Error(data.error || 'Failed to accept job')
       }
 
-      // 2. Create acceptance workflow record
-      const { error: workflowError } = await supabase
-        .from('job_acceptance_workflow')
-        .insert({
-          job_request_id: jobRequest.id,
-          technician_user_id: jobRequest.technician_id,
-          company_user_id: jobRequest.company_id,
-          work_mode: workMode,
-          umbrella_provider_id: selectedUmbrella?.id || null,
-          payout_bank_account: bankAccount || null,
-          uk_eligibility_mode: needsUkEligibility ? ukEligibilityMode : 'not_required',
-          uk_eligibility_acknowledged: ukEligibilityMode === 'self_arranged' ? ukSelfArrangedAcknowledged : null,
-        })
+      if (!jobRequest.is_test) {
+        // 2. Create acceptance workflow record
+        const { error: workflowError } = await supabase
+          .from('job_acceptance_workflow')
+          .insert({
+            job_request_id: jobRequest.id,
+            technician_user_id: jobRequest.technician_id,
+            company_user_id: jobRequest.company_id,
+            work_mode: workMode,
+            umbrella_provider_id: selectedUmbrella?.id || null,
+            payout_bank_account: bankAccount || null,
+            uk_eligibility_mode: needsUkEligibility ? ukEligibilityMode : 'not_required',
+            uk_eligibility_acknowledged: ukEligibilityMode === 'self_arranged' ? ukSelfArrangedAcknowledged : null,
+          })
 
-      if (workflowError) {
-        console.error('Workflow error:', workflowError)
-        // Don't fail the whole operation if workflow insert fails
+        if (workflowError) {
+          console.error('Workflow error:', workflowError)
+          // Don't fail the whole operation if workflow insert fails
+        }
       }
 
       onAccepted()
+      if (jobRequest.is_test) {
+        setShowDemoFeedback(true)
+        setLoading(false)
+        return
+      }
       onClose()
     } catch (err: any) {
       setError(err.message)
@@ -325,8 +373,52 @@ Note: MoR billing and any insurance are handled by the provider under their own 
 
   if (!isOpen) return null
 
-  // Block acceptance if not verified
-  if (!isVerified) {
+  if (showDemoFeedback) {
+    const dismissDemoFeedback = () => {
+      setShowDemoFeedback(false)
+      onClose()
+    }
+    return (
+      <div className="modal-overlay" onClick={dismissDemoFeedback}>
+        <div className="modal p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <h2 className="text-xl font-semibold text-white mb-3">{demoFeedbackCopy.title}</h2>
+          <p className="text-steel-300 text-sm mb-4">{demoFeedbackCopy.intro}</p>
+          <ul className="space-y-2 mb-6 text-steel-200 text-sm">
+            <li className="flex gap-2">
+              <span aria-hidden>✅</span>
+              <span>{demoFeedbackCopy.line1}</span>
+            </li>
+            <li className="flex gap-2">
+              <span aria-hidden>✅</span>
+              <span>{demoFeedbackCopy.line2}</span>
+            </li>
+            <li className="flex gap-2">
+              <span aria-hidden>✅</span>
+              <span>{demoFeedbackCopy.line3}</span>
+            </li>
+          </ul>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/profile/edit"
+              className="btn-primary-filled w-full justify-center text-center"
+              onClick={() => {
+                setShowDemoFeedback(false)
+                onClose()
+              }}
+            >
+              {demoFeedbackCopy.ctaPrimary}
+            </Link>
+            <button type="button" onClick={dismissDemoFeedback} className="btn-secondary w-full justify-center">
+              {demoFeedbackCopy.ctaSecondary}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Block acceptance if not verified (ofertas de prueba permiten flujo completo sin verificación)
+  if (!isVerified && !jobRequest.is_test) {
     const isPending = technicianVerificationStatus === 'pending'
     
     return (
@@ -774,6 +866,17 @@ Note: MoR billing and any insurance are handled by the provider under their own 
                 )}
               </button>
             )}
+
+            <div>
+              <label className="block text-sm text-steel-400 mb-2">
+                {language === 'es' ? 'Mensaje de presentación' : 'Presentation message'}
+              </label>
+              <textarea
+                value={presentationMessage}
+                onChange={(e) => setPresentationMessage(e.target.value)}
+                className="input w-full min-h-[140px]"
+              />
+            </div>
           </div>
         )}
 

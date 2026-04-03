@@ -20,6 +20,10 @@ export default function EditProfilePage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [presentationMessageTemplate, setPresentationMessageTemplate] = useState('')
+  const [offerMessageTemplate, setOfferMessageTemplate] = useState('')
+  const [isDefaultPresentationTemplate, setIsDefaultPresentationTemplate] = useState(false)
+  const [isDefaultOfferTemplate, setIsDefaultOfferTemplate] = useState(false)
 
   // Profile fields
   const [fullName, setFullName] = useState('')
@@ -33,9 +37,20 @@ export default function EditProfilePage() {
   const [drivingLicense, setDrivingLicense] = useState(false)
   const [languages, setLanguages] = useState<string[]>([])
   const [visibilityAnonymous, setVisibilityAnonymous] = useState(true)
-  const [isAvailable, setIsAvailable] = useState(true)
   const [contractTypePreference, setContractTypePreference] = useState<'short-term' | 'long-term' | 'both'>('both')
   const [yearsExperience, setYearsExperience] = useState<number | ''>()
+  const [aogAvailable, setAogAvailable] = useState(false)
+  const [aogLocation, setAogLocation] = useState('')
+
+  const buildDefaultPresentationTemplate = (name?: string) =>
+    language === 'es'
+      ? `Estimado/a equipo,\nMe pongo en contacto en respuesta a su solicitud a través de AeroMatch.\nSoy ${name || '[nombre del técnico]'}, técnico de mantenimiento aeronáutico.\nQuedo a su disposición para coordinar los detalles.\n\nUn saludo,\n${name || '[nombre del técnico]'}`
+      : `Dear team,\nI am contacting you in response to your request through AeroMatch.\nI am ${name || '[technician name]'}, an aviation maintenance technician.\nI remain available to coordinate details.\n\nBest regards,\n${name || '[technician name]'}`
+
+  const buildDefaultOfferTemplate = (companyName?: string) =>
+    language === 'es'
+      ? `Estimado/a técnico,\nNos ponemos en contacto a través de AeroMatch para ofrecerle una oportunidad de trabajo.\n\nQuedamos a su disposición para resolver cualquier duda.\nUn saludo,\n${companyName || '[nombre empresa]'}`
+      : `Dear Technician,\nWe are contacting you through AeroMatch to offer a work opportunity.\n\nWe remain available for any questions.\nBest regards,\n${companyName || '[company name]'}`
 
   useEffect(() => {
     loadProfile()
@@ -57,6 +72,28 @@ export default function EditProfilePage() {
     setProfile(profileData)
     setFullName(profileData?.full_name || '')
 
+    const { data: companyData } = await supabase
+      .from('companies')
+      .select('company_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (profileData?.presentation_message_template) {
+      setPresentationMessageTemplate(profileData.presentation_message_template)
+      setIsDefaultPresentationTemplate(false)
+    } else {
+      setPresentationMessageTemplate(buildDefaultPresentationTemplate(profileData?.full_name || ''))
+      setIsDefaultPresentationTemplate(true)
+    }
+
+    if (profileData?.offer_message_template) {
+      setOfferMessageTemplate(profileData.offer_message_template)
+      setIsDefaultOfferTemplate(false)
+    } else {
+      setOfferMessageTemplate(buildDefaultOfferTemplate(companyData?.company_name || profileData?.full_name || 'AeroMatch'))
+      setIsDefaultOfferTemplate(true)
+    }
+
     if (profileData?.role === 'technician') {
       const { data: techData } = await supabase
         .from('technicians')
@@ -75,9 +112,10 @@ export default function EditProfilePage() {
         setDrivingLicense(techData.driving_license || false)
         setLanguages(techData.languages || [])
         setVisibilityAnonymous(techData.visibility_anonymous ?? true)
-        setIsAvailable(techData.is_available ?? true)
         setContractTypePreference(techData.contract_type_preference || 'both')
         setYearsExperience(techData.years_experience || '')
+        setAogAvailable(techData.aog_available || false)
+        setAogLocation(techData.aog_location || '')
       }
     }
 
@@ -104,7 +142,11 @@ export default function EditProfilePage() {
       // Update profile
       await supabase
         .from('profiles')
-        .update({ full_name: fullName })
+        .update({
+          full_name: fullName,
+          presentation_message_template: isDefaultPresentationTemplate ? null : (presentationMessageTemplate || null),
+          offer_message_template: isDefaultOfferTemplate ? null : (offerMessageTemplate || null)
+        })
         .eq('id', user.id)
 
       // Update technician data
@@ -122,9 +164,10 @@ export default function EditProfilePage() {
             driving_license: drivingLicense,
             languages: languages,
             visibility_anonymous: visibilityAnonymous,
-            is_available: isAvailable,
             contract_type_preference: contractTypePreference,
-            years_experience: yearsExperience || null
+            years_experience: yearsExperience || null,
+            aog_available: aogAvailable,
+            aog_location: aogAvailable ? (aogLocation || null) : null,
           })
           .eq('user_id', user.id)
 
@@ -154,8 +197,6 @@ export default function EditProfilePage() {
     title: language === 'es' ? 'Editar Perfil' : 'Edit Profile',
     basicInfo: language === 'es' ? 'Información Básica' : 'Basic Information',
     fullName: language === 'es' ? 'Nombre completo' : 'Full name',
-    availabilityStatus: language === 'es' ? 'Estado de disponibilidad' : 'Availability status',
-    availabilityDesc: language === 'es' ? '¿Estás disponible para nuevas ofertas?' : 'Are you available for new offers?',
     capabilities: language === 'es' ? 'Capacidades' : 'Capabilities',
     licenses: language === 'es' ? 'Licencias' : 'Licenses',
     aircraftTypes: language === 'es' ? 'Tipos de Aeronave' : 'Aircraft Types',
@@ -182,6 +223,14 @@ export default function EditProfilePage() {
     both: language === 'es' ? 'Ambos' : 'Both',
     yearsExperience: language === 'es' ? 'Años de experiencia' : 'Years of experience',
     yearsExperienceDesc: language === 'es' ? 'Experiencia total en mantenimiento aeronáutico' : 'Total experience in aviation maintenance',
+    presentationMessage: language === 'es' ? 'Mensaje de presentación' : 'Presentation message',
+    presentationMessageDesc: language === 'es' ? 'Se propone automáticamente al aceptar una oferta, pero puedes editarlo.' : 'Auto-suggested when accepting an offer, but you can edit it.',
+    offerMessage: language === 'es' ? 'Mensaje de oferta' : 'Offer message',
+    offerMessageDesc: language === 'es' ? 'Se propone automáticamente al enviar una oferta, pero puedes editarlo.' : 'Auto-suggested when sending an offer, but you can edit it.',
+    aogAvailability: language === 'es' ? 'Disponibilidad AOG' : 'AOG Availability',
+    aogAvailable: language === 'es' ? 'Estoy disponible para situaciones AOG' : 'I am available for AOG situations',
+    aogLocation: language === 'es' ? 'Ciudad/Región para AOG' : 'City/Region for AOG',
+    aogLocationHint: language === 'es' ? 'Se comparte ubicación aproximada para emergencias AOG' : 'Approximate location shared for AOG emergencies',
   }
 
   return (
@@ -240,25 +289,6 @@ export default function EditProfilePage() {
 
           {profile?.role === 'technician' && (
             <>
-              {/* Availability Toggle */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-white">{labels.availabilityStatus}</p>
-                    <p className="text-sm text-steel-400">{labels.availabilityDesc}</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isAvailable}
-                      onChange={(e) => setIsAvailable(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-14 h-7 bg-steel-700 peer-focus:ring-2 peer-focus:ring-gold-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-success-500"></div>
-                  </label>
-                </div>
-              </div>
-
               {/* Contract Preference & Experience */}
               <div className="card p-6">
                 <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -450,7 +480,65 @@ export default function EditProfilePage() {
                   </label>
                 </div>
               </div>
+
+              <div className="card p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">{labels.aogAvailability}</h2>
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-navy-800/50 rounded-lg hover:bg-navy-800 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={aogAvailable}
+                    onChange={(e) => setAogAvailable(e.target.checked)}
+                    className="checkbox"
+                  />
+                  <span className="text-sm text-white">{labels.aogAvailable}</span>
+                </label>
+                {aogAvailable && (
+                  <div className="mt-4">
+                    <label className="label">{labels.aogLocation}</label>
+                    <input
+                      type="text"
+                      value={aogLocation}
+                      onChange={(e) => setAogLocation(e.target.value)}
+                      className="input"
+                      placeholder={language === 'es' ? 'Madrid, España' : 'Madrid, Spain'}
+                    />
+                    <p className="text-xs text-steel-500 mt-2">{labels.aogLocationHint}</p>
+                  </div>
+                )}
+              </div>
             </>
+          )}
+
+          {profile?.role === 'technician' && (
+            <div className="card p-6">
+              <h2 className="text-lg font-semibold text-white mb-2">{labels.presentationMessage}</h2>
+              <p className="text-sm text-steel-400 mb-3">{labels.presentationMessageDesc}</p>
+              <textarea
+                value={presentationMessageTemplate}
+                onChange={(e) => {
+                  setPresentationMessageTemplate(e.target.value)
+                  setIsDefaultPresentationTemplate(false)
+                }}
+                className={`input min-h-[140px] ${isDefaultPresentationTemplate ? 'text-steel-400' : 'text-white'}`}
+                placeholder={language === 'es' ? 'Escribe tu mensaje de presentación...' : 'Write your presentation message...'}
+              />
+            </div>
+          )}
+
+          {profile?.role === 'company' && (
+            <div className="card p-6">
+              <h2 className="text-lg font-semibold text-white mb-2">{labels.offerMessage}</h2>
+              <p className="text-sm text-steel-400 mb-3">{labels.offerMessageDesc}</p>
+              <textarea
+                value={offerMessageTemplate}
+                onChange={(e) => {
+                  setOfferMessageTemplate(e.target.value)
+                  setIsDefaultOfferTemplate(false)
+                }}
+                className={`input min-h-[140px] ${isDefaultOfferTemplate ? 'text-steel-400' : 'text-white'}`}
+                placeholder={language === 'es' ? 'Escribe tu mensaje de oferta...' : 'Write your offer message...'}
+              />
+            </div>
           )}
 
           {/* Save Button */}

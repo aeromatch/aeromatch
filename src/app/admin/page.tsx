@@ -28,6 +28,7 @@ interface Technician {
   availCount: number
   hasPremium: boolean
   premiumExpires?: string
+  profileActive?: boolean
 }
 
 interface Company {
@@ -93,6 +94,7 @@ export default function AdminPage() {
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null)
   const [loadingCertificate, setLoadingCertificate] = useState(false)
   const [viewingCertPdf, setViewingCertPdf] = useState<string | null>(null)
+  const [userActionLoading, setUserActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
     checkAuth()
@@ -306,6 +308,42 @@ export default function AdminPage() {
     }
   }
 
+  const handleBlockTechnician = async (userId: string) => {
+    if (!confirm('¿Bloquear este técnico? Se ocultará de las búsquedas.')) return
+    setUserActionLoading(`block-${userId}`)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'block' })
+      })
+      if (!res.ok) throw new Error('Error bloqueando usuario')
+      fetchTechnicians()
+    } catch (err) {
+      console.error(err)
+      alert('No se pudo bloquear el usuario')
+    } finally {
+      setUserActionLoading(null)
+    }
+  }
+
+  const handleDeleteTechnician = async (userId: string) => {
+    if (!confirm('¿Eliminar completamente este usuario? Esta acción es irreversible.')) return
+    setUserActionLoading(`delete-${userId}`)
+    try {
+      const res = await fetch(`/api/admin/users?userId=${encodeURIComponent(userId)}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('Error eliminando usuario')
+      fetchTechnicians()
+    } catch (err) {
+      console.error(err)
+      alert('No se pudo eliminar el usuario')
+    } finally {
+      setUserActionLoading(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-navy-950 flex items-center justify-center">
@@ -485,6 +523,8 @@ export default function AdminPage() {
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Docs</th>
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Avail</th>
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Premium</th>
+                  <th className="text-center py-3 px-4 text-steel-400 font-medium">Estado</th>
+                  <th className="text-center py-3 px-4 text-steel-400 font-medium">Acciones</th>
                   <th className="text-left py-3 px-4 text-steel-400 font-medium">Registered</th>
                 </tr>
               </thead>
@@ -504,6 +544,31 @@ export default function AdminPage() {
                       ) : (
                         <span className="text-steel-500">-</span>
                       )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {t.profileActive === false ? (
+                        <span className="text-red-400 text-xs">Bloqueado</span>
+                      ) : (
+                        <span className="text-green-400 text-xs">Activo</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleBlockTechnician(t.id)}
+                          disabled={userActionLoading === `block-${t.id}` || t.profileActive === false}
+                          className="px-2 py-1 rounded bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 text-xs disabled:opacity-50"
+                        >
+                          Bloquear
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTechnician(t.id)}
+                          disabled={userActionLoading === `delete-${t.id}`}
+                          className="px-2 py-1 rounded bg-red-500/10 border border-red-500/30 text-red-300 text-xs disabled:opacity-50"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-steel-400 text-xs">
                       {new Date(t.createdAt).toLocaleDateString()}

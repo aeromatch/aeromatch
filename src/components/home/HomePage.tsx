@@ -2,14 +2,22 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Logo } from '@/components/ui/Logo'
+import '@/styles/infographic.css'
+import { Logo, LogoGoldA } from '@/components/ui/Logo'
 import { useLanguage, LanguageSwitch } from '@/lib/i18n/LanguageContext'
+import { StorySection } from '@/components/home/StorySection'
+import { HowItWorks } from '@/components/home/HowItWorks'
+import { ShareProfile } from '@/components/home/ShareProfile'
+import { Ecosystem } from '@/components/home/Ecosystem'
+import { Stats } from '@/components/home/Stats'
+import { FinalCTA } from '@/components/home/FinalCTA'
+import { InfographicMotion } from '@/components/home/InfographicMotion'
 import { 
   FEATURE_FLAGS, 
   PRELAUNCH_COPY, 
-  TESTIMONIALS,
   COMPANY_PRESTEP 
 } from '@/lib/config/features'
+import { getLandingCopy } from '@/lib/i18n/landingCopy'
 
 interface HomePageProps {
   isLoggedIn: boolean
@@ -17,12 +25,11 @@ interface HomePageProps {
 
 export function HomePage({ isLoggedIn }: HomePageProps) {
   const { language } = useLanguage()
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [showCompanyPrestep, setShowCompanyPrestep] = useState(false)
+  const landing = getLandingCopy(language)
 
   // Get pre-launch copy
   const preLaunch = PRELAUNCH_COPY[language]
-  const testimonials = TESTIMONIALS[language]
   const companyPrestep = COMPANY_PRESTEP[language]
 
   // All labels with ES/EN
@@ -195,6 +202,7 @@ No paperwork. No middlemen. No commissions.`,
     footer: {
       privacy: language === 'es' ? 'Privacidad' : 'Privacy',
       terms: language === 'es' ? 'Términos' : 'Terms',
+      about: language === 'es' ? 'Acerca de aeroMatch' : 'About aeroMatch',
       copyright: '© 2025 AeroMatch. All rights reserved.',
     },
   }
@@ -225,7 +233,9 @@ No paperwork. No middlemen. No commissions.`,
       <header className="sticky top-0 z-50 bg-navy-950/95 backdrop-blur-md border-b border-steel-800/30">
         <nav className="max-w-6xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Logo size="md" />
+            <Link href="/" className="inline-flex shrink-0" aria-label="aeroMatch inicio">
+              <Logo size="md" />
+            </Link>
             
             <div className="flex items-center gap-4">
               <LanguageSwitch />
@@ -278,42 +288,33 @@ No paperwork. No middlemen. No commissions.`,
 
         <div className="relative z-10 w-full max-w-6xl mx-auto px-6 lg:px-8 py-16">
           <div className="max-w-4xl mx-auto text-center">
-            {/* Logo */}
-            <div className="flex justify-center mb-12">
-              <Logo size="hero" />
+            <div className="mb-12 flex justify-center overflow-visible pt-2 sm:pt-4">
+              <div className="overflow-visible [filter:drop-shadow(0_8px_32px_rgba(201,162,77,0.25))]">
+                <LogoGoldA size={128} />
+              </div>
             </div>
 
-            {/* Main headline */}
             <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl tracking-tight mb-6 leading-[1.15]">
               <span className="block text-white font-semibold mb-2">{content.hero.headline1}</span>
               <span className="block text-gold-400 font-bold">{content.hero.headline2}</span>
             </h1>
 
-            {/* Subheadline */}
             <p className="max-w-2xl mx-auto text-lg sm:text-xl text-steel-300 mb-10 leading-relaxed">
               {content.hero.subheadline}
             </p>
 
-            {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link
-                href="/auth?mode=signup&role=technician"
-                className="btn-primary-filled-lg group"
-              >
+              <Link href="/auth?mode=signup&role=technician" className="btn-primary-filled-lg group">
                 {content.hero.ctaTechnician}
                 <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
-              <button
-                onClick={handleCompanyCta}
-                className="btn-secondary-lg"
-              >
+              <button onClick={handleCompanyCta} className="btn-secondary-lg">
                 {content.hero.ctaCompany}
               </button>
             </div>
 
-            {/* Trust Badges */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-steel-400">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -335,10 +336,7 @@ No paperwork. No middlemen. No commissions.`,
               </div>
             </div>
 
-            {/* Pre-launch pricing context */}
-            <p className="mt-6 text-sm text-steel-500">
-              {content.pricingContext}
-            </p>
+            <p className="mt-6 text-sm text-steel-500">{content.pricingContext}</p>
           </div>
         </div>
 
@@ -350,255 +348,44 @@ No paperwork. No middlemen. No commissions.`,
         </div>
       </section>
 
-      {/* Why AeroMatch - Storytelling (MOVED UP - now section #2) */}
-      <section className="py-24 bg-navy-900/30">
-        <div className="max-w-3xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-12">
-            {content.whyAeroMatch.title}
-          </h2>
-          
-          <div className="relative">
-            {/* Quote mark */}
-            <svg className="absolute -top-4 -left-4 w-12 h-12 text-gold-500/20" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-            </svg>
-            
-            <div className="bg-navy-800/50 border border-steel-700/30 rounded-2xl p-8 sm:p-10">
-              <div className="prose prose-invert max-w-none">
-                {content.whyAeroMatch.story.split('\n\n').map((paragraph, idx) => (
-                  <p key={idx} className="text-steel-300 leading-relaxed mb-4 last:mb-0">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-              
-              <div className="mt-8 pt-6 border-t border-steel-700/30">
-                <p className="text-gold-400 font-semibold italic">
-                  {content.whyAeroMatch.signature}
-                </p>
-                <p className="text-steel-500 text-sm mt-1">— Raúl, Founder</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div id="am-infographic">
+        <InfographicMotion />
+        <StorySection copy={landing.story} />
+        <div className="sep" />
+        <HowItWorks copy={landing.how} />
+        <div className="sep" />
+        <ShareProfile copy={landing.share} />
+        <div className="sep" />
+        <Ecosystem copy={landing.ecosystem} />
+        <div className="sep" />
+        <Stats copy={landing.stats} />
+        <div className="sep" />
+        <FinalCTA copy={landing.finalCta} />
+      </div>
 
-      {/* Community Building Section (replaces counters during pre-launch) */}
-      {FEATURE_FLAGS.SHOW_COMMUNITY_BUILDING_MESSAGE && !FEATURE_FLAGS.SHOW_PUBLIC_COUNTERS && (
-        <section className="py-16 bg-navy-900/50 border-y border-steel-800/30">
-          <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-gold-500/10 border border-gold-500/30 rounded-full px-4 py-2 mb-6">
-              <span className="text-gold-400">🚀</span>
-              <span className="text-gold-400 font-medium text-sm">
-                {language === 'es' ? 'Fase de Pre-Lanzamiento' : 'Pre-Launch Phase'}
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              {content.communityBuilding.title}
-            </h2>
-            <p className="text-lg text-steel-400 max-w-2xl mx-auto mb-8">
-              {content.communityBuilding.message}
-            </p>
-            <Link
-              href="/auth?mode=signup&role=technician"
-              className="btn-primary-filled inline-flex items-center gap-2"
-            >
-              {preLaunch.ctaTechnician}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Testimonials Section (social proof) */}
-      {FEATURE_FLAGS.SHOW_TESTIMONIALS && (
-        <section className="py-20">
-          <div className="max-w-5xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-12">
-              {content.testimonials.title}
-            </h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              {testimonials.map((testimonial, idx) => (
-                <div 
-                  key={idx}
-                  className="bg-navy-800/50 border border-steel-700/30 rounded-2xl p-6 relative"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center text-2xl flex-shrink-0">
-                      {testimonial.icon}
-                    </div>
-                    <div>
-                      <p className="text-steel-300 leading-relaxed mb-4 italic">
-                        "{testimonial.quote}"
-                      </p>
-                      <p className="text-sm text-gold-400 font-medium">
-                        — {testimonial.role}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* How It Works Section */}
-      <section className="py-24 bg-navy-900/30">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-16">
-            {content.howItWorks.title}
-          </h2>
-
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-            {/* For Technicians */}
-            <div>
-              <h3 className="text-xl font-semibold text-gold-400 mb-8 flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                {content.howItWorks.forTechnicians}
-              </h3>
-              <div className="space-y-6">
-                {content.howItWorks.techSteps.map((step, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 font-bold">
-                      {step.num}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-medium mb-1">{step.title}</h4>
-                      <p className="text-steel-400 text-sm">{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link
-                href="/auth?mode=signup&role=technician"
-                className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 font-medium transition-colors"
-              >
-                {preLaunch.ctaTechnician}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* For Companies */}
-            <div>
-              <h3 className="text-xl font-semibold text-gold-400 mb-8 flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                {content.howItWorks.forCompanies}
-              </h3>
-              <div className="space-y-6">
-                {content.howItWorks.companySteps.map((step, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center text-gold-400 font-bold">
-                      {step.num}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-medium mb-1">{step.title}</h4>
-                      <p className="text-steel-400 text-sm">{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={handleCompanyCta}
-                className="btn-secondary-lg mt-8"
-              >
-                {content.hero.ctaCompany}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-24">
-        <div className="max-w-3xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-12">
-            {content.faq.title}
-          </h2>
-          
-          <div className="space-y-4">
-            {content.faq.items.map((item, idx) => (
-              <div 
-                key={idx}
-                className="bg-navy-800/50 border border-steel-700/30 rounded-xl overflow-hidden"
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-navy-800/70 transition-colors"
-                >
-                  <span className="font-medium text-white">{item.q}</span>
-                  <svg 
-                    className={`w-5 h-5 text-gold-500 flex-shrink-0 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div 
-                  className={`overflow-hidden transition-all duration-300 ${
-                    openFaq === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="px-6 pb-4">
-                    <p className="text-steel-300 leading-relaxed">{item.a}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 bg-navy-900/30">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <div className="cta-card text-center">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
-              {content.cta.title}
-            </h2>
-            <p className="max-w-xl mx-auto text-steel-300 mb-8">
-              {content.cta.subtitle}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/auth?mode=signup&role=technician"
-                className="btn-primary-filled-lg"
-              >
-                {preLaunch.ctaTechnician}
-              </Link>
-              <button
-                onClick={handleCompanyCta}
-                className="btn-secondary-lg"
-              >
-                {content.hero.ctaCompany}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
+      {/* Footer — mismo logo que la barra superior + enlace Acerca de */}
       <footer className="py-8 border-t border-steel-800/30">
         <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-6">
-              <Logo size="sm" />
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <Link href="/" className="inline-flex shrink-0" aria-label="aeroMatch inicio">
+                <Logo size="md" />
+              </Link>
               <LanguageSwitch />
+              <Link
+                href="/about"
+                className="inline-flex items-center justify-center rounded-lg border border-gold-500/50 bg-gold-500/5 px-4 py-2 text-sm font-semibold text-gold-400 transition-colors hover:border-gold-400 hover:bg-gold-500/10 hover:text-gold-300"
+              >
+                {content.footer.about}
+              </Link>
             </div>
-            <div className="flex items-center gap-6 text-sm text-steel-500">
-              <a href="#" className="hover:text-white transition-colors">{content.footer.privacy}</a>
-              <a href="#" className="hover:text-white transition-colors">{content.footer.terms}</a>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-steel-500">
+              <a href="#" className="hover:text-white transition-colors">
+                {content.footer.privacy}
+              </a>
+              <a href="#" className="hover:text-white transition-colors">
+                {content.footer.terms}
+              </a>
               <span>{content.footer.copyright}</span>
             </div>
           </div>

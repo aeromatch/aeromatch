@@ -1,0 +1,4594 @@
+[
+  {
+    "id": "ATA46-B2-001",
+    "ata": "46",
+    "subtopic": "ATSU architecture and software partitioning",
+    "category": "B2",
+    "level": 1,
+    "question": "Into which two main parts is the Air Traffic Service Unit (ATSU) software partitioned?",
+    "options": {
+      "a": "Flight management and flight guidance applications",
+      "b": "Aircraft interface/host platform and data link applications",
+      "c": "Maintenance applications and administrative applications"
+    },
+    "correct_answer": "b",
+    "justification": "Page 5: The ATSU S/W is partitioned into two main parts: aircraft interface/host platform and data link applications.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-002",
+    "ata": "46",
+    "subtopic": "ATSU architecture and software partitioning",
+    "category": "B2",
+    "level": 1,
+    "question": "Which service of the ATSU host platform software is used for the acquisition of aircraft parameters and system monitoring?",
+    "options": {
+      "a": "Human-Machine Interface (HMI) service",
+      "b": "On-board peripherals service",
+      "c": "System management service"
+    },
+    "correct_answer": "c",
+    "justification": "Page 5: system management, used for the acquisition of the aircraft parameters for application S/W use and monitoring of the system: power supply and BITE functions.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-003",
+    "ata": "46",
+    "subtopic": "ATSU architecture and software partitioning",
+    "category": "B2",
+    "level": 2,
+    "question": "In the ATSU modularity concept, what is the primary role of the 'Remote AOC' application?",
+    "options": {
+      "a": "Processing, printing, and display of received messages",
+      "b": "Routing data to and from AOC peripherals",
+      "c": "Generation and triggering of downlink messages"
+    },
+    "correct_answer": "b",
+    "justification": "Page 5: For the remote AOC applications, the ATSU only routes data to and from AOC peripherals.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B1B2-004",
+    "ata": "46",
+    "subtopic": "ATSU architecture and software partitioning",
+    "category": "B1B2",
+    "level": 2,
+    "question": "Via which unit is the ATSU software uploaded into the system?",
+    "options": {
+      "a": "Centralized Fault Display Interface Unit (CFDIU)",
+      "b": "Multipurpose Disk Drive Unit (MDDU)",
+      "c": "Flight Management and Guidance Computer (FMGC)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 7: The ATSU S/W is uploaded via the Multipurpose Disk Drive Unit (MDDU).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-005",
+    "ata": "46",
+    "subtopic": "ATSU architecture and software partitioning",
+    "category": "B2",
+    "level": 3,
+    "question": "During a complete ATSU S/W upload, why is a de-selection of the data loading required for each type of software?",
+    "options": {
+      "a": "To prevent the MDDU from overheating during long transfers",
+      "b": "To ensure the ATSU can re-initialize until the DATALINK ATSU FAULT warning clears",
+      "c": "To allow the FMGC to synchronize its database with the new ATSU software"
+    },
+    "correct_answer": "b",
+    "justification": "Page 7: If a complete S/W uploading is required, a de-selection of the ATSU data loading must be carried out, for each type of S/W, so that a re-initialization of the ATSU can be made until the DATALINK ATSU FAULT warning goes off on the EWD.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B1B2-006",
+    "ata": "46",
+    "subtopic": "ATIMS warnings and fault logic",
+    "category": "B1B2",
+    "level": 1,
+    "question": "What indications are triggered on the flight deck when an Air Traffic Service Unit (ATSU) failure occurs?",
+    "options": {
+      "a": "Master Warning, continuous repetitive chime, and the SD status page",
+      "b": "Master Caution, Single Chime, and DATALINK ATSU FAULT on the EWD",
+      "c": "A red fault light on the overhead panel and an amber 'COMPANY STBY' memo"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: When there is an Air Traffic Service Unit (ATSU) failure, the message 'DATALINK ATSU FAULT' appears on the EWD, in this case, MASTER CAUTion light and Single Chime (SC) will be activated.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B1B2-007",
+    "ata": "46",
+    "subtopic": "ATIMS warnings and fault logic",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Where is the ATSU fault message displayed for the crew to identify inoperative systems?",
+    "options": {
+      "a": "In the INOP SYS column of the STATUS page",
+      "b": "In the FAULT log of the MCDU COMM menu",
+      "c": "On the Engine/Warning Display as a red prioritized warning"
+    },
+    "correct_answer": "a",
+    "justification": "Page 9: NOTE: In the INOP SYS column of the STATUS page, the ATSU fault message appears.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-008",
+    "ata": "46",
+    "subtopic": "ATIMS warnings and fault logic",
+    "category": "B2",
+    "level": 2,
+    "question": "Which memo appears in green when the VHF Data Radio (VDR) 3, configured in VDL mode 2, is unavailable for data transmission?",
+    "options": {
+      "a": "COMPANY DATALINK STBY",
+      "b": "VHF3 VOICE",
+      "c": "DATALINK ATSU FAULT"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: When VHF Data Radio (VDR) 3, configured in VHF DataLink (VDL) mode 2, is not available for data transmission, the right memo 'VHF3 VOICE' appears in green.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B1B2-009",
+    "ata": "46",
+    "subtopic": "ATIMS warnings and fault logic",
+    "category": "B1B2",
+    "level": 2,
+    "question": "How long does the 'HF VOICE' memo pulse in green when all installed HFDRs are in voice mode?",
+    "options": {
+      "a": "5 seconds",
+      "b": "10 seconds",
+      "c": "60 seconds"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: When all the HF Data Radio (HFDR) (if installed) are in voice mode, the right memo 'HF VOICE' pulses in green for 10 seconds and then stays stable.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-010",
+    "ata": "46",
+    "subtopic": "ATIMS warnings and fault logic",
+    "category": "B2",
+    "level": 3,
+    "question": "During which flight phases are the DATALINK ATSU FAULT and COMPANY MSG warnings inhibited?",
+    "options": {
+      "a": "Phases 1, 2, 9, 10",
+      "b": "Phases 3, 4, 5, 7, 8",
+      "c": "Phases 4, 5, 6, 7"
+    },
+    "correct_answer": "b",
+    "justification": "Page 10: The Flight Phase Inhibition table shows phases 3, 4, 5, 7, 8 for DATALINK ATSU FAULT and the company memos.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-011",
+    "ata": "46",
+    "subtopic": "ATIMS MCDU menus and operation",
+    "category": "B2",
+    "level": 1,
+    "question": "What are the two primary functions provided by the ATIMS through the MCDU?",
+    "options": {
+      "a": "Flight planning and fuel management",
+      "b": "AOC hosted applications and air-ground communication management",
+      "c": "Centralized maintenance and AIDS recording"
+    },
+    "correct_answer": "b",
+    "justification": "Page 11: The MCDU gives the following functions: Airline Operational Control (AOC) hosted applications and, air-ground communication management.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-012",
+    "ata": "46",
+    "subtopic": "ATIMS MCDU menus and operation",
+    "category": "B2",
+    "level": 1,
+    "question": "In the MCDU COMM MENU, what is the function of the 'AUDIT PRINT PAGE SET OFF' key?",
+    "options": {
+      "a": "It stops all data link printing functions across the aircraft",
+      "b": "It disables the audit function directly without accessing the AUDIT page",
+      "c": "It resets the printer after a communication failure"
+    },
+    "correct_answer": "b",
+    "justification": "Page 13: NOTE: The AUDIT PRINT PAGE SET OFF function is used to disable this function directly from this page without having to get access to the AUDIT page.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-013",
+    "ata": "46",
+    "subtopic": "ATIMS MCDU menus and operation",
+    "category": "B2",
+    "level": 2,
+    "question": "Under which conditions is the initialization through the COMM CONFIG menu considered complete?",
+    "options": {
+      "a": "When the ATSU is connected to the SITA network via SATCOM",
+      "b": "When the ATSU receives a valid A/C registration, airline ID, and scan mask",
+      "c": "When the GPS primary status is confirmed and the clock is synchronized"
+    },
+    "correct_answer": "b",
+    "justification": "Page 13: The initialization through COMM CONFIG menu is considered as completed when the Air Traffic Service Unit (ATSU) has received a valid aircraft registration number, airline identification and scan mask.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-014",
+    "ata": "46",
+    "subtopic": "ATIMS MCDU menus and operation",
+    "category": "B2",
+    "level": 2,
+    "question": "What information is displayed on the 'VHF3 DATA MODE' MCDU page?",
+    "options": {
+      "a": "The signal strength and frequency of the active VOR station",
+      "b": "The selected regions, associated data link providers, and frequencies",
+      "c": "The maintenance status of the three RMPs"
+    },
+    "correct_answer": "b",
+    "justification": "Page 13: The VHF3 DATA MODE page shows the various regions, which can be selected. Each region is associated with a data link service provider and a frequency.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-015",
+    "ata": "46",
+    "subtopic": "ATIMS MCDU menus and operation",
+    "category": "B2",
+    "level": 3,
+    "question": "Which MCDU menu allows a technician to print out exchanged messages per media and router for analysis?",
+    "options": {
+      "a": "COMM STATUS menu",
+      "b": "AOC CONFIG menu",
+      "c": "MAINTENANCE STATUS (AUDIT) menu"
+    },
+    "correct_answer": "c",
+    "justification": "Page 15: AUDIT to print out exchanged messages per media and router depending on selection (found under MAINTENANCE STATUS).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-016",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "B2",
+    "level": 1,
+    "question": "Which essential parameter for ATSU router initialization is sent by the ATC Transponders?",
+    "options": {
+      "a": "Airline identification",
+      "b": "A/C ICAO CODE (24bit address)",
+      "c": "Scan mask priority list"
+    },
+    "correct_answer": "b",
+    "justification": "Page 19: Four essential parameters are required: A/C ICAO CODE (24bit address sent by the ATC Transponders)...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-017",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit is responsible for sending the aircraft registration number to the ATSU during router initialization?",
+    "options": {
+      "a": "Flight Warning Computer (FWC)",
+      "b": "Centralized Fault Display Interface Unit (CFDIU)",
+      "c": "Air Data/Inertial Reference Unit (ADIRU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 19: The A/C registration number is sent by the Centralized Fault Display Interface Unit (CFDIU).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-018",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "B2",
+    "level": 2,
+    "question": "What warning is displayed on the EWD if any of the four essential router initialization parameters are invalid?",
+    "options": {
+      "a": "COMPANY DATALINK STBY",
+      "b": "DATALINK ATSU FAULT + ATSU INIT FAULT",
+      "c": "VHF3 DATA MODE ERROR"
+    },
+    "correct_answer": "b",
+    "justification": "Page 19: Four essential parameters are required... Otherwise, the DATALINK ATSU FAULT+ ATSU INIT FAULT amber warnings are displayed on the Engine/Warning Display (EWD).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-019",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "B2",
+    "level": 2,
+    "question": "How does the ATSU create the Flight Identification parameter?",
+    "options": {
+      "a": "By reading the tail number from the CFDIU",
+      "b": "By concatenating the airline ID and the flight number from the FMGC",
+      "c": "By decoding the 24-bit ICAO address from the transponder"
+    },
+    "correct_answer": "b",
+    "justification": "Page 19: The ATSU creates the flight identification by concatenating the airline identification parameter and the flight number parameter coming from the Flight Management and Guidance Computer (FMGC).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-020",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the purpose of the 'NEW SCAN SELECT' function in the VHF SCAN SELECT pages?",
+    "options": {
+      "a": "To initiate a manual scan for all available SITA stations",
+      "b": "To erase the previous scan mask selection to allow a new configuration",
+      "c": "To toggle between TLS and HAM test modes"
+    },
+    "correct_answer": "b",
+    "justification": "Page 21: The NEW SCAN SELECT function is used to erase the previous selection. The VHF3 SCAN MASK is compulsory for the router operation.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-021",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "b2",
+    "level": 3,
+    "question": "Which action must be performed after selecting service providers in the scan mask to finalize the router initialization?",
+    "options": {
+      "a": "Pressing the 'CONFIG ACTIVATE' LSK in the COMM CONFIG menu",
+      "b": "Performing a hard reset of the ATSU via the C/B panel",
+      "c": "Selecting 'REVERT AUTO' on the VHF3 DATA MODE page"
+    },
+    "correct_answer": "a",
+    "justification": "Page 23: To finalize the initialization the CONFIG ACTIVATE LSK in the COMM CONFIG menu must be pressed. When the initialization of the ATSU router is completed, the DATALINK ATSU FAULT + ATSU INIT FAULT warning goes off.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-022",
+    "ata": "46",
+    "subtopic": "ATSU Router initialization and tests",
+    "category": "B2",
+    "level": 3,
+    "question": "During an ATSU operational test in Voice mode, what indication on the Radio Management Panel (RMP) remains in the active window?",
+    "options": {
+      "a": "The active frequency in digits",
+      "b": "The 'DATA' indication",
+      "c": "The 'STBY' indication"
+    },
+    "correct_answer": "b",
+    "justification": "Page 27: On the Radio Management Panel (RMP), the DATA indication stays in view in the active window. In this mode, communication tests with the ground can be done.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-023",
+    "ata": "46",
+    "subtopic": "ATIMS interfaces",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit transmits UTC time and date to the ATSU as a backup to the aircraft clock?",
+    "options": {
+      "a": "Flight Management and Guidance Computer 1 (FMGC1)",
+      "b": "Multi-Mode Receiver 2 (MMR2)",
+      "c": "Display Management Computer 3 (DMC3)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 35: As back-up of the clock, the MMR2 transmits the UTC time and date from a GPS source, on an ARINC 429 bus.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-024",
+    "ata": "46",
+    "subtopic": "ATIMS interfaces",
+    "category": "B2",
+    "level": 1,
+    "question": "The ATSU sends 1 discrete signal to the 3 RMPs. What is the purpose of this signal?",
+    "options": {
+      "a": "To indicate which entity is controlling the VDR3",
+      "b": "To synchronize the active frequency between RMPs",
+      "c": "To initiate a self-test of the RMP communication buses"
+    },
+    "correct_answer": "a",
+    "justification": "Page 35: The ATSU sends 1 discrete signal to the 3 RMPs to indicate which entity is controlling the VDR3.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-025",
+    "ata": "46",
+    "subtopic": "ATIMS interfaces",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the primary purpose of the ATSU/FDIMU interface?",
+    "options": {
+      "a": "Loading of performance databases into the FMGC",
+      "b": "Flight performance in uplink request and downlink AIDS reports",
+      "c": "Recording of cockpit voice signals for the CVR"
+    },
+    "correct_answer": "b",
+    "justification": "Page 36: The ATSU/FDIMU interface is used for flight performance in uplink request and downlink AIDS reports.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-026",
+    "ata": "46",
+    "subtopic": "ATIMS interfaces",
+    "category": "B2",
+    "level": 2,
+    "question": "Which system is optionally used to connect an Electronic Flight Bag (EFB) for the 'Less Paper in Cockpit' option?",
+    "options": {
+      "a": "ATIMS Printer interface",
+      "b": "Aircraft Information Network System (AINS) plugs",
+      "c": "Multipurpose Control and Display Unit (MCDU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 36: NOTE: The AINS plugs are used to connect the Electronic Flight Bag (EFB) for customers who get the Less Paper in Cockpit (LCP) option.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-027",
+    "ata": "46",
+    "subtopic": "ATIMS interfaces",
+    "category": "B2",
+    "level": 3,
+    "question": "If an aircraft loses communication with the GPS clock, how does the ATSU maintain valid UTC time for AOC messages?",
+    "options": {
+      "a": "It uses time signals from the FMGC 1",
+      "b": "It acquires UTC data from the MMR2 on an ARINC 429 bus",
+      "c": "It reverts to the local time entered manually on the COMM CONFIG page"
+    },
+    "correct_answer": "b",
+    "justification": "Page 35: The ATSU acquires Universal Time Coordinated (UTC) time and date from the clock... As back-up of the clock, the MMR2 transmits the UTC time and date from a GPS source.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-028",
+    "ata": "46",
+    "subtopic": "ATIMS interfaces",
+    "category": "B2",
+    "level": 3,
+    "question": "How does the ATSU determine whether the aircraft is on ground or in flight for its logic functions?",
+    "options": {
+      "a": "Via a discrete input from the Landing Gear Control and Interface Unit (LGCIU)",
+      "b": "By comparing Air Data/Inertial Reference Unit (ADIRU) airspeed to 80 knots",
+      "c": "Through ARINC 429 altitude data received from the Radio Altimeter"
+    },
+    "correct_answer": "a",
+    "justification": "Page 36: The ATSU receives, from the Landing Gear Control and Interface Unit (LGCIU), information on a discrete input to determine if the aircraft is on ground or in flight.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-029",
+    "ata": "46",
+    "subtopic": "Enhanced Surveillance (EHS)",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the primary use of the Mode S Data Link in the Elementary Surveillance (ELS) concept?",
+    "options": {
+      "a": "Transmission of AOC company reports",
+      "b": "TCAS coordination, selective interrogation, and enhanced surveillance",
+      "c": "Voice communication over satellite networks"
+    },
+    "correct_answer": "b",
+    "justification": "Page 38: Mode S: Data Link - Used for TCAS, selective interrogation, enhanced surveillance.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-030",
+    "ata": "46",
+    "subtopic": "Enhanced Surveillance (EHS)",
+    "category": "B2",
+    "level": 1,
+    "question": "Which of the following is NOT an Elementary Surveillance (ELS) parameter sent to the ATC Center?",
+    "options": {
+      "a": "Aircraft identification",
+      "b": "Flight level",
+      "c": "Roll angle"
+    },
+    "correct_answer": "c",
+    "justification": "Page 40: The Elementary Surveillance (ELS) sends to the ATC Center: aircraft identification, flight level. Roll angle is listed under specific parameters for enhanced surveillance (EHS).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-031",
+    "ata": "46",
+    "subtopic": "Enhanced Surveillance (EHS)",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the typical range limit for ADS-B broadcast signals using the transponder aerial?",
+    "options": {
+      "a": "120 NM",
+      "b": "250 NM",
+      "c": "500 NM"
+    },
+    "correct_answer": "a",
+    "justification": "Page 42: Because ADS-B uses the transponder aerial, the range limit is 120NM.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-032",
+    "ata": "46",
+    "subtopic": "Enhanced Surveillance (EHS)",
+    "category": "B2",
+    "level": 2,
+    "question": "How does Automatic Dependant Surveillance-Contract (ADS-C) differ from ADS-Broadcast (ADS-B)?",
+    "options": {
+      "a": "ADS-C is hosted by the transponder while ADS-B is hosted by the ATSU",
+      "b": "ADS-C reports data requested in a contract between the airborne system and the ATC ground system",
+      "c": "ADS-C requires no action from the flight crew while ADS-B requires manual triggering"
+    },
+    "correct_answer": "b",
+    "justification": "Page 42: The ADS-C application is hosted by the ATSU and reports data requested in a contract made between the airborne system and the ATC ground system.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-033",
+    "ata": "46",
+    "subtopic": "Enhanced Surveillance (EHS)",
+    "category": "B2",
+    "level": 3,
+    "question": "What happens if an aircraft is flying outside of Secondary Surveillance Radar (SSR) coverage but has active ADS-C?",
+    "options": {
+      "a": "It can no longer be tracked by any ATC facility",
+      "b": "It can still be tracked using worldwide data link range (SATCOM and HF)",
+      "c": "The transponder automatically switches to 'Extended Squitters' to increase range"
+    },
+    "correct_answer": "b",
+    "justification": "Page 42: ADS-C uses the almost worldwide data link range and can track aircraft out of SSR coverage.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-034",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 1,
+    "question": "Which component of the Airbus Information Network System (AINS) provides server and data management functions on-board?",
+    "options": {
+      "a": "Server Interface Unit (SIU)",
+      "b": "Aircraft Network Server Unit (ANSU)",
+      "c": "Terminal Wireless LAN Unit (TWLU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 47: the Aircraft Network Server Unit (ANSU), which provides a powerful server and data management functions on-board the aircraft.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-035",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the primary function of the AINS Server Interface Unit (SIU)?",
+    "options": {
+      "a": "To host the electronic flight bag (EFB) software",
+      "b": "To provide a security barrier between the avionics world and the open world",
+      "c": "To manage wireless communications with the airport LAN"
+    },
+    "correct_answer": "b",
+    "justification": "Page 47: the Server Interface Unit (SIU), which protects the 'avionics world' systems from pollution or hacking intrusion from the 'open world', and gives a security barrier between the avionics and open networks.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-036",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 2,
+    "question": "The AINS Terminal Wireless LAN Unit (TWLU) is designed to operate under which condition?",
+    "options": {
+      "a": "During all flight phases above 10,000 feet",
+      "b": "Only when the aircraft is on the ground",
+      "c": "Only during approach and landing phases"
+    },
+    "correct_answer": "b",
+    "justification": "Page 53: The function of the TWLU is to operate only while the aircraft is on the ground.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B1-037",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B1",
+    "level": 2,
+    "question": "How are the SIU, ANSU, and TWLU supplied with power?",
+    "options": {
+      "a": "28V DC from the ESS BUS",
+      "b": "115V AC from BUS 2 via a circuit breaker",
+      "c": "5V AC from the lighting transformer"
+    },
+    "correct_answer": "b",
+    "justification": "Page 55: The SIU, the ANSU and the TWLU are supplied with 115V AC from the 115V AC BUS 2 bar 218XP-B via a Circuit Breaker (C/B).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-038",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 3,
+    "question": "If the Server Interface Unit (SIU) is removed for maintenance, what happens to the cockpit peripheral connections?",
+    "options": {
+      "a": "They automatically switch to the standby FMGC",
+      "b": "MCDU 3 and the printer connections with the CFDIU are lost",
+      "c": "Only the laptop EFB connection is affected; the printer remains functional"
+    },
+    "correct_answer": "b",
+    "justification": "Page 57: NOTE: If the SIU is removed (e.g for maintenance purpose), the MCDU 3 and the printer connections with the CFDIU are lost as they are switched internally in the SIU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-039",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 3,
+    "question": "After an AINS software reset using the switch on the 48VU panel, how long must the crew wait before using the AINS and CINS?",
+    "options": {
+      "a": "2 minutes",
+      "b": "15 minutes",
+      "c": "30 seconds"
+    },
+    "correct_answer": "b",
+    "justification": "Page 57: After the software reset, it is necessary to wait approximately 15 minutes before using the AINS and the CINS.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-040",
+    "ata": "23",
+    "subtopic": "VHF communication system (transceivers, antennas, control)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which VHF Data Radio (VDR) is typically reserved for ATSU functions and backup voice communications?",
+    "options": {
+      "a": "VDR 1",
+      "b": "VDR 2",
+      "c": "VDR 3"
+    },
+    "correct_answer": "c",
+    "justification": "Page 61: VDR 3 is used for Air Traffic Service Unit (ATSU) functions and as back-up voice communications if there is a failure of system 1 or 2.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-041",
+    "ata": "23",
+    "subtopic": "VHF communication system (transceivers, antennas, control)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "What is the standard frequency range for the aircraft's VHF system?",
+    "options": {
+      "a": "108.00 to 117.95 MHz",
+      "b": "118.00 to 136.975 MHz",
+      "c": "2.8 to 23.999 MHz"
+    },
+    "correct_answer": "b",
+    "justification": "Page 89: The VHF system operates within the frequency range of 118.00 to 136.975 MHz.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-042",
+    "ata": "23",
+    "subtopic": "VHF communication system (transceivers, antennas, control)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "On the Radio Management Panel (RMP), what happens to the previous active frequency when a new standby frequency is transferred?",
+    "options": {
+      "a": "It is permanently deleted from the RMP memory",
+      "b": "It becomes the new standby frequency",
+      "c": "It is stored in the FMGC navigation database"
+    },
+    "correct_answer": "b",
+    "justification": "Page 96: Pressing the transfer pushbutton, activates the frequency and displays it in the active window, whereas the previous active frequency becomes stand-by.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-043",
+    "ata": "23",
+    "subtopic": "VHF communication system (transceivers, antennas, control)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "How does an operator select multiple radio receivers for simultaneous listening on the Audio Control Panel (ACP)?",
+    "options": {
+      "a": "By pulling the corresponding reception knobs out",
+      "b": "By pressing and releasing the reception knobs so they come on white",
+      "c": "By using the 'ALL' button on the RMP"
+    },
+    "correct_answer": "b",
+    "justification": "Page 96: To select a receiver, the related reception knob must be released out. The reception knob comes on white... several reception knobs can be selected simultaneously.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-044",
+    "ata": "23",
+    "subtopic": "VHF communication system (transceivers, antennas, control)",
+    "category": "B2",
+    "level": 3,
+    "question": "If RMP 1 fails, how can the VHF 1 transceiver still be controlled?",
+    "options": {
+      "a": "It can only be controlled by the FMGC through automatic tuning",
+      "b": "It can be controlled by another RMP through Serial input port B",
+      "c": "It is permanently lost until the RMP is replaced"
+    },
+    "correct_answer": "b",
+    "justification": "Page 88: The VHF transceiver has 2 serial input ports : Serial input port A for normal use and serial input port B in case of RMP failure.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-045",
+    "ata": "23",
+    "subtopic": "VHF communication system (transceivers, antennas, control)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "What is the ECAM indication if a VHF system emits continuously for more than one minute?",
+    "options": {
+      "a": "VHF 1 FAULT in amber",
+      "b": "COM: VHF 1/2 EMITTING in amber",
+      "c": "DATALINK STBY in green"
+    },
+    "correct_answer": "b",
+    "justification": "Page 88: In case of continuous emitting, the ECAM displays: - COM: VHF 1/2 EMITTING.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-046",
+    "ata": "23",
+    "subtopic": "HF communication system",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Where is the HF antenna located on the Airbus Single Aisle aircraft?",
+    "options": {
+      "a": "On the top of the fuselage behind the cockpit",
+      "b": "Behind the leading edge of the vertical stabilizer",
+      "c": "Inside the nose radome"
+    },
+    "correct_answer": "b",
+    "justification": "Page 67: The HF antenna is installed behind the leading edge of the vertical stabilizer.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-047",
+    "ata": "23",
+    "subtopic": "HF communication system",
+    "category": "B1B2",
+    "level": 1,
+    "question": "What is the frequency range for the HF communication system?",
+    "options": {
+      "a": "118.0 to 136.0 MHz",
+      "b": "2.8 to 23.999 MHz",
+      "c": "960 to 1220 MHz"
+    },
+    "correct_answer": "b",
+    "justification": "Page 85: The HF system operates within the frequency range of 2.8 to 23.999 MHz.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-048",
+    "ata": "23",
+    "subtopic": "HF communication system",
+    "category": "B2",
+    "level": 2,
+    "question": "Which unit controls the tuning operations for the HF transceivers via ARINC 429 numeric messages?",
+    "options": {
+      "a": "Flight Management and Guidance Computer (FMGC)",
+      "b": "Radio Management Panel (RMP)",
+      "c": "Audio Management Unit (AMU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 86: The Radio Management Panel (RMP) controls the tuning operations which are transmitted to the transceiver (XCVR) by a numeric message in compliance with ARINC 429.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1-049",
+    "ata": "23",
+    "subtopic": "HF communication system",
+    "category": "B1",
+    "level": 3,
+    "question": "If an aircraft is being jacked for maintenance with weight off wheels, how is the HF BITE affected?",
+    "options": {
+      "a": "The HF system automatically enters a full power test mode",
+      "b": "The LGCIU signal allows the HF BITE to accurately count flight legs",
+      "c": "The HF BITE assumes the aircraft is in flight based on the LGCIU status",
+      "d": ""
+    },
+    "correct_answer": "c",
+    "justification": "Page 86: The Landing Gear Control and Interface Unit (LGCIU) indicates the flight or ground status... used by the HF BITE, in order to count the flight legs.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-050",
+    "ata": "23",
+    "subtopic": "SELCAL system",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Where is the SELCAL code panel located on the aircraft?",
+    "options": {
+      "a": "Center pedestal",
+      "b": "Aft avionics compartment (80VU)",
+      "c": "Flight Attendant Panel (FAP)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 69: The SELCAL panel, AMU, HF and VHF Line Replaceable Units (LRUs) are in the aft avionics compartment. Page 91 also specifies 80VU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-051",
+    "ata": "23",
+    "subtopic": "SELCAL system",
+    "category": "B2",
+    "level": 2,
+    "question": "How is a crew member alerted on the ACP when a valid SELCAL code is received?",
+    "options": {
+      "a": "A green 'DATA' light appears on the RMP",
+      "b": "The CALL light flashes amber on the corresponding communication channel",
+      "c": "A continuous buzzer sounds from the area microphone"
+    },
+    "correct_answer": "b",
+    "justification": "Page 90: On the ACPs, the CALL light, corresponding to the communication channel used, flashes amber.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-052",
+    "ata": "23",
+    "subtopic": "SELCAL system",
+    "category": "B1B2",
+    "level": 3,
+    "question": "Which of the following methods can be used to cancel a SELCAL call alert?",
+    "options": {
+      "a": "Pressing the RESET key on any ACP or activating the PTT on the called channel",
+      "b": "Rotating the volume control knob on the AMU",
+      "c": "Switching off the RMP for 5 seconds"
+    },
+    "correct_answer": "a",
+    "justification": "Page 90: The call is cancelled using the RESET key on one ACP, or selecting the called channel and activating the Push To Talk (PTT).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-053",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which interphone system is intended for ground use only by maintenance technicians?",
+    "options": {
+      "a": "Flight interphone",
+      "b": "Cabin interphone",
+      "c": "Service interphone"
+    },
+    "correct_answer": "c",
+    "justification": "Page 63: Service interphone (on ground only) for maintenance technician communication with cockpit or cabin.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-054",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "How many service interphone jacks are installed around the aircraft?",
+    "options": {
+      "a": "Three",
+      "b": "Five",
+      "c": "Eight"
+    },
+    "correct_answer": "c",
+    "justification": "Page 224: The SVCE INTPH SYS is made of: - eight interphone jacks.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-055",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the function of the five isolation units in the service interphone system?",
+    "options": {
+      "a": "To amplify audio signals for long wire runs",
+      "b": "To minimize effects of a short-circuit in a maintenance jack-socket",
+      "c": "To separate flight crew communications from ground crew audio"
+    },
+    "correct_answer": "b",
+    "justification": "Page 224: five isolation units, If there is a short-circuit condition in a maintenance-interphone jack-socket, the isolation unit will keep the effects of the failure on the service interphone system to a minimum.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-056",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "On the Audio Control Panel, what does the illumination of the green bars on the INT transmission key indicate?",
+    "options": {
+      "a": "A call is being received from the purser",
+      "b": "The flight interphone is ready to operate",
+      "c": "The cockpit loudspeaker is muted"
+    },
+    "correct_answer": "b",
+    "justification": "Page 94: Selection of the INT transmission key lights the green bars, indicating that the flight interphone is ready to operate.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-057",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B2",
+    "level": 3,
+    "question": "What happens to the flight interphone communication if a radio emission is keyed while the INT/RAD switch is in the INT position?",
+    "options": {
+      "a": "The radio emission is blocked until the interphone is released",
+      "b": "Both signals are mixed and transmitted simultaneously",
+      "c": "The flight interphone is momentarily cut"
+    },
+    "correct_answer": "c",
+    "justification": "Page 94: NOTE: The radio function has priority over the flight interphone function. So, even with the INT/RAD switch in INT position, the flight interphone is momentarily cut during a radio emission.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1-058",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B1",
+    "level": 3,
+    "question": "Why is the service interphone system automatically disabled when the aircraft is jacked with weight off wheels?",
+    "options": {
+      "a": "To save battery power for emergency systems",
+      "b": "To stop potential static noise from wires acting as antennae",
+      "c": "To prevent accidental triggering of the landing gear retraction"
+    },
+    "correct_answer": "b",
+    "justification": "Page 336: With weight off wheels, the service interphone system is disabled... The reason for this is to stop potential static noise started and amplified through the AMU due to the length of wires acting as antennae.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-059",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "If the LGCIU signal is unavailable on the ground, how can maintenance personnel establish service interphone communication?",
+    "options": {
+      "a": "By pulling and resetting the CIDS director circuit breakers",
+      "b": "By switching the SVCE INT OVRD P/BSW to 'ON' on the 50VU panel",
+      "c": "By selecting 'STBY' on all RMPs simultaneously"
+    },
+    "correct_answer": "b",
+    "justification": "Page 336: To re-enable the service interphone, the SerViCE INTerphone OVeRriDe P/BSW must be switched to 'ON'. The Service Interphone Override switch is on the Maintenance Panel 50VU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-060",
+    "ata": "23",
+    "subtopic": "Passenger Address (PA) system",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit is responsible for assigning priorities to various PA sources and transmitting digital signals to the DEU As?",
+    "options": {
+      "a": "Audio Management Unit (AMU)",
+      "b": "CIDS Director",
+      "c": "Flight Attendant Panel (FAP)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 213: The Cabin Intercommunication Data System (CIDS) directors (DIRs) accept audio signals from the various Passenger Address (PA) sources... The active DIR assigns priorities to each source. It transmits the signal in digital form via the two top-line data buses to the type A Decoder/Encoder Units (DEUs).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-061",
+    "ata": "23",
+    "subtopic": "Passenger Address (PA) system",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the standard first priority for Passenger Address announcements?",
+    "options": {
+      "a": "Cabin attendant stations",
+      "b": "Prerecorded announcement (PRAM)",
+      "c": "Flight compartment"
+    },
+    "correct_answer": "c",
+    "justification": "Page 213: The basic levels of priority are the following ones: - 1st priority: Flight compartment.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-062",
+    "ata": "23",
+    "subtopic": "Passenger Address (PA) system",
+    "category": "B2",
+    "level": 2,
+    "question": "By how many decibels is the PA volume automatically increased when an engine is running?",
+    "options": {
+      "a": "+ 2 dB",
+      "b": "+ 4 dB",
+      "c": "+ 6 dB"
+    },
+    "correct_answer": "c",
+    "justification": "Page 214: When an engine is running, the PA volume is increased automatically by + 6 dB.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-063",
+    "ata": "23",
+    "subtopic": "Passenger Address (PA) system",
+    "category": "B2",
+    "level": 2,
+    "question": "Which system component monitors for rapid decompression to trigger an automatic PA announcement increase of +4 dB?",
+    "options": {
+      "a": "Flight Warning Computer (FWC)",
+      "b": "Cabin Pressure Controller (CPC)",
+      "c": "Engine Interface Unit (EIU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 214: When an engine is running, the PA volume is increased automatically by + 6 dB, and by + 4 dB in the event of cabin depressurization, monitored by the Cabin Pressure Controller (CPC).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-064",
+    "ata": "23",
+    "subtopic": "Passenger Address (PA) system",
+    "category": "B2",
+    "level": 3,
+    "question": "How is acoustic feedback avoided if the cockpit door is opened during a PA announcement?",
+    "options": {
+      "a": "The cockpit loudspeaker is completely muted",
+      "b": "The PA volume decreases in the cockpit door area",
+      "c": "The PA system is automatically disconnected until the door is closed"
+    },
+    "correct_answer": "b",
+    "justification": "Page 214: If during a PA announcement the cockpit door is opened, there is a volume decrease of the PA announcement in the cockpit door area, to avoid a feedback with the cockpit.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-065",
+    "ata": "23",
+    "subtopic": "Audio Management Unit (AMU)",
+    "category": "B2",
+    "level": 1,
+    "question": "What type of data is exchanged between the Audio Management Unit (AMU) and the Audio Control Panels (ACPs)?",
+    "options": {
+      "a": "Analog audio signals",
+      "b": "Digital data via ARINC 429 buses",
+      "c": "High-frequency radio signals"
+    },
+    "correct_answer": "b",
+    "justification": "Page 80: ACP-AMU link is done by ARINC 429 buses. Only digital data are exchanged between the AMU and the ACPs. There are no audio signals inside the ACPs.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-066",
+    "ata": "23",
+    "subtopic": "Audio Management Unit (AMU)",
+    "category": "B2",
+    "level": 2,
+    "question": "Where is the actual volume control processing for radio and interphone achieved?",
+    "options": {
+      "a": "Inside the individual ACPs",
+      "b": "Inside the Radio Management Panels (RMPs)",
+      "c": "Inside the Audio Management Unit (AMU)"
+    },
+    "correct_answer": "c",
+    "justification": "Page 80: The volume control function is achieved by digital transmission of the knobs position to the AMU. Volume control is achieved inside the AMU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-067",
+    "ata": "23",
+    "subtopic": "Audio Management Unit (AMU)",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the effect of the AMU muting circuit when a transmission is keyed by a push-to-talk switch?",
+    "options": {
+      "a": "It disconnects all headsets to prevent listener fatigue",
+      "b": "It decreases the gain and band-pass of the loudspeaker amplifiers",
+      "c": "It sends a ground signal to the FWC to suppress Master Warning audio"
+    },
+    "correct_answer": "b",
+    "justification": "Page 82: When a transmission is keyed by any push to talk switch, a ground signal is delivered to the two loudspeaker amplifiers. This ground signal decreases the gain and band-pass of the loudspeaker amplifiers.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-068",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "On how many independent channels does the CVR record audio signals?",
+    "options": {
+      "a": "Two",
+      "b": "Four",
+      "c": "Eight"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: In normal mode, the CVR records, on four independent channels, the audio signals...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-069",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "What audio is recorded on CVR Channel 4?",
+    "options": {
+      "a": "Captain's audio via the AMU",
+      "b": "Ambient noise picked up by the area microphone",
+      "c": "Datalink message archives from the ATSU"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: Channel 4 records the ambient noise picked up by the area microphone and supplied through a pre-amplifier to the CVR.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-070",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What specific ground conditions must be met for the CVR erase function to operate?",
+    "options": {
+      "a": "Aircraft on ground, engines running, and parking brake off",
+      "b": "Aircraft on ground, landing gear shock absorbers compressed, and parking brake applied",
+      "c": "Aircraft on ground, weight-on-wheels signal present, and slats/flaps extended"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: Erase is only possible, aircraft on the ground, R and L main landing gear shock absorbers compressed and parking brake applied.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-071",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "If the engines are shut down, how must the CVR be energized for testing?",
+    "options": {
+      "a": "By selecting 'CVR TEST' on the MCDU maintenance menu",
+      "b": "By pressing the GND CTL P/B on the RCDR panel",
+      "c": "By initiating an APU start sequence"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: NOTE: If the engines are shut down, the CVR must first be energized by pressing the GND CTL P/B on the RCDR panel.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-072",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "How long does the CVR continue to run after the second engine shutdown on the ground?",
+    "options": {
+      "a": "One minute",
+      "b": "Five minutes",
+      "c": "Ten minutes"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: The CVR is automatically supplied... on the ground until a maximum of five minutes after the second engine shutdown.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-073",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B2",
+    "level": 3,
+    "question": "In CVR 'CAA mode', when are the hand microphones considered 'HOT'?",
+    "options": {
+      "a": "At all times for voice/noise pick-up",
+      "b": "Only when the oxygen mask pressure switch is closed",
+      "c": "Only when the Push-To-Talk (PTT) switch on the microphone is activated"
+    },
+    "correct_answer": "c",
+    "justification": "Page 112: In CAA mode... The hand microphones are only 'HOT' when the Push-To-Talk (PTT) switch on the microphone is activated.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-074",
+    "ata": "23",
+    "subtopic": "Audio Switching",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the result of selecting the 'CAPT 3' position on the AUDIO SWITCHING selector?",
+    "options": {
+      "a": "The Captain uses the F/O's Audio Control Panel",
+      "b": "The Captain uses the 3rd occupant ACP, and 3rd occupant audio equipment is disabled",
+      "c": "The Captain's audio is recorded directly to the ATSU as well as the CVR"
+    },
+    "correct_answer": "b",
+    "justification": "Page 78: CAPT 3 POSITION: In this position, the CAPT will use the 3rd occupant ACP. The 3rd occupant audio equipment cannot be used.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-075",
+    "ata": "23",
+    "subtopic": "CIDS Director",
+    "category": "B1B2",
+    "level": 3,
+    "question": "What happens in the CIDS system if the Service Bus power is lost?",
+    "options": {
+      "a": "The system shuts down completely to preserve the ESS BUS",
+      "b": "The second DIR, non-essential DEU circuits, and the FAP become inoperative",
+      "c": "The system switches all loads to the HOT BAT BUS for 30 minutes"
+    },
+    "correct_answer": "b",
+    "justification": "Page 159: If SVCE BUS power is unavailable, the following items of equipment are inoperative: - the second DIR, - the non essential DEU circuits, - the FAP.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-076",
+    "ata": "34",
+    "subtopic": "Air Data and Inertial Reference System (ADIRS)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which function of the ADIRU uses laser gyros and accelerometers to provide attitude and heading data?",
+    "options": {
+      "a": "Air Data Reference (ADR) unit",
+      "b": "Inertial Reference (IR) unit",
+      "c": "Air Data Module (ADM)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 342: Each ADIRU combines... an Air Data Reference (ADR) unit, a strapdown Inertial Reference (IR) unit, using laser gyros and accelerometers.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1-077",
+    "ata": "34",
+    "subtopic": "Air Data and Inertial Reference System (ADIRS)",
+    "category": "B1",
+    "level": 1,
+    "question": "Where are the three ADIRUs located in the aircraft?",
+    "options": {
+      "a": "Forward avionics compartment (90VU)",
+      "b": "Aft avionics compartment forward of 80VU",
+      "c": "On the center pedestal beneath the MCDUs"
+    },
+    "correct_answer": "b",
+    "justification": "Page 436: The 3 ADIRUs are in the aft avionics compartment forward of the 80VU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-078",
+    "ata": "34",
+    "subtopic": "Air Data and Inertial Reference System (ADIRS)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "Which unit is responsible for converting pitot and static pressure into digital ARINC 429 format for the ADIRU?",
+    "options": {
+      "a": "Display Management Computer (DMC)",
+      "b": "Air Data Module (ADM)",
+      "c": "Flight Management and Guidance Computer (FMGC)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 438: Three Pitot probes provide total pressure to three Air Data Modules (ADMs), which convert this pressure into digital format: ARINC 429.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-079",
+    "ata": "34",
+    "subtopic": "Air Data and Inertial Reference System (ADIRS)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "During ADIRU alignment through the MCDU, what must be the position of the MSU selector switches?",
+    "options": {
+      "a": "OFF",
+      "b": "NAV",
+      "c": "ATT"
+    },
+    "correct_answer": "b",
+    "justification": "Page 448: To perform the three IRs alignments, the three OFF/NAVigation/ATTitude selector switches on the Air Data/Inertial Reference System (ADIRS) Mode Selector Unit (MSU) must be set to NAV position.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-080",
+    "ata": "34",
+    "subtopic": "Air Data and Inertial Reference System (ADIRS)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "If both FMGCs have failed, how can the crew tune the navigation receivers?",
+    "options": {
+      "a": "By using the ADIRS Mode Selector Unit in ATT mode",
+      "b": "By using the backup tuning mode on RMP 1 and 2",
+      "c": "By manually entering frequencies on the ISIS indicator"
+    },
+    "correct_answer": "b",
+    "justification": "Page 370: Radio Management Panel (RMP) 1 and 2 are capable of tuning the own side Navigation receivers in backup mode if both FMGCs have failed...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-081",
+    "ata": "34",
+    "subtopic": "Air Data and Inertial Reference System (ADIRS)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "What indication appears on the upper ECAM display unit at the end of a successful IR alignment process?",
+    "options": {
+      "a": "IR ALIGNED message",
+      "b": "The IRS IN ALIGN 1 MN indication goes out of view",
+      "c": "A green 'GPS PRIMARY' message"
+    },
+    "correct_answer": "b",
+    "justification": "Page 448: On the upper ECAM display unit, the IRS IN ALIGN 1 MN indication goes out of view at the end of the alignment process.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-082",
+    "ata": "34",
+    "subtopic": "Integrated Standby Instrument System (ISIS)",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which conventional instruments does the Integrated Standby Instrument System (ISIS) replace?",
+    "options": {
+      "a": "PFD, ND, and DDRMI",
+      "b": "Standby altimeter, horizon indicator, and AirSpeed Indicator (ASI)",
+      "c": "VOR, ADF, and Marker receivers"
+    },
+    "correct_answer": "b",
+    "justification": "Page 450: The Integrated Standby Instrument System (ISIS) is a combined standby altimeter, horizon indicator and AirSpeed Indicator (ASI).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-083",
+    "ata": "34",
+    "subtopic": "Integrated Standby Instrument System (ISIS)",
+    "category": "B2",
+    "level": 1,
+    "question": "How long is the initialization display shown when the ISIS is first energized?",
+    "options": {
+      "a": "30 seconds",
+      "b": "90 seconds",
+      "c": "5 minutes"
+    },
+    "correct_answer": "b",
+    "justification": "Page 450: As soon as the ISIS is energized, it shows the initialization display for 90 s.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-084",
+    "ata": "34",
+    "subtopic": "Integrated Standby Instrument System (ISIS)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What is indicated by the trapezoidal index beneath the roll indicator on the ISIS standby horizon?",
+    "options": {
+      "a": "Aircraft vertical speed",
+      "b": "Aircraft lateral acceleration (sideslip)",
+      "c": "Flight path angle order"
+    },
+    "correct_answer": "b",
+    "justification": "Page 458: A trapezoidal index, which can move beneath the roll indicator, represents the A/C lateral acceleration (sideslip).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-085",
+    "ata": "34",
+    "subtopic": "Integrated Standby Instrument System (ISIS)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "Which button on the ISIS is used to program characteristic speeds and altitudes on the display scales?",
+    "options": {
+      "a": "LS P/B",
+      "b": "BUGS P/B",
+      "c": "RST P/B"
+    },
+    "correct_answer": "b",
+    "justification": "Page 460: Pushing the BUGS P/B shows the BUGS display. This display is used to program characteristic speeds and altitudes displayed on the related speed and altitude scales.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-086",
+    "ata": "34",
+    "subtopic": "Integrated Standby Instrument System (ISIS)",
+    "category": "B2",
+    "level": 3,
+    "question": "Under what condition is the ISIS functional test inhibited?",
+    "options": {
+      "a": "Whenever the aircraft is on the ground",
+      "b": "When the Calibrated Air Speed (CAS) is greater than 60 knots",
+      "c": "When the Landing System (LS) mode is active"
+    },
+    "correct_answer": "b",
+    "justification": "Page 462: NOTE: The ISIS has an internal flight/ground logic... The test is inhibited when the Calibrated Air Speed (CAS) is greater than 60 kts.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1-087",
+    "ata": "34",
+    "subtopic": "Integrated Standby Instrument System (ISIS)",
+    "category": "B1",
+    "level": 3,
+    "question": "What is the backup power supply for the ISIS if the DC Essential Bus is not available?",
+    "options": {
+      "a": "APU Generator",
+      "b": "HOT BATTERY BUS (if airspeed > 50 kts)",
+      "c": "Static Inverter"
+    },
+    "correct_answer": "b",
+    "justification": "Page 464: If DC ESS BUS is not available, a back-up of 28V DC is automatically supplied from the HOT BATtery BUS if airspeed is greater than 50 kts.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-088",
+    "ata": "34",
+    "subtopic": "Multi-Mode Receiver (MMR) system",
+    "category": "B2",
+    "level": 1,
+    "question": "Which two navigation functions are combined into a single Multi-Mode Receiver (MMR) unit?",
+    "options": {
+      "a": "VOR and DME",
+      "b": "ILS and GPS",
+      "c": "ADF and TCAS"
+    },
+    "correct_answer": "b",
+    "justification": "Page 472: The Multi-Mode Receiver (MMR) system is a navigation sensor with 3 internal receivers: MMR = ILS + GPS.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1-089",
+    "ata": "34",
+    "subtopic": "Multi-Mode Receiver (MMR) system",
+    "category": "B1",
+    "level": 1,
+    "question": "Where are the ILS Localizer and Glide Slope antennas typically installed?",
+    "options": {
+      "a": "Top fuselage",
+      "b": "Nose radome",
+      "c": "Vertical stabilizer"
+    },
+    "correct_answer": "b",
+    "justification": "Page 480: The Multi-mode Receiver antennas are installed... in the radome for the G/S and LOC dual antennas.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-090",
+    "ata": "34",
+    "subtopic": "Multi-Mode Receiver (MMR) system",
+    "category": "B1B2",
+    "level": 2,
+    "question": "In the GPS system architecture, how many satellites are necessary for the receiver to compute the aircraft position?",
+    "options": {
+      "a": "At least one",
+      "b": "At least four",
+      "c": "At least twenty-four"
+    },
+    "correct_answer": "b",
+    "justification": "Page 478: The principle of GPS position computation is based on the measurement of transmission time of the GPS signals broadcast by at least four satellites.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-091",
+    "ata": "34",
+    "subtopic": "Multi-Mode Receiver (MMR) system",
+    "category": "B2",
+    "level": 2,
+    "question": "What does the 'GPS PRIMARY' message on the Navigation Display (ND) indicate?",
+    "options": {
+      "a": "The GPS is the only available navigation source",
+      "b": "The GPS is receiving adequate signals to calculate a present position",
+      "c": "The FMGC has selected GPS 1 as the master source"
+    },
+    "correct_answer": "b",
+    "justification": "Page 380: GPS when receiving adequate signals to calculate a present position will be annotated at the bottom of the ND. This is displayed as 'GPS PRIMARY'.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-092",
+    "ata": "34",
+    "subtopic": "Multi-Mode Receiver (MMR) system",
+    "category": "B2",
+    "level": 3,
+    "question": "To preserve side segregation, which input port of ADIRU 3 should be selected if ADIRU 1 fails in a dual GPS architecture?",
+    "options": {
+      "a": "Primary input port (GPS 1)",
+      "b": "Secondary input port (GPS 2)",
+      "c": "Digital Interface port (MMR 2)"
+    },
+    "correct_answer": "a",
+    "justification": "Page 486: In case of one ADIRU 1 failure, the FMGC 1 uses ADIRU 3/GPS 1 data. (Preserving segregation: GPS 1/ADIRU 1/FMGC 1 and GPS 2/ADIRU 2/FMGC 2).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-093",
+    "ata": "34",
+    "subtopic": "Multi-Mode Receiver (MMR) system",
+    "category": "B2",
+    "level": 3,
+    "question": "What logic inhibits frequency changes in the MMR unit during an ILS approach?",
+    "options": {
+      "a": "The LGCIU when landing gear is extended",
+      "b": "The FMGC when LAND mode is armed below 700 feet",
+      "c": "The EGPWC when a terrain caution is detected"
+    },
+    "correct_answer": "b",
+    "justification": "Page 489: NOTE: A discrete signal sent by the FMGC inhibits any frequency change in the MMR unit when LAND mode is armed below 700 ft.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-094",
+    "ata": "34",
+    "subtopic": "Weather radar system",
+    "category": "B1B2",
+    "level": 1,
+    "question": "What is the maximum range for rain detection using the Weather Radar (WXR) system?",
+    "options": {
+      "a": "40 NM",
+      "b": "320 NM",
+      "c": "5 NM"
+    },
+    "correct_answer": "b",
+    "justification": "Page 492: Maximum range: For rain detection: 320 NM.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-095",
+    "ata": "34",
+    "subtopic": "Weather radar system",
+    "category": "B2",
+    "level": 1,
+    "question": "In which EFIS mode is the WXR image NOT displayed?",
+    "options": {
+      "a": "ARC mode",
+      "b": "ROSE mode",
+      "c": "PLAN mode"
+    },
+    "correct_answer": "c",
+    "justification": "Page 497: Radar image... are displayed in all EFIS modes (ARC and ROSE) but not in PLAN mode.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-096",
+    "ata": "34",
+    "subtopic": "Weather radar system",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What safety precaution must be observed for personnel when the WXR is 'ON' on the ground?",
+    "options": {
+      "a": "Personnel should not be within 1.5 meters of the antenna",
+      "b": "Personnel should not be within 5 meters of the radome",
+      "c": "Personnel should not be within 60 meters of the aircraft nose"
+    },
+    "correct_answer": "b",
+    "justification": "Page 412: WARNING: when the WXR is 'ON': - personnel should not be within 5 meters of the radome.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-097",
+    "ata": "34",
+    "subtopic": "Weather radar system",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the purpose of the 'multiscan' function in the Weather Radar system?",
+    "options": {
+      "a": "To scan both horizontal and vertical planes simultaneously",
+      "b": "To provide significant weather display at all ranges essentially clutter-free",
+      "c": "To track terrain elevation using the GPS database"
+    },
+    "correct_answer": "b",
+    "justification": "Page 412: The multiscan is a radar function that displays all significant weather at all ranges... on a display that is essentially clutter-free.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-098",
+    "ata": "34",
+    "subtopic": "Weather radar system",
+    "category": "B2",
+    "level": 3,
+    "question": "How does the WXR system determine the optimum tilt angle when the MULTISCAN SW is set to AUTO?",
+    "options": {
+      "a": "By using pitch data from the ADIRU only",
+      "b": "By using terrain altitude information from the EGPWS",
+      "c": "By scanning the horizon and calculating the strongest reflection"
+    },
+    "correct_answer": "b",
+    "justification": "Page 412: The autotilt function uses the terrain altitude information of the EGPWS. Based on the aircraft altitude above the terrain... the EGPWS determines the optimum tilt angle.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-099",
+    "ata": "34",
+    "subtopic": "Weather radar system",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the result on the WXR/PWS transceiver if both EFIS control panels are set to PLAN mode?",
+    "options": {
+      "a": "The transceiver remains in standby mode",
+      "b": "The transceiver is de-energized",
+      "c": "The transceiver continues scanning but display is inhibited"
+    },
+    "correct_answer": "b",
+    "justification": "Page 503: NOTE: When both EFIS control panels are in PLAN mode, the WXR/PWS transceiver is de-energized.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-100",
+    "ata": "34",
+    "subtopic": "Radio altimeter",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Up to what altitude is the radio height data displayed on the PFD?",
+    "options": {
+      "a": "500 feet",
+      "b": "2,500 feet",
+      "c": "10,000 feet"
+    },
+    "correct_answer": "b",
+    "justification": "Page 408: RA data is supplied to several users and is displayed on both PFDs at all times below 2500 feet Above Ground Level (AGL).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-101",
+    "ata": "34",
+    "subtopic": "Radio altimeter",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What is the operating frequency range of the Radio Altimeter (RA) transceiver?",
+    "options": {
+      "a": "108 to 117 MHz",
+      "b": "4,200 to 4,400 MHz",
+      "c": "9,345 MHz"
+    },
+    "correct_answer": "b",
+    "justification": "Page 518: The RA transceiver measures the radio height... The transceiver operates in a frequency range of 4.200 to 4.400 MHz.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-102",
+    "ata": "34",
+    "subtopic": "Radio altimeter",
+    "category": "B2",
+    "level": 3,
+    "question": "What happens if RA 1 transceiver fails during normal flight below 2,500 feet?",
+    "options": {
+      "a": "The CAPT PFD display for radio height is permanently lost",
+      "b": "The DMC automatically switches the display to RA 2 data",
+      "c": "The ADIRU 1 provides a computed barometric altitude instead"
+    },
+    "correct_answer": "b",
+    "justification": "Page 518: In normal operation, RA 1 provides the radio height to the CAPT PFD... In case of one transceiver failure the DMC automatically switches to the other one.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-103",
+    "ata": "34",
+    "subtopic": "TCAS/ACAS system",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the function of the Resolution Advisory (RA) volume in the TCAS system?",
+    "options": {
+      "a": "It identifies traffic that does not represent a collision threat",
+      "b": "It triggers an aural and visual alarm for intruders representing a collision threat",
+      "c": "It provides a 120 NM search area around the aircraft"
+    },
+    "correct_answer": "b",
+    "justification": "Page 520: RA VOLUME: When the intruder represents a collision threat, the TCAS (or T2CAS) triggers an aural and visual alarm known as Resolution Advisory (RA).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-104",
+    "ata": "34",
+    "subtopic": "TCAS/ACAS system",
+    "category": "B1B2",
+    "level": 1,
+    "question": "How many TCAS antennas are installed on the aircraft?",
+    "options": {
+      "a": "One top antenna only",
+      "b": "Two antennas (1 top and 1 bottom)",
+      "c": "Four antennas (2 top and 2 bottom)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 531: The Traffic alert and Collision Avoidance System (TCAS) includes: ... - 2 antennas (1 top and 1 bottom).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-105",
+    "ata": "34",
+    "subtopic": "TCAS/ACAS system",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the primary role of the 'Suppressor' coaxial in the TCAS system?",
+    "options": {
+      "a": "To amplify signals between the top and bottom antennas",
+      "b": "To inhibit other systems in the same frequency range and prevent simultaneous transmission",
+      "c": "To filter out background noise from ground-based radar"
+    },
+    "correct_answer": "b",
+    "justification": "Page 531: A suppressor signal is transmitted, via a coaxial... to inhibit the other systems and to prevent simultaneous transmission.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-106",
+    "ata": "34",
+    "subtopic": "TCAS/ACAS system",
+    "category": "B2",
+    "level": 3,
+    "question": "In case of a TCAS warning, which systems have a higher priority and will inhibit TCAS aural alerts?",
+    "options": {
+      "a": "VHF and HF communication systems",
+      "b": "Stall, Windshear, and EGPWS messages",
+      "c": "GPS primary lost and ADIRU alignment messages"
+    },
+    "correct_answer": "b",
+    "justification": "Page 532: Various discrete signals are used for inhibition by equipment with higher priority than the TCAS... These priorities are: - Stall, - WindShear, - Predictive WindShear (PWS), - Enhanced Ground Proximity Warning System (EGPWS) messages.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-107",
+    "ata": "34",
+    "subtopic": "TCAS/ACAS system",
+    "category": "B2",
+    "level": 3,
+    "question": "Which TCAS mode is automatically selected by the system when on the ground to reduce nuisance alerts?",
+    "options": {
+      "a": "RA mode",
+      "b": "TA mode (Ground display mode)",
+      "c": "Standby mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 532: Operating mode: ... - ground display mode (TA mode).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-108",
+    "ata": "34",
+    "subtopic": "EGPWS",
+    "category": "B2",
+    "level": 1,
+    "question": "What are the two 'ENHANCED' functions added to the basic GPWS modes in an EGPWS system?",
+    "options": {
+      "a": "Predictive Windshear and Multiscan radar",
+      "b": "Terrain Clearance Floor (TCF) and Terrain Awareness alerting and Display (TAD)",
+      "c": "GPS position fixing and SATCOM data link"
+    },
+    "correct_answer": "b",
+    "justification": "Page 534: The 'ENHANCED' functions added to the basic GPWS modes are: -Terrain Clearance Floor (TCF)... - Terrain Awareness alerting and Display (TAD).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-109",
+    "ata": "34",
+    "subtopic": "EGPWS",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What is the effect of pressing the 'SYS' P/BSW on the GPWS control panel to the 'OFF' position?",
+    "options": {
+      "a": "It inhibits only the Terrain Awareness Display (TAD)",
+      "b": "It inhibits all GPWS warnings (modes 1 to 5)",
+      "c": "It resets the EGPWC for a standard power-up test"
+    },
+    "correct_answer": "b",
+    "justification": "Page 540: the SYStem P/BSW with the white OFF legend, inhibits all the GPWS warnings (mode 1 to 5).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-110",
+    "ata": "34",
+    "subtopic": "EGPWS",
+    "category": "B2",
+    "level": 3,
+    "question": "What specific visual indication on the ND is provided by the T2CAS system if the aircraft cannot climb over terrain with a sufficient safety margin?",
+    "options": {
+      "a": "A solid red background with the word 'PULL UP'",
+      "b": "Visual black crosses displayed in the solid red area",
+      "c": "A flashing amber 'TERRAIN AHEAD' message"
+    },
+    "correct_answer": "b",
+    "justification": "Page 543: If GCAM predicts that the A/C can not climb over the terrain with sufficient safety margin... visual black crosses are displayed in the solid red on the ND.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-111",
+    "ata": "34",
+    "subtopic": "EGPWS",
+    "category": "B2",
+    "level": 3,
+    "question": "Which navigation source does the EGPWC use as its highest priority for aircraft position?",
+    "options": {
+      "a": "IRS latitude and longitude",
+      "b": "GPS position",
+      "c": "FMS position"
+    },
+    "correct_answer": "b",
+    "justification": "Page 540: The EGPWC uses preferably GPS position, then IRS latitude and longitude data...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-112",
+    "ata": "22",
+    "subtopic": "Automatic Flight System (AFS) General",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Does the Automatic Flight System (AFS) move the side sticks or thrust levers during operation?",
+    "options": {
+      "a": "Yes, they move to provide tactile feedback to the pilot",
+      "b": "No, they do not move automatically during AFS operation",
+      "c": "Only the thrust levers move during autothrust operation"
+    },
+    "correct_answer": "b",
+    "justification": "Page 614: NOTE: During AFS operation, side sticks and thrust levers do not move automatically.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-113",
+    "ata": "22",
+    "subtopic": "Flight Management and Guidance Computer (FMGC)",
+    "category": "B2",
+    "level": 1,
+    "question": "What are the two distinct parts that make up each Flight Management and Guidance Computer (FMGC)?",
+    "options": {
+      "a": "Navigation and communication parts",
+      "b": "Flight Management (FM) and Flight Guidance (FG) parts",
+      "c": "Performance and Maintenance parts"
+    },
+    "correct_answer": "b",
+    "justification": "Page 616: Each FMGC is made of two parts: the Flight Management (FM) part and the Flight Guidance (FG) part.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-114",
+    "ata": "22",
+    "subtopic": "Flight Management and Guidance Computer (FMGC)",
+    "category": "B2",
+    "level": 2,
+    "question": "In FMGC 'Single Mode', how are the MCDUs driven?",
+    "options": {
+      "a": "Each MCDU is driven by its ownside FM part",
+      "b": "Both MCDUs are driven by the remaining healthy FM part",
+      "c": "The MCDUs are disabled and backup nav must be used"
+    },
+    "correct_answer": "b",
+    "justification": "Page 701: SINGLE MODE: If one FM part has failed, a single mode is active. Both MCDUs are driven by the remaining FM part.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-115",
+    "ata": "22",
+    "subtopic": "Flight Management and Guidance Computer (FMGC)",
+    "category": "B2",
+    "level": 2,
+    "question": "How often does the navigation database in the FMGC require updating?",
+    "options": {
+      "a": "Every 7 days",
+      "b": "Every 28 days",
+      "c": "Every 90 days"
+    },
+    "correct_answer": "b",
+    "justification": "Page 704: This database has a tailored coverage, updated every 28 days.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-116",
+    "ata": "22",
+    "subtopic": "Flight Management and Guidance Computer (FMGC)",
+    "category": "B2",
+    "level": 3,
+    "question": "What triggers the FMGC system to revert from Normal to Independent mode?",
+    "options": {
+      "a": "A failure of the ADIRU 1 airspeed signal",
+      "b": "A disagreement between the two FM parts",
+      "c": "Manual selection of the backup nav on the MCDU MENU"
+    },
+    "correct_answer": "b",
+    "justification": "Page 701: INDEPENDENT MODE: If the FM parts disagree... the system then reverts to independent mode.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-117",
+    "ata": "22",
+    "subtopic": "Flight Management and Guidance Computer (FMGC)",
+    "category": "B2",
+    "level": 3,
+    "question": "Under what condition is the 'FMS1/FMS2 POS DIFF' message displayed on the MCDUs?",
+    "options": {
+      "a": "When aircraft position difference between FMGCs is greater than 1 Nm",
+      "b": "When aircraft position difference between FMGCs is greater than 5 Nm",
+      "c": "When the GPS primary status is lost on both sides"
+    },
+    "correct_answer": "b",
+    "justification": "Page 701: If the difference is greater than 5 Nm, 2 tons or 2 Kts respectively, an appropriate message is displayed on the MCDUs: - FMS1/FMS2 POS DIFF...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-118",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit calculates the orders for the autothrust function (A/THR)?",
+    "options": {
+      "a": "Flight Augmentation Computer (FAC)",
+      "b": "Flight Management and Guidance Computer (FMGC)",
+      "c": "Engine Interface Unit (EIU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 635: To get the A/THR function, the thrust target computed by the Flight Management and Guidance Computers (FMGCs) is chosen by the Flight Control Unit (FCU).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-119",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What is indicated by the green message 'A. FLOOR' with an amber flashing box on the Flight Mode Annunciator (FMA)?",
+    "options": {
+      "a": "The autothrust has failed and must be reset",
+      "b": "The system has detected an excessive Angle-Of-Attack and is ordering maximum thrust",
+      "c": "The aircraft is below 100 feet RA during landing"
+    },
+    "correct_answer": "b",
+    "justification": "Page 675: In case of excessive AOA or avoidance maneuver... the engine thrust becomes equal to the TOGA thrust... the green message A. FLOOR with an amber flashing box is displayed on the FMA.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-120",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B1B2",
+    "level": 2,
+    "question": "When is the RETARD mode for autothrust available?",
+    "options": {
+      "a": "During takeoff run to prevent engine overspeed",
+      "b": "Only in automatic landing below 40 feet RA for the flare phase",
+      "c": "During emergency descent when VMO is exceeded"
+    },
+    "correct_answer": "b",
+    "justification": "Page 675: Beside these two modes, RETARD is only available in automatic landing when engine thrust has to be reduced to idle for the flare phase below 40 feet RA.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-121",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B1B2",
+    "level": 3,
+    "question": "What is the consequence of autothrust (A/THR) disconnection when the thrust lever is within a detent?",
+    "options": {
+      "a": "Thrust immediately reverts to the physical lever position",
+      "b": "Thrust on the corresponding engine is frozen at its last value (memo mode)",
+      "c": "The engines automatically shut down for safety"
+    },
+    "correct_answer": "b",
+    "justification": "Page 676: after FCU P/BSW disconnection, or failure: - when a thrust lever is in its detent, the thrust on the corresponding engine is frozen at its last value just before the disconnection (memo mode).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-122",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B2",
+    "level": 3,
+    "question": "In the event of one engine failure, what is the new active zone for A/THR activation on the thrust levers?",
+    "options": {
+      "a": "Between the CL detent and the 0 stop",
+      "b": "Between the FLX/MCT detent and the 0 stop",
+      "c": "Between the TOGA stop and the CL detent"
+    },
+    "correct_answer": "b",
+    "justification": "Page 672: NOTE: In case of one engine failure, the A/THR activation zone is between the FLX/MCT detent and the 0 stop, instead of the CL detent, and the 0 stop.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-123",
+    "ata": "22",
+    "subtopic": "FAC (Flight Augmentation Computer)",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit is responsible for the 'Rudder Travel Limitation' function?",
+    "options": {
+      "a": "Flight Management and Guidance Computer (FMGC)",
+      "b": "Flight Augmentation Computer (FAC)",
+      "c": "Display Management Computer (DMC)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 620: The basic functions of the Flight Augmentation Computer (FAC) are: ... - rudder travel limitation.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-124",
+    "ata": "22",
+    "subtopic": "FAC (Flight Augmentation Computer)",
+    "category": "B2",
+    "level": 1,
+    "question": "Where is the Fault Isolation and Detection System (FIDS) function active?",
+    "options": {
+      "a": "In both FMGCs",
+      "b": "Only in FAC 1",
+      "c": "In the CFDIU only"
+    },
+    "correct_answer": "b",
+    "justification": "Page 621: The FIDS function is only active in FAC 1.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-125",
+    "ata": "22",
+    "subtopic": "FAC (Flight Augmentation Computer)",
+    "category": "B2",
+    "level": 2,
+    "question": "What parameters are used by the FAC to compute the aircraft weight in flight?",
+    "options": {
+      "a": "Fuel quantity and center of gravity data from FQIC",
+      "b": "ADIRS, FMGC, and Slat Flap Control Computer (SFCC) parameters",
+      "c": "Radio Alt and Glide Slope deviation signals"
+    },
+    "correct_answer": "b",
+    "justification": "Page 659: In flight, the FAC computes the weight with the Air Data/Inertial Reference System (ADIRS), FMGC and Slat Flap Control Computer (SFCC) parameters.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-126",
+    "ata": "22",
+    "subtopic": "FAC (Flight Augmentation Computer)",
+    "category": "B2",
+    "level": 2,
+    "question": "How many functions does the FAC yaw damper have?",
+    "options": {
+      "a": "Two",
+      "b": "Three",
+      "c": "Four"
+    },
+    "correct_answer": "c",
+    "justification": "Page 620: The yaw damper has four functions and controls the rudder via yaw damper actuators.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-127",
+    "ata": "22",
+    "subtopic": "FAC (Flight Augmentation Computer)",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the consequence of a failure of the two ADIRUs on the flight envelope protection?",
+    "options": {
+      "a": "The system switches to standby GPS altitude",
+      "b": "The alpha-floor detection does not operate",
+      "c": "The yaw damper reverts to mechanical linkage only"
+    },
+    "correct_answer": "b",
+    "justification": "Page 661: If there is a failure of the two ADIRS, the alpha-floor detection does not operate.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-128",
+    "ata": "22",
+    "subtopic": "FAC (Flight Augmentation Computer)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "On ground, how is a FAC reset attempted if a computer fault light appears on the ECAM?",
+    "options": {
+      "a": "The reset is automatic when the fault disappears, with engines shut down",
+      "b": "The pilot must press the instinctive disconnect on the side stick",
+      "c": "The C/B must be pulled for exactly 7 minutes"
+    },
+    "correct_answer": "a",
+    "justification": "Page 654: NOTE: On ground with engines shut down, the reset is automatic when the fault disappears.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-129",
+    "ata": "22",
+    "subtopic": "Flight Control Unit (FCU) operation",
+    "category": "B2",
+    "level": 1,
+    "question": "What happens to the FCU display windows if both processing channels (FCU 1 and FCU 2) fail?",
+    "options": {
+      "a": "They display the last valid data from the FMGC",
+      "b": "All FCU controls are inoperative and AP/FD functions are unavailable",
+      "c": "They switch to a simplified backup battery-powered mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 689: If both channels fail, all FCU controls are inoperative: A/THR, AP/Flight Director (FD) 1 and AP/FD 2 are not available.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-130",
+    "ata": "22",
+    "subtopic": "Flight Control Unit (FCU) operation",
+    "category": "B1B2",
+    "level": 2,
+    "question": "In the FCU Vertical Speed (V/S) control knob operation, what does 'pushing' the knob command?",
+    "options": {
+      "a": "An immediate descent to 1000 feet",
+      "b": "An immediate level off with a zero target",
+      "c": "Selection of the managed flight path angle mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 697: Pushing the V/S FPA rotary knob will command an immediate level off by engaging the V/S FPA mode with a zero target as displayed in the FCU window.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-131",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which condition is necessary to engage the Autopilot (AP) for maintenance purposes on the ground with engines shut down?",
+    "options": {
+      "a": "Both FMGCs must be in Independent mode",
+      "b": "Hydraulic power is not required",
+      "c": "External 115V AC power must be disconnected"
+    },
+    "correct_answer": "b",
+    "justification": "Page 628: For maintenance purposes, the AP can be engaged on ground with both engines shut down. Hydraulic power is not required.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-132",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B1B2",
+    "level": 1,
+    "question": "What is the minimum time an aircraft must be airborne before the Autopilot can be engaged in flight?",
+    "options": {
+      "a": "30 seconds",
+      "b": "5 seconds",
+      "c": "60 seconds"
+    },
+    "correct_answer": "b",
+    "justification": "Page 628: The AP can be engaged in flight, provided the aircraft has been airborne for at least 5 seconds.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-133",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B2",
+    "level": 2,
+    "question": "In cruise, what happens if the pilot attempts to engage a second Autopilot (AP) while one is already active?",
+    "options": {
+      "a": "The system enters Dual mode (AP 1+2)",
+      "b": "The second AP engagement is inhibited",
+      "c": "Engaging the second AP disengages the first one"
+    },
+    "correct_answer": "c",
+    "justification": "Page 628: In cruise, only one AP can be engaged at a time... Engaging the second AP disengages the first one.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B1B2-134",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B1B2",
+    "level": 2,
+    "question": "What occurs automatically to the Autopilot when one engine is started on the ground?",
+    "options": {
+      "a": "The AP engages in takeoff mode",
+      "b": "The AP disengages",
+      "c": "The AP switches to internal battery power"
+    },
+    "correct_answer": "b",
+    "justification": "Page 628: When an engine is started, the AP disengages.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-135",
+    "ata": "22",
+    "subtopic": "Autopilot failures",
+    "category": "B2",
+    "level": 3,
+    "question": "What causes the Autopilot to disengage if the pilot applies manual pressure to the flight controls?",
+    "options": {
+      "a": "Any movement of the side stick beyond the neutral dead-zone",
+      "b": "If a pedal or side stick load threshold is overridden",
+      "c": "A failure signal from the ELAC due to surface disagreement"
+    },
+    "correct_answer": "b",
+    "justification": "Page 628: When the AP is engaged, the load thresholds on the rudder pedals and the side sticks are increased. If a pedal or side stick load threshold is overridden, the AP disengages.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-136",
+    "ata": "22",
+    "subtopic": "Autopilot modes",
+    "category": "B2",
+    "level": 2,
+    "question": "During the landing rollout at low speed (approx. 60 knots), what is the normal procedure for disengaging the Autopilot?",
+    "options": {
+      "a": "Retarding thrust levers to idle",
+      "b": "Pressing a takeover pushbutton on the side stick",
+      "c": "Selecting 'OFF' on the ADIRS Mode Selector Unit"
+    },
+    "correct_answer": "b",
+    "justification": "Page 629: During roll out, at low speed (about 60 knots), the pilot normally disengages the AP by pressing a takeover pushbutton located on the side stick.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-137",
+    "ata": "22",
+    "subtopic": "Autopilot modes",
+    "category": "B2",
+    "level": 3,
+    "question": "During landing rollout with the AP engaged, to what position is the Trimmable Horizontal Stabilizer (THS) reset?",
+    "options": {
+      "a": "0 degrees (Neutral)",
+      "b": "0.5 degrees nose up",
+      "c": "3 degrees nose up"
+    },
+    "correct_answer": "b",
+    "justification": "Page 629: During roll out... The THS is reset to 0.5 nose up.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-138",
+    "ata": "22",
+    "subtopic": "Flight Director modes",
+    "category": "B2",
+    "level": 1,
+    "question": "How is the engagement of Flight Director 1 (FD1) and FD2 indicated on the PFD?",
+    "options": {
+      "a": "A green 'FD' text in the center of the display",
+      "b": "A '1FD2' indication on the top right of the PFD",
+      "c": "Three green bars on the MCDU status page"
+    },
+    "correct_answer": "b",
+    "justification": "Page 631: 1FD2 indication is displayed on each PFD to show that FD1 is engaged on the CAPT side and FD2 is engaged on the F/O side.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-139",
+    "ata": "22",
+    "subtopic": "Flight Director modes",
+    "category": "B2",
+    "level": 2,
+    "question": "What happens to the Flight Director (FD) symbols on the PFD if the HDG-V/S / TRK-FPA P/BSW on the FCU is pressed?",
+    "options": {
+      "a": "The FD bars are removed and replaced by FPD/FPV symbols",
+      "b": "The FD bars flash for 10 seconds to indicate a mode change",
+      "c": "The FD bars turn red to indicate an invalid guidance mode"
+    },
+    "correct_answer": "a",
+    "justification": "Page 631: There are two types of symbols: the FD bars, the Flight Path Director (FPD) and Flight Path Vector (FPV) symbols. The central ... P/BSW on the FCU makes the pilots switch between these two types of symbols.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-140",
+    "ata": "22",
+    "subtopic": "Flight Director modes",
+    "category": "B2",
+    "level": 3,
+    "question": "Under what condition will the Flight Director bars flash on the PFD for 10 seconds?",
+    "options": {
+      "a": "During any autopilot disengagement",
+      "b": "At certain system configuration changes",
+      "c": "When the aircraft enters the EGPWS warning envelope"
+    },
+    "correct_answer": "b",
+    "justification": "Page 633: NOTE: At certain system configuration changes, the FMGCs send a command to the DMCs to make the FD bars flash for 10 seconds.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-141",
+    "ata": "22",
+    "subtopic": "Autoland CAT II/III",
+    "category": "B2",
+    "level": 2,
+    "question": "What does the 'LAND TEST' on the MCDU provide to maintenance personnel?",
+    "options": {
+      "a": "A simulated landing to check landing gear vibration",
+      "b": "The test availability of the LANDing mode and equipment for Category 3",
+      "c": "A printout of the last 10 successful autolandings"
+    },
+    "correct_answer": "b",
+    "justification": "Page 640: The LAND TEST gives the test availability of the LANDing mode and equipment required to obtain CATegory 3.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-142",
+    "ata": "22",
+    "subtopic": "Autoland CAT II/III",
+    "category": "B2",
+    "level": 3,
+    "question": "When LAND mode is engaged and the autopilot is active, how is yaw damping controlled?",
+    "options": {
+      "a": "Directly by the FMGC yaw guidance order",
+      "b": "By the FAC using the Dutch roll damping law",
+      "c": "By the ELAC using the normal yaw axis law"
+    },
+    "correct_answer": "a",
+    "justification": "Page 652: With the autopilot engaged and the Land Mode activated, Dutch roll damping and Turn coordination are inhibited and yaw damping is accomplished directly from the FMGC yaw guidance order.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-143",
+    "ata": "22",
+    "subtopic": "Autoland CAT II/III",
+    "category": "B2",
+    "level": 1,
+    "question": "At what altitude during an automatic landing does the 'RETARD' auto call out trigger?",
+    "options": {
+      "a": "100 feet RA",
+      "b": "40 feet RA",
+      "c": "10 feet RA"
+    },
+    "correct_answer": "b",
+    "justification": "Page 675: RETARD is only available in automatic landing when engine thrust has to be reduced to idle for the flare phase below 40 feet RA.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-144",
+    "ata": "22",
+    "subtopic": "Go-around",
+    "category": "B2",
+    "level": 2,
+    "question": "Which action automatically engages the Autothrust (A/THR) function during a Go-Around?",
+    "options": {
+      "a": "Pressing the APPR button on the FCU",
+      "b": "Setting the thrust levers to the TOGA stop",
+      "c": "Engaging the second autopilot"
+    },
+    "correct_answer": "b",
+    "justification": "Page 635: The A/THR is engaged automatically: - when the AP/Flight Director (FD) is engaged in Take-Off (TO) or Go Around (GA) modes. (Initiated by levers to TOGA).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-145",
+    "ata": "22",
+    "subtopic": "Go-around",
+    "category": "B2",
+    "level": 3,
+    "question": "If an aircraft is in Go-Around mode, which computer provides the engine failure compensation fast law for the yaw damper?",
+    "options": {
+      "a": "ELAC",
+      "b": "FAC",
+      "c": "SEC"
+    },
+    "correct_answer": "b",
+    "justification": "Page 644: engine failure compensation fast law is given by the FAC using the ADIRS data in Take-Off/Go-Around (TOGA) or RunWaY modes only.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-146",
+    "ata": "22",
+    "subtopic": "FCU failures",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the active/standby relationship of the two identical processing channels (FCU 1 and 2) inside the single FCU panel?",
+    "options": {
+      "a": "They operate in active/active parallel mode",
+      "b": "Only one channel is active at a time, the other is in standby",
+      "c": "FCU 1 controls the Captain's PFD while FCU 2 controls the F/O's"
+    },
+    "correct_answer": "b",
+    "justification": "Page 689: Only one channel is active at a time, the other is in standby.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-147",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B2",
+    "level": 3,
+    "question": "In a dual autopilot approach (AP1+2), which autopilot has priority if both are engaged?",
+    "options": {
+      "a": "The last engaged AP",
+      "b": "AP1 has priority, AP2 is in standby",
+      "c": "They share priority through the cross-talk bus"
+    },
+    "correct_answer": "b",
+    "justification": "Page 683: AP1 has priority, AP2 is in standby. The FCCs use the AP1 commands first.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-148",
+    "ata": "22",
+    "subtopic": "FCU failures",
+    "category": "B2",
+    "level": 3,
+    "question": "If an FCU processor failure occurs, how can the remaining healthy channel be identified by the crew?",
+    "options": {
+      "a": "By a red 'FCU FAIL' message on the EWD",
+      "b": "Automatic switching occurs; the failure is transparent if only one channel fails",
+      "c": "The display windows on the failed side will go blank"
+    },
+    "correct_answer": "b",
+    "justification": "Page 689: This description implies manual intervention is only needed if BOTH channels fail. Note states: 'Only one channel is active at a time... if both channels fail, all FCU controls are inoperative'.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-149",
+    "ata": "22",
+    "subtopic": "Flight Director modes",
+    "category": "B2",
+    "level": 1,
+    "question": "What does a non-lit Flight Director (FD) pushbutton on the FCU signify?",
+    "options": {
+      "a": "The FD is in managed mode",
+      "b": "No FD symbols can be displayed on the corresponding PFD",
+      "c": "The FMGC has failed"
+    },
+    "correct_answer": "b",
+    "justification": "Page 631: A non lit FD P/BSW means that no FD symbols can be displayed on the corresponding PFD.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-150",
+    "ata": "22",
+    "subtopic": "Autoland CAT II/III",
+    "category": "B2",
+    "level": 3,
+    "question": "Below 400 feet during a LAND mode approach, how can the mode be disengaged?",
+    "options": {
+      "a": "By pressing the APPR button on the FCU",
+      "b": "Only by activating GO-AROUND",
+      "c": "By retarding the thrust levers to idle"
+    },
+    "correct_answer": "b",
+    "justification": "Page 699: NOTE: Below 400 ft, LAND mode can only be disengaged by activating GO-AROUND.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-151",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the primary role of the Flight Management (FM) part of the FMGC?",
+    "options": {
+      "a": "Controlling the autopilot servos",
+      "b": "Flight plan definition, revision, and monitoring",
+      "c": "Monitoring the flight envelope protections"
+    },
+    "correct_answer": "b",
+    "justification": "Page 616: The FM part gives the functions related to flight plan definition, revision and monitoring.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-152",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 2,
+    "question": "Which database contains the optimal speed schedules and profiles used by the FM function?",
+    "options": {
+      "a": "Navigation database",
+      "b": "Performance database",
+      "c": "MCDU software database"
+    },
+    "correct_answer": "b",
+    "justification": "Page 705: The performance database contains optimal speed schedules for the expected range of operating conditions.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-153",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 3,
+    "question": "In FMGC 'Single Mode' due to an FM part failure, what message appears on the MCDU corresponding to the failed side?",
+    "options": {
+      "a": "FMS INDEPENDENT OPERATION",
+      "b": "OPP FMGC IN PROGRESS",
+      "c": "CHECK FMS POSITION"
+    },
+    "correct_answer": "b",
+    "justification": "Page 701: SINGLE MODE: If one FM part has failed... A white message OPP FMGC IN PROGRESS is displayed on the MCDU corresponding to the failed FMGC.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-154",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B2",
+    "level": 2,
+    "question": "When the Autopilot (AP) is engaged, what happens to the tactile feel of the rudder pedals and side sticks?",
+    "options": {
+      "a": "The load thresholds are decreased for easier override",
+      "b": "The load thresholds are increased",
+      "c": "They are mechanically locked and cannot be moved"
+    },
+    "correct_answer": "b",
+    "justification": "Page 628: When the AP is engaged, the load thresholds on the rudder pedals and the side sticks are increased.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-155",
+    "ata": "22",
+    "subtopic": "Flight Director modes",
+    "category": "B2",
+    "level": 3,
+    "question": "During takeoff, below 30 feet RA when a Localizer (LOC) signal is available, which symbol replaces the roll bar on the PFD?",
+    "options": {
+      "a": "Flight Path Vector (FPV)",
+      "b": "Yaw bar index",
+      "c": "Flight Path Director (FPD)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 633: Below 30 feet RA at take-off when a LOCalizer (LOC) signal is available and during landing, the roll bar is replaced by a yaw bar index.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-156",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 1,
+    "question": "Which aircraft system uses the Aircraft Communication Addressing and Reporting System (ACARS) function to exchange flight plan data with the ground?",
+    "options": {
+      "a": "ADIRS",
+      "b": "FMS",
+      "c": "FAC"
+    },
+    "correct_answer": "b",
+    "justification": "Page 704: The FMS uses the Aircraft Communication Addressing and Reporting System (ACARS) function to exchange data between the ground station and the master FMGC.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-157",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the purpose of the 'A/THR instinctive disconnect' switches on the thrust levers?",
+    "options": {
+      "a": "To manually engage the autothrust",
+      "b": "To manually disconnect the autothrust and adjust thrust to the lever position",
+      "c": "To toggle between Speed and Mach modes"
+    },
+    "correct_answer": "b",
+    "justification": "Page 635 & 676: A/THR is manually disconnected: - either by pressing the A/THR instinctive disconnect switch... When the disconnection is made by the instinctive disconnect P/B, the thrust is immediately adjusted to the thrust lever position.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-158",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the maximum number of flight plan legs that can be downloaded into the MCDU for the 'BACK-UP NAV' function?",
+    "options": {
+      "a": "50 legs",
+      "b": "150 legs",
+      "c": "250 legs"
+    },
+    "correct_answer": "b",
+    "justification": "Page 708: Downloading includes waypoint position... in a maximum of 150 legs.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-159",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 1,
+    "question": "What does a green dot on the PFD airspeed scale represent?",
+    "options": {
+      "a": "The current managed speed target",
+      "b": "The engine out operating speed in clean configuration",
+      "c": "The minimum selectable speed (VLS)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 670: GREEN DOT: This is the engine out operating speed in clean configuration. It is displayed in flight only by a green dot.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-160",
+    "ata": "22",
+    "subtopic": "Flight Control Unit (FCU) operation",
+    "category": "B2",
+    "level": 2,
+    "question": "When the SPD/MACH control knob is pulled, what reference speed does the FMGC use?",
+    "options": {
+      "a": "A managed speed calculated by the FMGC",
+      "b": "A selected reference speed displayed on the FCU",
+      "c": "V2 + 10 knots"
+    },
+    "correct_answer": "b",
+    "justification": "Page 691: PULLED: When pulled, the Flight Management and Guidance Computer (FMGC) uses a selected reference speed which is displayed on the FCU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-161",
+    "ata": "22",
+    "subtopic": "FCU failures",
+    "category": "B2",
+    "level": 3,
+    "question": "If an FCU knob is turned to change a speed but is not pulled within a specific time, what happens to the display?",
+    "options": {
+      "a": "The display is locked to the new value",
+      "b": "The display reverts to dashes after 45 seconds",
+      "c": "A 'CHECK FCU' warning appears on the EWD"
+    },
+    "correct_answer": "b",
+    "justification": "Page 691: TURNED: ... If the knob is not pulled within 45 seconds the display reverts to dashes.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-162",
+    "ata": "22",
+    "subtopic": "Autoland CAT II/III",
+    "category": "B2",
+    "level": 1,
+    "question": "What color is the 'GLIDE SLOPE' text on the PFD when the Landing System (LS) mode is active?",
+    "options": {
+      "a": "Cyan",
+      "b": "Magenta",
+      "c": "Green"
+    },
+    "correct_answer": "b",
+    "justification": "Page 482: ILS information is displayed in magenta.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-163",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the primary source of GPS position data for ADIRU 1 and ADIRU 3 in normal operation?",
+    "options": {
+      "a": "GPS 1",
+      "b": "GPS 2",
+      "c": "The MMR 1 and 2 hybrid output"
+    },
+    "correct_answer": "a",
+    "justification": "Page 486: In normal operation, the GPS 1 data are used by the Air Data/Inertial Reference Units (ADIRUs) 1 and 3.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-164",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 3,
+    "question": "If both FMGCs fail, what system can be used to optionally retrieve ADIRS parameters?",
+    "options": {
+      "a": "AINS laptop plug",
+      "b": "Back-up nav on the MCDU",
+      "c": "ISIS functional test page"
+    },
+    "correct_answer": "b",
+    "justification": "Page 681: NOTE: In case of loss of both FMGC, the ADIRS parameters can be optionally retrieved using the back-up nav on the MCDU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-165",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the definition of the Cost Index (CI) used in the FM performance function?",
+    "options": {
+      "a": "The ratio of takeoff weight to fuel density",
+      "b": "The ratio of cost of time to the cost of fuel",
+      "c": "The total landing fee divided by distance flown"
+    },
+    "correct_answer": "b",
+    "justification": "Page 705: A CI is defined as the ratio of cost of time to the cost of fuel.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-166",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 2,
+    "question": "In the MCDU 'POSITION MONITOR' page, which position source is indicated by 'GPIRS'?",
+    "options": {
+      "a": "GPS alone",
+      "b": "A hybrid mix of GPS and IRS data",
+      "c": "IRS corrected by VOR/DME"
+    },
+    "correct_answer": "b",
+    "justification": "Page 486: The Inertial Reference (IR) portion... gives to the FMGC... hybrid GPIR data. Page 381 shows the GPIRS line on the MCDU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-167",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B2",
+    "level": 3,
+    "question": "If AP 1 is active and disengages, what is the behavior of the standby AP 2 in a dual-channel approach?",
+    "options": {
+      "a": "The flight enters manual law immediately",
+      "b": "A switching is done to the AP 2 commands",
+      "c": "The aircraft enters an emergency descent automatically"
+    },
+    "correct_answer": "b",
+    "justification": "Page 683: A switching is done to the AP 2 commands in case of AP1 disengagement.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-168",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B2",
+    "level": 1,
+    "question": "Which cockpit indication confirms the engagement of the A/THR function?",
+    "options": {
+      "a": "The A/THR P/BSW on the FCU is lit",
+      "b": "Thrust levers move to the CL detent automatically",
+      "c": "A green 'A/THR' message on the Engine/Warning Display"
+    },
+    "correct_answer": "a",
+    "justification": "Page 635: When A/THR is engaged: - the FCU A/THR P/BSW is lit.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-169",
+    "ata": "22",
+    "subtopic": "Flight Control Unit (FCU) operation",
+    "category": "B2",
+    "level": 2,
+    "question": "When the FCU Heading/Track lateral control knob is pushed, what is the status of the navigation mode?",
+    "options": {
+      "a": "The navigation mode is engaged",
+      "b": "The navigation mode is armed",
+      "c": "The navigation mode is disarmed"
+    },
+    "correct_answer": "b",
+    "justification": "Page 693: PUSHED: When pushed, the navigation mode is armed.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-170",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 3,
+    "question": "During 'INDEPENDENT MODE' operation, what happens if an entry is made on MCDU 1?",
+    "options": {
+      "a": "The entry is automatically synchronized to FMGC 2",
+      "b": "The entry is not applied to the other MCDU",
+      "c": "The system triggers an FMS DISAGREE Master Caution"
+    },
+    "correct_answer": "b",
+    "justification": "Page 702: In independent mode, both MCDUs operate separately. Although the cross talk is present, an entry on one MCDU is not applied to the other one.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-171",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 1,
+    "question": "Which MCDU page is used to activate the 'BACK-UP NAV' function if both FM parts fail?",
+    "options": {
+      "a": "DATA index page",
+      "b": "MCDU MENU page",
+      "c": "INIT page"
+    },
+    "correct_answer": "b",
+    "justification": "Page 708: The MCDU B/UP NAV is activated through the 'SELECT NAV B/UP” prompt on the MCDU MENU page.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-172",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 2,
+    "question": "When 'BACK-UP NAV' is active, what color and line style is used to display the flight plan on the ND?",
+    "options": {
+      "a": "Solid magenta",
+      "b": "Dashed green",
+      "c": "Solid cyan"
+    },
+    "correct_answer": "b",
+    "justification": "Page 708: In all cases, the flight plan line is dashed in green (as NAV mode cannot be engaged).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-173",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 3,
+    "question": "What event will automatically deactivate 'Backup Navigation' and return control to the FM?",
+    "options": {
+      "a": "The aircraft descends below 10,000 feet",
+      "b": "The onside FM becomes healthy while the offside FM is failed",
+      "c": "Selection of 'PLAN' mode on the EFIS control panel"
+    },
+    "correct_answer": "b",
+    "justification": "Page 709: Backup Navigation is deactivated upon one of the following events: ... - The following condition becomes true: onside FM is Healthy and offside FM is failed.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-174",
+    "ata": "22",
+    "subtopic": "Autopilot modes",
+    "category": "B2",
+    "level": 1,
+    "question": "During which phase of landing are the three green bars of the FD pushbuttons automatically illuminated?",
+    "options": {
+      "a": "Final approach",
+      "b": "Roll out phase",
+      "c": "Flare phase"
+    },
+    "correct_answer": "b",
+    "justification": "Page 631: Upon FCU power up... or when losing the AP during the roll out phase of the landing, the three green bars of the FD P/BSWs come on automatically.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-175",
+    "ata": "22",
+    "subtopic": "FCU failures",
+    "category": "B2",
+    "level": 2,
+    "question": "Which button on the FCU allows the selection of Metric Altitude display on the ECAM?",
+    "options": {
+      "a": "ALT selector inner knob",
+      "b": "METRIC ALT P/B",
+      "c": "EXPED P/B"
+    },
+    "correct_answer": "b",
+    "justification": "Page 695: This METRIC ALT P/BSW is used to display the FCU altitude target in meter in the lower part of the lower ECAM display unit.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-176",
+    "ata": "22",
+    "subtopic": "Autothrust system",
+    "category": "B2",
+    "level": 3,
+    "question": "Under what Ra altitude is the 'alpha-floor' protection inhibited during flight (except immediately after liftoff)?",
+    "options": {
+      "a": "500 feet RA",
+      "b": "100 feet RA",
+      "c": "400 feet RA"
+    },
+    "correct_answer": "b",
+    "justification": "Page 635: or in flight, when the alpha-floor is detected; this is inhibited below 100 feet RA except during the 15 seconds following the lift-off.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-177",
+    "ata": "22",
+    "subtopic": "Flight Director modes",
+    "category": "B2",
+    "level": 1,
+    "question": "What does the symbol 'FPV' represent on the PFD?",
+    "options": {
+      "a": "Flight Path Vector",
+      "b": "Flight Plan View",
+      "c": "Fixed Pitch Value"
+    },
+    "correct_answer": "a",
+    "justification": "Page 631: There are two types of symbols: ... Flight Path Director (FPD) and Flight Path Vector (FPV) symbols.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-178",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 2,
+    "question": "Which unit calculates the aircraft's current track and FPA displayed as the FPV symbol?",
+    "options": {
+      "a": "FMGC",
+      "b": "ADIRS",
+      "c": "FAC"
+    },
+    "correct_answer": "b",
+    "justification": "Page 633: The FPV symbol position is computed by the Air Data Inertial Reference System (ADIRS).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-179",
+    "ata": "22",
+    "subtopic": "Autopilot engagement conditions",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the result on the flight control laws if the pilot moves the side stick while the Autopilot is active?",
+    "options": {
+      "a": "The system enters Alternate Law",
+      "b": "The autopilot disengages and the system returns to manual flight",
+      "c": "The autopilot stays engaged but ignores the pilot's input"
+    },
+    "correct_answer": "b",
+    "justification": "Page 614: If the pilot moves the side stick when the AFS is active, it disengages the autopilot. Back to manual flight...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-180",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 1,
+    "question": "How many pre-programmed cabin layouts can the Cabin Assignment Module (CAM) contain?",
+    "options": {
+      "a": "One",
+      "b": "Three",
+      "c": "Ten"
+    },
+    "correct_answer": "b",
+    "justification": "Page 261: The CAM can contain up to three pre-programmed cabin layouts and 3 additional modified layouts.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA22-B2-181",
+    "ata": "22",
+    "subtopic": "Flight Management",
+    "category": "B2",
+    "level": 2,
+    "question": "What action on the FCU sets the 'managed' speed mode?",
+    "options": {
+      "a": "Pulling the SPD/MACH knob",
+      "b": "Pushing the SPD/MACH knob",
+      "c": "Rotating the SPD/MACH knob"
+    },
+    "correct_answer": "b",
+    "justification": "Page 691: PUSHED: When pushed, dashes are displayed... The FMGC uses a managed reference speed.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-076",
+    "ata": "23",
+    "subtopic": "RMP failures",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the physical indication to the crew that a Radio Management Panel (RMP) has failed?",
+    "options": {
+      "a": "A red 'FAIL' light on the master caution panel",
+      "b": "The blanking of the display windows on the RMP",
+      "c": "A steady 'COM FAIL' message on the ND"
+    },
+    "correct_answer": "b",
+    "justification": "Page 76: A RMP failure is indicated by the blanking of the display windows.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-077",
+    "ata": "23",
+    "subtopic": "RMP failures",
+    "category": "B2",
+    "level": 3,
+    "question": "When a failed RMP is selected 'OFF', what action does it take to assist the rest of the system?",
+    "options": {
+      "a": "It resets all communication transceivers",
+      "b": "It sends a discrete signal for system reconfiguration",
+      "c": "It forces the remaining RMPs into 'NAV' mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 76: When selected off, the RMP sends a discrete signal for system reconfiguration.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-078",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B2",
+    "level": 1,
+    "question": "Which SATCOM component is described as the 'heart' of the system, handling protocol and modulation?",
+    "options": {
+      "a": "Intermediate Gain Antenna (IGA)",
+      "b": "Satellite Data Unit (SDU)",
+      "c": "Beam Steering Unit (BSU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 104: SDU: The SDU is the heart of the SATCOM system. It does most of the data-handling, protocol, modulation/coding...",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1-079",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B1",
+    "level": 1,
+    "question": "Where is the SATCOM Satellite Data Unit (SDU) installed?",
+    "options": {
+      "a": "Forward avionics rack 90VU",
+      "b": "Aft avionics rack 80VU",
+      "c": "Inside the vertical stabilizer"
+    },
+    "correct_answer": "b",
+    "justification": "Page 71: The SDU is installed in the aft avionics rack 80VU.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-080",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B2",
+    "level": 2,
+    "question": "What are the two possible power supply configurations for the SATCOM Intermediate Gain Antenna (IGA)?",
+    "options": {
+      "a": "115V AC or 28V DC",
+      "b": "115V AC only",
+      "c": "5V AC or 28V DC"
+    },
+    "correct_answer": "a",
+    "justification": "Page 104: The IGA is powered by the SDU, and is capable of operating with either 115V AC or 28V DC.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-081",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B2",
+    "level": 2,
+    "question": "The SATCOM SDU receives relative azimuth and elevation commands from which system for beam steering?",
+    "options": {
+      "a": "FMGC",
+      "b": "ADIRS",
+      "c": "GPS"
+    },
+    "correct_answer": "b",
+    "justification": "Page 104: The SDU is connected to: - the Air Data/Inertial Reference System (ADIRS) to provide the Beam Steering Unit (BSU) with relative azimuth and relative elevation command.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-082",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B2",
+    "level": 3,
+    "question": "How can the SATCOM High Power Amplifier (HPA) and BSU be tested during troubleshooting?",
+    "options": {
+      "a": "Only via a laptop connected to the SIU",
+      "b": "Through the SDU via the CFDIU ARINC 429 buses",
+      "c": "By using the test pushbutton on the RCDR panel"
+    },
+    "correct_answer": "b",
+    "justification": "Page 107: The SDU is interfaced with the CFDIU for BITE purposes... The HPA and BSU can be tested through the SDU via ARINC 429 buses.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-083",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit hosts the AOC (Airline Operational Control) software package for data link communication?",
+    "options": {
+      "a": "FMGC",
+      "b": "ATSU",
+      "c": "SDU"
+    },
+    "correct_answer": "b",
+    "justification": "Page 6: The ATSU AOC software package is shown as part of the ATSU in the functional diagram.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-084",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the primary function of the 'ACARS Router' application within the ATSU?",
+    "options": {
+      "a": "Displaying weather radar images",
+      "b": "Routing data between remote/hosted AOC applications and ground networks",
+      "c": "Storing cockpit voice data before transmission"
+    },
+    "correct_answer": "b",
+    "justification": "Page 6: The ATSU diagram shows AOC Applications (Remote and Hosted) connecting through an ACARS Router to ground/network links.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-085",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 3,
+    "question": "If the 'COMPANY DATALINK STBY' green memo appears, what does it indicate regarding the ATSU?",
+    "options": {
+      "a": "The system is functioning normally but on backup power",
+      "b": "The data link function is lost or there is a router configuration failure",
+      "c": "The ground station is not currently polling the aircraft"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: When the data link function is lost or unavailable or when there is an ATSU router configuration failure, the left memo 'COMPANY DATALINK STBY' appears in green.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-086",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B2",
+    "level": 2,
+    "question": "Which component is used to activate the CVR Push-to-Test function?",
+    "options": {
+      "a": "A toggle switch on the AMU",
+      "b": "The RCDR/CVR TEST switch on the overhead panel",
+      "c": "A maintenance menu on MCDU 3"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: The Push-to-Test function is activated using ... a pushbutton RCDR/CVR TEST switch 5RK installed on the overhead panel.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-087",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the purpose of the jumper strap installed on the AMU for CVR recording?",
+    "options": {
+      "a": "To bypass a failed area microphone",
+      "b": "To enable selection between FAA and CAA recording modes",
+      "c": "To increase the recording capacity to 120 minutes"
+    },
+    "correct_answer": "b",
+    "justification": "Page 112: A jumper strap installed on the AMU enables Federal Aviation Administration (FAA) /Civil Aviation Authority (CAA) recording selection.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-088",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 3,
+    "question": "What tone is sent through the audio monitor to indicate a successful erase of the CVR memory?",
+    "options": {
+      "a": "400 Hz tone",
+      "b": "600 Hz tone",
+      "c": "800 Hz tone"
+    },
+    "correct_answer": "a",
+    "justification": "Page 109: A 400 Hz tone is sent through the audio monitor to indicate a successful erase.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-089",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which unit is responsible for logical control of the SATCOM beam steering and performing antenna BITE functions?",
+    "options": {
+      "a": "High Power Amplifier (HPA)",
+      "b": "Antenna control driver",
+      "c": "Diplexer/Low Noise Amplifier (D/LNA)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 105: The IGA has: ... an antenna control driver to make the logical control of the beam steering, and also does the BITE functions of the IGA.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-090",
+    "ata": "23",
+    "subtopic": "RMP failures",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the standard allocation for RMP 2 frequency control?",
+    "options": {
+      "a": "VHF 1 and HF 1",
+      "b": "VHF 2 and HF 2",
+      "c": "VHF 3 only"
+    },
+    "correct_answer": "b",
+    "justification": "Page 75: Basic allocation: ... - RMP 2 VHF 2. (HF 2 is also allocated to RMP 2/3 depending on options, Page 77 diagram shows RMP 2 linked to VHF 2 and HF 2).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-091",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1B2",
+    "level": 2,
+    "question": "How long must the RCDR CVR ERASE P/B be pressed to activate the memory erase function?",
+    "options": {
+      "a": "Minimum of 0.5 s",
+      "b": "Minimum of 5 s",
+      "c": "Minimum of 10 s"
+    },
+    "correct_answer": "a",
+    "justification": "Page 109: The RCDR CVR ERASE P/B must be pressed for a minimum of 0.5 s to activate the erase function.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-092",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the bit rate of the ATSU VDL mode 2 function?",
+    "options": {
+      "a": "2.4 Kbit/s",
+      "b": "31.5 Kbit/s",
+      "c": "64.0 Kbit/s"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: With this function, the rate throughput is increased ten times through a D8-PSK modulation (31,5 Kbit/s).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-093",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the modulation type used by VDL mode 2 to reduce channel saturation?",
+    "options": {
+      "a": "QPSK",
+      "b": "D8-PSK",
+      "c": "Frequency Modulation (FM)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: With this function, the rate throughput is increased ten times through a D8-PSK modulation (31,5 Kbit/s).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-094",
+    "ata": "23",
+    "subtopic": "Audio Switching",
+    "category": "B2",
+    "level": 2,
+    "question": "What ECAM memo message is displayed when the AUDIO SWITCHING selector is moved to the F/O 3 position?",
+    "options": {
+      "a": "AUDIO F/O XFRD",
+      "b": "AUDIO 3 XFRD",
+      "c": "ACP 3 ACTIVE"
+    },
+    "correct_answer": "b",
+    "justification": "Page 78: F/O 3 POSITION: ... NOTE: The message 'AUDIO 3 XFRD' is displayed in green on the ECAM MEMO display.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-095",
+    "ata": "23",
+    "subtopic": "Audio Switching",
+    "category": "B2",
+    "level": 3,
+    "question": "Why are there two relays controlled by the AUDIO SWITCHING selector in the AMU system?",
+    "options": {
+      "a": "To separate the cockpit and cabin interphone circuits",
+      "b": "To save audio equipment functions in case of DC essential loss",
+      "c": "To allow the CVR to continue recording after engine shutdown"
+    },
+    "correct_answer": "b",
+    "justification": "Page 78: NOTE: Two relays controlled by the AUDIO SWITCHING selector let save the audio equipment functions in case of DC essential loss.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-096",
+    "ata": "23",
+    "subtopic": "Audio Management Unit (AMU)",
+    "category": "B2",
+    "level": 1,
+    "question": "Which card within the AMU handles calls from the ground crew and attendant stations?",
+    "options": {
+      "a": "Audio card",
+      "b": "SELCAL/CALL card",
+      "c": "BITE processor card"
+    },
+    "correct_answer": "b",
+    "justification": "Page 90: The SELective CALling (SELCAL) and CALL functions are done in the Audio Management Unit (AMU) by the SELCAL/CALL card.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-097",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B2",
+    "level": 1,
+    "question": "Where is the Solid State Cockpit Voice Recorder (SSCVR) physically located in the aircraft?",
+    "options": {
+      "a": "Forward avionics rack 90VU",
+      "b": "Rear fuselage",
+      "c": "Main cargo compartment"
+    },
+    "correct_answer": "b",
+    "justification": "Page 73: The Solid State Cockpit Voice Recorder is installed in the rear fuselage.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1-098",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B1",
+    "level": 2,
+    "question": "Which panel contains the CVR/HEAD SET JACK used to receive aural indications during a CVR test?",
+    "options": {
+      "a": "RCDR panel 21VU",
+      "b": "Maintenance panel 50VU",
+      "c": "Audio Control Panel (ACP)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 109: In addition to the visual indication, an aural indication is given through the audio monitor output received at the CVR/HEAD SET JACK (on the maintenance panel 50VU).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-099",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B2",
+    "level": 3,
+    "question": "What specific frequency tone is sent to the headset jack and loud speakers for aural indication during a CVR test?",
+    "options": {
+      "a": "600 Hz or 800 Hz",
+      "b": "400 Hz only",
+      "c": "1000 Hz pulse",
+      "d": ""
+    },
+    "correct_answer": "a",
+    "justification": "Page 109: Or, at the two loud speakers a 600 Hz tone is sent to indicate successful self-test. A 800 Hz tone is sent to the headset jack and the loud speakers for aural indication.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-100",
+    "ata": "23",
+    "subtopic": "Cockpit Voice Recorder (CVR)",
+    "category": "B2",
+    "level": 3,
+    "question": "In 'FAA mode', what signal is recorded to capture all communications sent out by the crewmembers?",
+    "options": {
+      "a": "Area microphone signal",
+      "b": "Side-tone signal",
+      "c": "Direct FMGC output"
+    },
+    "correct_answer": "b",
+    "justification": "Page 112: In FAA mode... This is obtained by the recording of side-tone signal: Audio output. This lets, at the same time record all the communications sent out by these crewmembers.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-101",
+    "ata": "23",
+    "subtopic": "Audio Management Unit (AMU)",
+    "category": "B2",
+    "level": 2,
+    "question": "How many identical audio processing cards are included in the AMU layout?",
+    "options": {
+      "a": "One card for the whole cockpit",
+      "b": "One card for each installed ACP",
+      "c": "Two redundant cards for all stations"
+    },
+    "correct_answer": "b",
+    "justification": "Page 80: The AMU includes several identical audio processing cards, one for each ACP.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-102",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B2",
+    "level": 3,
+    "question": "During a 'GROUND CALL', what is the duration of the amber MECHanical legend flashing on the ACPs?",
+    "options": {
+      "a": "10 seconds",
+      "b": "60 seconds",
+      "c": "Until the ground mechanic hangs up"
+    },
+    "correct_answer": "b",
+    "justification": "Page 92: The MECHanical legend flashes amber for 60 seconds on the ACPs.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-103",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the predefined priority level for an 'Emergency Call' in the Cabin Interphone system?",
+    "options": {
+      "a": "Level 1",
+      "b": "Level 2",
+      "c": "Level 3"
+    },
+    "correct_answer": "a",
+    "justification": "Page 220: All communication modes are handled with respect to the predefined priorities listed below: - 1, emergency call.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-104",
+    "ata": "23",
+    "subtopic": "Interphone system (flight/cabin/service)",
+    "category": "B2",
+    "level": 2,
+    "question": "In the cabin interphone system, what symbol appears on the top line of the AIP when the handset is lifted?",
+    "options": {
+      "a": "A green dot",
+      "b": "A sharp '#' symbol",
+      "c": "The word 'READY'"
+    },
+    "correct_answer": "b",
+    "justification": "Page 218: When the handset is lifted, a dialing tone (440 Hz) is heard. The top line of the AIP shows a sharp '#' symbol.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-105",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 2,
+    "question": "Which MCDU menu is used to verify the communication (router) status of the on-board peripherals?",
+    "options": {
+      "a": "COMM CONFIG page",
+      "b": "COMM STATUS page",
+      "c": "MAINTENANCE TEST page"
+    },
+    "correct_answer": "b",
+    "justification": "Page 15: The COMM STATUS pages are used to verify the communication status of ATSU: ... - the communication (router) status of the on-board peripherals.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-106",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 1,
+    "question": "What are the four essential parameters required for the initialization of the ATSU router?",
+    "options": {
+      "a": "Aircraft Weight, CG, Fuel, and Flight Plan",
+      "b": "ICAO CODE, Airline ID, A/C Registration, and Scan Mask",
+      "c": "UTC Time, Date, Gate Number, and Destination"
+    },
+    "correct_answer": "b",
+    "justification": "Page 19: Four essential parameters are required: - A/C ICAO CODE ... - a valid airline identification ... - a valid A/C registration number ... - a valid scan mask.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-107",
+    "ata": "23",
+    "subtopic": "ACARS datalink operation",
+    "category": "B2",
+    "level": 3,
+    "question": "If the ATSU initialization is incomplete, which amber warning is displayed on the EWD?",
+    "options": {
+      "a": "COMPANY DATALINK STBY",
+      "b": "DATALINK ATSU FAULT + ATSU INIT FAULT",
+      "c": "VHF3 VOICE ERROR"
+    },
+    "correct_answer": "b",
+    "justification": "Page 19: Four essential parameters are required... Otherwise, the DATALINK ATSU FAULT+ ATSU INIT FAULT amber warnings are displayed on the Engine/Warning Display (EWD).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B1B2-108",
+    "ata": "23",
+    "subtopic": "RMP failures",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Which panel allows the crew to select radio frequencies and courses in case both FMGCs fail?",
+    "options": {
+      "a": "FCU",
+      "b": "RMP",
+      "c": "ACP"
+    },
+    "correct_answer": "b",
+    "justification": "Page 702: If both FMGCs fail, the crew must use the RMPs to select the frequencies and courses.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA23-B2-109",
+    "ata": "23",
+    "subtopic": "SATCOM",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the primary frequency band used by the SATCOM system for aeronautical services?",
+    "options": {
+      "a": "VHF-Band",
+      "b": "L-Band",
+      "c": "X-Band"
+    },
+    "correct_answer": "b",
+    "justification": "Page 104: The function of the SATCOM system is the reception and processing of signals via satellites supplying aeronautical services in the L-Band.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-112",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the operational frequency range for the ground VOR stations?",
+    "options": {
+      "a": "190 kHz to 1750 kHz",
+      "b": "108 MHz to 117.95 MHz",
+      "c": "962 MHz to 1213 MHz"
+    },
+    "correct_answer": "b",
+    "justification": "Page 593: The VOR system... working in the frequency range of 108 MHz to 117.95 MHz.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1B2-113",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B1B2",
+    "level": 1,
+    "question": "Where is the marker antenna physically installed on the aircraft?",
+    "options": {
+      "a": "Top of the vertical stabilizer",
+      "b": "Lower fuselage",
+      "c": "Nose radome"
+    },
+    "correct_answer": "b",
+    "justification": "Page 607: The marker antenna is installed on the lower fuselage.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-114",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 2,
+    "question": "How many VOR/marker receivers are installed, and which one has the marker function active?",
+    "options": {
+      "a": "Two receivers; marker active in VOR 1 only",
+      "b": "Two receivers; marker active in both",
+      "c": "One combined receiver with two antennas"
+    },
+    "correct_answer": "a",
+    "justification": "Page 609: The VOR and MKR system includes: - 2 identical VOR/MKR receivers... only 1 MKR system is installed... Page 609 further states 'MKR one is operative as it is connected to the MKR antenna' and the diagram on page 609 says 'MKR FUNCTION ACTIVE IN VOR 1 ONLY'.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-115",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 2,
+    "question": "What principle does the DME system use to determine aircraft distance from a ground station?",
+    "options": {
+      "a": "Phase difference between reference and variable signals",
+      "b": "Measurement of the time delay of reply pulses",
+      "c": "Triangulation of signals from three independent stations"
+    },
+    "correct_answer": "b",
+    "justification": "Page 566: After a 50 microseconds delay, the ground station replies. The interrogator determines the distance... by the time necessary for the echoes to come back.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-116",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 3,
+    "question": "If FMGC 1 fails, how is the ownside DME 1 interrogator tuned?",
+    "options": {
+      "a": "It remains in standby until FMGC 1 is reset",
+      "b": "The other FMGC (FMGC 2) tunes it directly or through its RMP",
+      "c": "It automatically switches to GPS position fixing"
+    },
+    "correct_answer": "b",
+    "justification": "Page 572: With failure of one FMGC the other FMGC can control the DME interrogators, one directly, the other through its RMP.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1-117",
+    "ata": "34",
+    "subtopic": "ADF",
+    "category": "B1",
+    "level": 1,
+    "question": "Where are the two ADF receivers installed?",
+    "options": {
+      "a": "Aft cargo compartment",
+      "b": "Avionics bay",
+      "c": "Inside the vertical stabilizer"
+    },
+    "correct_answer": "b",
+    "justification": "Page 587: Two ADF receivers are installed in the avionics bay.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-118",
+    "ata": "34",
+    "subtopic": "ADF",
+    "category": "B2",
+    "level": 2,
+    "question": "Which antennas are combined within the ADF antenna to provide bearing information?",
+    "options": {
+      "a": "Two loop antennas and one sense antenna",
+      "b": "Three separate whip antennas",
+      "c": "One directional phased array"
+    },
+    "correct_answer": "a",
+    "justification": "Page 591: The ADF antenna provides three signals and consists of one sense antenna and two loop antennas.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-119",
+    "ata": "34",
+    "subtopic": "ADF",
+    "category": "B2",
+    "level": 3,
+    "question": "In case of a dual FMGC failure, how is the ADF 1 receiver tuned?",
+    "options": {
+      "a": "It cannot be tuned; the system is lost",
+      "b": "Using the backup tuning on the RMPs",
+      "c": "By using the ISIS control panel in 'ADF' mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 591: In case of dual FMGC failure, the RMPs enable back-up tuning.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-120",
+    "ata": "34",
+    "subtopic": "Mode S transponder",
+    "category": "B2",
+    "level": 1,
+    "question": "What is the interrogation frequency used by the ATC ground station for the transponder?",
+    "options": {
+      "a": "1030 MHz",
+      "b": "1090 MHz",
+      "c": "1213 MHz"
+    },
+    "correct_answer": "a",
+    "justification": "Page 582: The antenna operates... with an interrogation frequency of 1.030 MHz and a reply frequency of 1.090 MHz.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-121",
+    "ata": "34",
+    "subtopic": "Mode S transponder",
+    "category": "B2",
+    "level": 2,
+    "question": "How many bits are used for the unique address of each Mode S transponder?",
+    "options": {
+      "a": "8 bits",
+      "b": "24 bits",
+      "c": "32 bits"
+    },
+    "correct_answer": "b",
+    "justification": "Page 582: Each transponder has its own and unique address coded on 24 bits.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-122",
+    "ata": "34",
+    "subtopic": "Mode S transponder",
+    "category": "B2",
+    "level": 3,
+    "question": "Which system provides the barometric altitude for Mode C transmissions to the ATC transponder?",
+    "options": {
+      "a": "FMGC",
+      "b": "ADIRU",
+      "c": "ISIS"
+    },
+    "correct_answer": "b",
+    "justification": "Page 582: ADIRU 1 and ADIRU 2 provide barometric altitude to associated transponders for mode C.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-123",
+    "ata": "34",
+    "subtopic": "EGPWS modes 1-5",
+    "category": "B2",
+    "level": 2,
+    "question": "EGPWS Mode 1 provides alerts for which hazardous condition?",
+    "options": {
+      "a": "Excessive closure rate with terrain",
+      "b": "Excessive rate of descent",
+      "c": "Descent after take-off"
+    },
+    "correct_answer": "b",
+    "justification": "Page 548: - WARNING MODES - MODE 1: EXCESSIVE RATE OF DESCENT.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-124",
+    "ata": "34",
+    "subtopic": "EGPWS modes 1-5",
+    "category": "B2",
+    "level": 2,
+    "question": "Which EGPWS mode triggers a 'DON'T SINK' aural alert if an excessive altitude loss occurs after take-off?",
+    "options": {
+      "a": "Mode 2",
+      "b": "Mode 3",
+      "c": "Mode 4"
+    },
+    "correct_answer": "b",
+    "justification": "Page 553: Mode 3 provides a warning for excessive altitude loss after take-off... GPWS lights come on and the 'DON'T SINK' aural alert sounds repeatedly.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-125",
+    "ata": "34",
+    "subtopic": "EGPWS modes 1-5",
+    "category": "B2",
+    "level": 3,
+    "question": "What logic handles EGPWS Mode 2 when the landing gear and flaps are in the landing configuration (Mode 2B)?",
+    "options": {
+      "a": "The warning switches to 'PULL UP' immediately",
+      "b": "The aural message is 'TERRAIN' only and is not followed by 'PULL UP'",
+      "c": "The entire Mode 2 is inhibited"
+    },
+    "correct_answer": "b",
+    "justification": "Page 551: When gear and flaps are in the landing configuration, the aural message is 'TERRAIN' only and is not followed by 'PULL UP' if the aircraft remains in the envelope.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-126",
+    "ata": "34",
+    "subtopic": "EGPWS modes 1-5",
+    "category": "B2",
+    "level": 3,
+    "question": "In EGPWS Mode 4, which aural message has the highest priority?",
+    "options": {
+      "a": "TOO LOW TERRAIN",
+      "b": "TOO LOW GEAR",
+      "c": "TOO LOW FLAPS"
+    },
+    "correct_answer": "b",
+    "justification": "Page 555: NOTE: The 'TOO LOW GEAR' message has priority over the 'TOO LOW FLAPS' message.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-127",
+    "ata": "34",
+    "subtopic": "EGPWS modes 1-5",
+    "category": "B2",
+    "level": 2,
+    "question": "What condition triggers an EGPWS Mode 5 warning?",
+    "options": {
+      "a": "Unsafe terrain clearance with gear up",
+      "b": "Descent below the Glide Slope beam during ILS approaches",
+      "c": "Excessive pitch attitude during landing"
+    },
+    "correct_answer": "b",
+    "justification": "Page 557: Mode 5 provides warnings when the aircraft flight path descends below the G/S beam during ILS approaches.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-128",
+    "ata": "34",
+    "subtopic": "PWS",
+    "category": "B2",
+    "level": 1,
+    "question": "At what altitude range is the Predictive Windshear (PWS) function active?",
+    "options": {
+      "a": "0 to 2300 feet RA",
+      "b": "0 to 5000 feet RA",
+      "c": "Only below 500 feet RA"
+    },
+    "correct_answer": "a",
+    "justification": "Page 503: The windshear function is automatically activated below 2300 ft RA.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-129",
+    "ata": "34",
+    "subtopic": "PWS",
+    "category": "B2",
+    "level": 2,
+    "question": "Which system receives PWS alerts from the radar hazard bus to determine priority against other alerts?",
+    "options": {
+      "a": "FMGC",
+      "b": "EGPWS",
+      "c": "FWC"
+    },
+    "correct_answer": "b",
+    "justification": "Page 503: The EGPWS receives PWS alerts from the radar hazard bus to determine the priorities.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-130",
+    "ata": "34",
+    "subtopic": "PWS",
+    "category": "B2",
+    "level": 3,
+    "question": "What signals are required as 'Qualifiers' for the automatic activation of the PWS function?",
+    "options": {
+      "a": "RA altitude and Landing Flap selection",
+      "b": "ATC control unit switch position and Engine oil pressure",
+      "c": "ADIRU ground speed and Glide Slope status"
+    },
+    "correct_answer": "b",
+    "justification": "Page 503: Two types of qualifier inputs are required... Qualifier type A... Provided by the Air Traffic Control (ATC)... Qualifier type B... indicate a normal engine oil pressure.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-131",
+    "ata": "34",
+    "subtopic": "GPS hybrid navigation",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the purpose of the 'GPIRS' data computed by the ADIRUs?",
+    "options": {
+      "a": "To calibrate the Pitot probes during high speed flight",
+      "b": "To provide a hybrid position fixing function using GPS and Inertial Reference",
+      "c": "To calculate the terrain clearance for the EGPWS"
+    },
+    "correct_answer": "b",
+    "justification": "Page 486: The Inertial Reference (IR) portion of the ADIRU 1(2) gives to the FMGC 1(2): ... hybrid GPIR data. The FMGC 1(2) uses the hybrid GPIR 1(2) data for position fixing functions.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-132",
+    "ata": "34",
+    "subtopic": "GPS hybrid navigation",
+    "category": "B2",
+    "level": 3,
+    "question": "If the GPS mode is active, how are VOR, DME, and ADF data used for navigation?",
+    "options": {
+      "a": "They provide a secondary backup and cross-check",
+      "b": "They are not used for navigation",
+      "c": "They are only used during final approach (below 700 ft)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 478: NOTE: When GPS mode is active, no VOR/DME/ADF data is used for navigation.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-133",
+    "ata": "34",
+    "subtopic": "EGPWS",
+    "category": "B2",
+    "level": 1,
+    "question": "Which system provides terrain altitude information to the EGPWC for the autotilt function of the weather radar?",
+    "options": {
+      "a": "ADIRS",
+      "b": "EGPWS internal terrain database",
+      "c": "GPS primary position"
+    },
+    "correct_answer": "b",
+    "justification": "Page 412: The autotilt function uses the terrain altitude information of the EGPWS. Page 534 states EGPWS includes a terrain database.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-134",
+    "ata": "34",
+    "subtopic": "EGPWS",
+    "category": "B2",
+    "level": 2,
+    "question": "What color indicates terrain altitude that is 'sufficiently below the A/C' on the ND EGPWS display?",
+    "options": {
+      "a": "Red",
+      "b": "Yellow",
+      "c": "Green"
+    },
+    "correct_answer": "c",
+    "justification": "Page 539: TERRAIN ALTITUDE SUFFICIENTLY BELOW THE A/C (GREEN).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-135",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 1,
+    "question": "Which unit is used by the crew to manually tune the radio navigation receivers?",
+    "options": {
+      "a": "Audio Control Panel (ACP)",
+      "b": "Multipurpose Control and Display Unit (MCDU)",
+      "c": "Flight Control Unit (FCU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 368: Access to the MCDU RADIO NAV page lets the crew manually tune the radio navigation receivers.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-136",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 2,
+    "question": "How are manually entered frequencies distinguished from auto-tuned frequencies on the MCDU?",
+    "options": {
+      "a": "Manual entries are in blue; auto-tuned are in green",
+      "b": "Manual entries are in big font; auto-tuned are in small font",
+      "c": "Manual entries are underscored; auto-tuned are italicized"
+    },
+    "correct_answer": "b",
+    "justification": "Page 420: When indications on the MCDU are manually entered, they are displayed in big font.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-137",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 3,
+    "question": "In the event of a failure of both Flight Management and Guidance Computers (FMGCs), how can navigation frequencies be controlled?",
+    "options": {
+      "a": "Only via the ISIS integrated display",
+      "b": "Via RMP 1 and RMP 2 in standby navigation mode",
+      "c": "They cannot be controlled; the aircraft must return to land immediately"
+    },
+    "correct_answer": "b",
+    "justification": "Page 75: If the standby navigation mode is selected, the navigation systems frequencies are controlled by RMP 1 and RMP 2 only. The standby navigation is selected in the event of failure of both ... (FMGCs).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-138",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 1,
+    "question": "What does a 'TO' indication arrow on the ND signify during VOR navigation?",
+    "options": {
+      "a": "The aircraft is flying towards the ground station",
+      "b": "The aircraft is flying away from the ground station",
+      "c": "The selected course is invalid"
+    },
+    "correct_answer": "a",
+    "justification": "Page 600: FLIGHT REPRESENTATION diagram shows 'TO' pointing toward the beacon station.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-139",
+    "ata": "34",
+    "subtopic": "ADF",
+    "category": "B2",
+    "level": 2,
+    "question": "What type of pointer is used to represent ADF 2 on the Navigation Display (ND)?",
+    "options": {
+      "a": "Single pointer",
+      "b": "Double pointer",
+      "c": "Triple pointer"
+    },
+    "correct_answer": "b",
+    "justification": "Page 589: ADF 2 is represented by a double pointer.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B1-140",
+    "ata": "34",
+    "subtopic": "ADF",
+    "category": "B1",
+    "level": 1,
+    "question": "Where are the ADF radio-navigation receiver antennas installed?",
+    "options": {
+      "a": "Under the cockpit windows",
+      "b": "Upper fuselage",
+      "c": "Lower portion of the fuselage aft of the landing gear"
+    },
+    "correct_answer": "b",
+    "justification": "Page 587: The ADF radio-navigation receiver antennas are installed on the upper fuselage.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-141",
+    "ata": "34",
+    "subtopic": "EGPWS modes 1-5",
+    "category": "B2",
+    "level": 2,
+    "question": "In EGPWS Mode 1, what is the sequence of aural alerts as the aircraft penetrates the second boundary?",
+    "options": {
+      "a": "SINK RATE followed by TERRAIN",
+      "b": "SINK RATE followed by repetitive PULL UP",
+      "c": "DON'T SINK followed by TOO LOW GEAR"
+    },
+    "correct_answer": "b",
+    "justification": "Page 549: Penetration of the first boundary generates a repeated 'SINK RATE' aural alert... Penetration of the second boundary generates a repetitive 'PULL UP' aural alert.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-142",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 1,
+    "question": "What color is a VOR identifier on the ND when it is tuned in background by the FMGC?",
+    "options": {
+      "a": "White",
+      "b": "Green",
+      "c": "Cyan"
+    },
+    "correct_answer": "b",
+    "justification": "Page 600 & 420: Information automatically derived from the database (auto-tuned) is shown in small font/green, while manual entries are big font/white. (Reference to standard EFIS color coding implied in manual graphics).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-143",
+    "ata": "34",
+    "subtopic": "GPS hybrid navigation",
+    "category": "B2",
+    "level": 1,
+    "question": "Which system segment computes the aircraft position based on measurement of transmission time from satellites?",
+    "options": {
+      "a": "Spatial segment",
+      "b": "Control segment",
+      "c": "User segment"
+    },
+    "correct_answer": "c",
+    "justification": "Page 478: This segment is constituted by the GPS receiver [User Segment] and allows: ... - navigation computation (Satellite choice, positioning...).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-144",
+    "ata": "34",
+    "subtopic": "PWS",
+    "category": "B2",
+    "level": 3,
+    "question": "How are PWS aural alerts inhibited during high-priority flight phases?",
+    "options": {
+      "a": "By the reactive windshear and stall warning from the FWCs",
+      "b": "Automatically above 2,500 feet radio altitude",
+      "c": "By selecting 'SYS OFF' on the GPWS control panel"
+    },
+    "correct_answer": "a",
+    "justification": "Page 503: PWS aural alerts (discrete input) are inhibited by the reactive windshear and stall warning from the Flight Warning Computers (FWCs).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-145",
+    "ata": "34",
+    "subtopic": "VOR/DME operation and failures",
+    "category": "B2",
+    "level": 2,
+    "question": "What is the primary indicator on the ND that a VOR station has been manually tuned through the MCDU?",
+    "options": {
+      "a": "The identifier is displayed in magenta",
+      "b": "The frequency and identifier are displayed in big font",
+      "c": "A box appears around the station symbol"
+    },
+    "correct_answer": "b",
+    "justification": "Page 420: When indications on the MCDU are manually entered, they are displayed in big font.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-040",
+    "ata": "46",
+    "subtopic": "VDL mode 2 detailed operation",
+    "category": "B2",
+    "level": 1,
+    "question": "What modulation method is used by the ATSU's VDL mode 2 function?",
+    "options": {
+      "a": "Binary Phase Shift Keying (BPSK)",
+      "b": "Differential 8-Phase Shift Keying (D8-PSK)",
+      "c": "Frequency Shift Keying (FSK)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 9: With this function, the rate throughput is increased ten times through a D8-PSK modulation (31,5 Kbit/s).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-041",
+    "ata": "46",
+    "subtopic": "VDL mode 2 detailed operation",
+    "category": "B2",
+    "level": 2,
+    "question": "By how much is the data link throughput increased when switching from standard VDL to VDL mode 2?",
+    "options": {
+      "a": "Two times",
+      "b": "Five times",
+      "c": "Ten times"
+    },
+    "correct_answer": "c",
+    "justification": "Page 9: With this function, the rate throughput is increased ten times through a D8-PSK modulation (31,5 Kbit/s).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-042",
+    "ata": "46",
+    "subtopic": "ATSU ground test",
+    "category": "B2",
+    "level": 1,
+    "question": "Through which MCDU menu is the result of the VHF3 ground communication link test accessed?",
+    "options": {
+      "a": "COMM CONFIG menu",
+      "b": "MAINTENANCE menu",
+      "c": "COMM STATUS menu"
+    },
+    "correct_answer": "b",
+    "justification": "Page 33: The link test is accessible through the MAINTENANCE menu. The result of this test confirms that the communication link between VHF3 and the ground is operational.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-043",
+    "ata": "46",
+    "subtopic": "ATSU ground test",
+    "category": "B2",
+    "level": 2,
+    "question": "What does a successful VHF3 link test in the MAINTENANCE menu confirm to the technician?",
+    "options": {
+      "a": "The ATSU has correctly initialized its database",
+      "b": "The communication link between VHF3 and the ground is operational",
+      "c": "The ACARS router has synchronized with the SITA network"
+    },
+    "correct_answer": "b",
+    "justification": "Page 33: The result of this test confirms that the communication link between VHF3 and the ground is operational.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-044",
+    "ata": "46",
+    "subtopic": "ATSU ground test",
+    "category": "B2",
+    "level": 3,
+    "question": "During a 'VHF3 LINK TEST', what indication is initially shown on the MCDU while the test is active?",
+    "options": {
+      "a": "VHF3 LINK OK",
+      "b": "IN PROGRESS VHF3 LINK",
+      "c": "SEARCHING GROUND STATION"
+    },
+    "correct_answer": "b",
+    "justification": "Page 34: The MCDU screen diagram for VHF3 LINK TEST shows 'IN PROGRESS VHF3 LINK' during the test execution.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-045",
+    "ata": "46",
+    "subtopic": "AINS BITE",
+    "category": "B2",
+    "level": 1,
+    "question": "Which AINS module performs data throughput control to the avionics only if conditions in a loadable database are met?",
+    "options": {
+      "a": "Aircraft Network Server Unit (ANSU)",
+      "b": "Avionics Software Protection Module",
+      "c": "Terminal Wireless LAN Unit (TWLU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 51: Avionics Software Protection Module... controls every input to the avionics and allows throughput only if the data meet conditions defined in loadable database.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-046",
+    "ata": "46",
+    "subtopic": "AINS BITE",
+    "category": "B2",
+    "level": 2,
+    "question": "How are the AINS embedded applications prevented from interfering with aircraft functions?",
+    "options": {
+      "a": "By using a physical hardware switch",
+      "b": "Through the core software and loadable filtering table database in the SIU",
+      "c": "By limiting the AINS power supply to 28V DC only"
+    },
+    "correct_answer": "b",
+    "justification": "Page 51: It is the core of the AINS safety policy... - the core software, - the loadable database (filtering table database).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-047",
+    "ata": "46",
+    "subtopic": "AINS BITE",
+    "category": "B2",
+    "level": 3,
+    "question": "In the AINS architecture, what determines the aircraft family for the Server Interface Unit (SIU)?",
+    "options": {
+      "a": "A signal from the FMGC",
+      "b": "One hardware pin programming",
+      "c": "The software part number uploaded via MDDU"
+    },
+    "correct_answer": "b",
+    "justification": "Page 57: The SIU acquires: ... - one hardware pin programming to determinate A/C family.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B1-048",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B1",
+    "level": 1,
+    "question": "Which cockpit plugs are wired directly to the Aircraft Network Server Unit (ANSU)?",
+    "options": {
+      "a": "CAPT plug, F/O plug, and cockpit PC/printer plug",
+      "b": "RMP 1 and 2 service jacks",
+      "c": "MCDU maintenance connector only"
+    },
+    "correct_answer": "a",
+    "justification": "Page 57: These ports are used to connect the ANSU to wired peripherals: - cockpit CAPT plug, - cockpit F/O plug, - cockpit PC and printer plug.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-049",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 2,
+    "question": "The SIU supplies which interface to support ARINC 615-3 data loading applications to various LRUs?",
+    "options": {
+      "a": "Ethernet",
+      "b": "ARINC 429",
+      "c": "RS-232"
+    },
+    "correct_answer": "b",
+    "justification": "Page 57: The SIU supplies ARINC 429 interface in order to support future ARINC 615-3 data loading applications.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA46-B2-050",
+    "ata": "46",
+    "subtopic": "AINS description and operation",
+    "category": "B2",
+    "level": 3,
+    "question": "Which signal is activated during FWC phases 1, 2, 9, and 10 to enable wireless communication modes in the AINS?",
+    "options": {
+      "a": "GPS Primary signal",
+      "b": "FHSS and DSSS discretes",
+      "c": "ATSU Datalink Busy discrete"
+    },
+    "correct_answer": "b",
+    "justification": "Page 57: - Frequency Hopping Spread Spectrum (FHSS) discrete is activated... during Flight Warning Computer (FWC) phase 1, 2, 9, 10, - Direct Sequence Spread Spectrum (DSSS) discrete is activated... during FWC phase 1, 2, 9, 10.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-146",
+    "ata": "34",
+    "subtopic": "Radio Altimeter BITE and testing",
+    "category": "B2",
+    "level": 2,
+    "question": "Which aircraft equipment is used to initiate a system test for the Radio Altimeters (RA) on the ground?",
+    "options": {
+      "a": "The PULL UP/GPWS P/BSW on the main instrument panel",
+      "b": "The MCDU via the Centralized Fault Display Interface Unit (CFDIU)",
+      "c": "The Radio Management Panel (RMP) in 'STBY NAV' mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 518: The MCDUs allow the systems to be tested via the Centralized Fault Display Interface Unit (CFDIU). The tests are only available on ground.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-147",
+    "ata": "34",
+    "subtopic": "Radio Altimeter BITE and testing",
+    "category": "B2",
+    "level": 3,
+    "question": "Under what specific condition is the Radio Altimeter ground test inhibited even if the aircraft is on the ground?",
+    "options": {
+      "a": "When the landing gear is retracted and locked",
+      "b": "When the associated engine N2 rating is greater than minimum idle rating",
+      "c": "When the FMGC is in 'GPS PRIMARY' mode"
+    },
+    "correct_answer": "b",
+    "justification": "Page 518: The Engine Interface Unit (EIU) 1(2) sends a ground discrete to the RA 1(2) to inhibit the test on ground when the associated engine N2 rating (high-pressure compressor rotational speed) is greater than minimum idle rating.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-148",
+    "ata": "34",
+    "subtopic": "Radio Altimeter BITE and testing",
+    "category": "B2",
+    "level": 3,
+    "question": "Which system component provides the flight/ground discrete signal used by the Radio Altimeter BITE module for counting internal flight legs?",
+    "options": {
+      "a": "Display Management Computer (DMC)",
+      "b": "Landing Gear Control and Interface Unit (LGCIU)",
+      "c": "Flight Augmentation Computer (FAC)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 518: The Landing Gear Control and Interface Unit (LGCIU) provides the flight/ground information, which is used by the transceiver BITE module to count the flight legs.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-149",
+    "ata": "34",
+    "subtopic": "ADIRS alignment in ATT mode",
+    "category": "B2",
+    "level": 2,
+    "question": "To perform a standard ADIRU alignment, in what position must the selector switches be on the ADIRS Mode Selector Unit (MSU)?",
+    "options": {
+      "a": "ATT",
+      "b": "NAV",
+      "c": "OFF then ATT"
+    },
+    "correct_answer": "b",
+    "justification": "Page 448: To perform the three IRs alignments, the three OFF/NAVigation/ATTitude selector switches on the Air Data/Inertial Reference System (ADIRS) Mode Selector Unit (MSU) must be set to NAV position.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-150",
+    "ata": "34",
+    "subtopic": "ADIRS alignment in ATT mode",
+    "category": "B2",
+    "level": 3,
+    "question": "What is the consequence if the MCDU INIT page is exited before the Inertial Reference (IR) alignment process has been initiated?",
+    "options": {
+      "a": "The alignment is automatically canceled",
+      "b": "An 'IR ALIGN' message is displayed in the MCDU scratchpad",
+      "c": "A 'CHECK IRS/AIRPORT POS' warning appears on the EWD"
+    },
+    "correct_answer": "b",
+    "justification": "Page 448: NOTE: When the INIT page is left without having aligned the IRs, an IR ALIGN message is displayed in the scratchpad.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-151",
+    "ata": "34",
+    "subtopic": "ADIRS alignment in ATT mode",
+    "category": "B2",
+    "level": 3,
+    "question": "How long does a standard Inertial Reference (IR) alignment typically take, assuming automatic GPS alignment is not active?",
+    "options": {
+      "a": "2 to 5 minutes",
+      "b": "10 or 15 minutes depending on latitude range",
+      "c": "Exactly 30 seconds after entering the FROM/TO route"
+    },
+    "correct_answer": "b",
+    "justification": "Page 448: ALIGN IRS message disappears and IRs alignment starts. It takes 10 or 15 minutes depending on the latitude range.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-152",
+    "ata": "34",
+    "subtopic": "Mode S transponder EHS data",
+    "category": "B2",
+    "level": 2,
+    "question": "Which of the following parameters is transmitted as part of Enhanced Surveillance (EHS) but NOT during Elementary Surveillance (ELS)?",
+    "options": {
+      "a": "Aircraft Identification",
+      "b": "Barometric pressure setting",
+      "c": "Flight Level"
+    },
+    "correct_answer": "b",
+    "justification": "Page 578: The specific parameters related to the enhanced surveillance are: ... - barometric pressure setting. (Aircraft identification and flight level are listed under ELS on page 577).",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-153",
+    "ata": "34",
+    "subtopic": "Mode S transponder EHS data",
+    "category": "B2",
+    "level": 3,
+    "question": "To enable the transmission of extended squitters and enhanced surveillance, the Mode S transponder is optionally interfaced with which systems?",
+    "options": {
+      "a": "ATSU, FCU, and the IR part of the ADIRU",
+      "b": "Radio Altimeter and the ADR part of the ADIRU",
+      "c": "Weather Radar and the Landing Gear Control Unit"
+    },
+    "correct_answer": "a",
+    "justification": "Page 582: NOTE: The links between the ATC and the Air Traffic Service Unit (ATSU), the Flight Control Unit (FCU) and the Inertial Reference (IR) part of the Air Data/Inertial Reference Unit (ADIRU) are optionally installed for enhanced surveillance/extended squitters.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-154",
+    "ata": "34",
+    "subtopic": "DME/DME position fixing logic",
+    "category": "B2",
+    "level": 2,
+    "question": "Where is the slant range distance data from the DME interrogators primarily sent for aircraft position calculation?",
+    "options": {
+      "a": "To the Display Management Computers (DMCs)",
+      "b": "To the Flight Management and Guidance Computers (FMGCs)",
+      "c": "To the Air Traffic Service Unit (ATSU)"
+    },
+    "correct_answer": "b",
+    "justification": "Page 572: USERS: The DME data is sent to the FMGCs for radio distance computation.",
+    "book": "book6",
+    "phase": "Phase 6"
+  },
+  {
+    "id": "ATA34-B2-155",
+    "ata": "34",
+    "subtopic": "DME/DME position fixing logic",
+    "category": "B2",
+    "level": 3,
+    "question": "When is the FMGC prevented from performing radio position updating using DME/DME or VOR/DME sources?",
+    "options": {
+      "a": "When the aircraft is in 'managed' lateral mode",
+      "b": "As long as GPS/IRS mode is active",
+      "c": "Whenever the Radio Altimeter is below 2,500 feet"
+    },
+    "correct_answer": "b",
+    "justification": "Page 487: NOTE: As long as GPS/IRS mode is active, radio updating DME/DME or VOR/DME is not allowed.",
+    "book": "book6",
+    "phase": "Phase 6"
+  }
+]

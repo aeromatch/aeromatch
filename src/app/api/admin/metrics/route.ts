@@ -53,11 +53,11 @@ export async function GET() {
       // Total companies
       adminClient.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'company'),
       // Total job requests
-      adminClient.from('job_requests').select('id', { count: 'exact', head: true }),
+      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('is_test', false),
       // Accepted jobs
-      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
+      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('status', 'accepted').eq('is_test', false),
       // Completed jobs (rated)
-      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('rated', true),
+      adminClient.from('job_requests').select('id', { count: 'exact', head: true }).eq('rated', true).eq('is_test', false),
       // Total ratings
       adminClient.from('job_ratings').select('id', { count: 'exact', head: true }),
       // Founding premium grants (both types: founding_member and founding_profile_complete)

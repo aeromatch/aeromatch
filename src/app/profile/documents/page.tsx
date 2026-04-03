@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { useAccess } from '@/hooks/useAccess'
+import { UpgradeBanner } from '@/components/ui/UpgradeBanner'
 
 interface Document {
   id: string
@@ -48,15 +50,6 @@ const GENERAL_CERTIFICATES = [
 // Additional documents (optional, shared only when accepting offers)
 const ADDITIONAL_DOCUMENTS = [
   { 
-    key: 'logbook', 
-    label: { es: 'Logbook', en: 'Logbook' },
-    description: { 
-      es: 'Registro de horas y trabajos realizados. Se compartirá solo cuando aceptes una oferta.', 
-      en: 'Record of hours and work performed. Shared only when you accept an offer.' 
-    },
-    icon: '📖'
-  },
-  { 
     key: 'cv', 
     label: { es: 'CV / Currículum', en: 'CV / Resume' },
     description: { 
@@ -65,12 +58,40 @@ const ADDITIONAL_DOCUMENTS = [
     },
     icon: '📄'
   },
+  { 
+    key: 'driving_license_doc', 
+    label: { es: 'Carnet de conducir', en: 'Driving license' },
+    description: { 
+      es: 'Copia de tu carnet de conducir.', 
+      en: 'Copy of your driving license.' 
+    },
+    icon: '🚗'
+  },
+  { 
+    key: 'avsaf', 
+    label: { es: 'AVSAF', en: 'AVSAF' },
+    description: { 
+      es: 'Documento AVSAF u homologable.', 
+      en: 'AVSAF document or equivalent.' 
+    },
+    icon: '🛡️'
+  },
+  { 
+    key: 'other_additional', 
+    label: { es: 'Otros documentos', en: 'Other documents' },
+    description: { 
+      es: 'Cualquier otra documentación relevante.', 
+      en: 'Any other relevant documentation.' 
+    },
+    icon: '📎'
+  },
 ]
 
 export default function DocumentsPage() {
   const router = useRouter()
   const supabase = createClient()
   const { t, language } = useLanguage()
+  const { hasAccess: hasLogbookAccess } = useAccess('logbook')
 
   const [profile, setProfile] = useState<any>(null)
   const [technician, setTechnician] = useState<any>(null)
@@ -79,7 +100,7 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'licenses' | 'ratings' | 'certificates' | 'additional'>('licenses')
+  const [activeTab, setActiveTab] = useState<'licenses' | 'ratings' | 'certificates' | 'logbook' | 'additional'>('licenses')
   const [selectedExtras, setSelectedExtras] = useState<{[aircraft: string]: string[]}>({})
   const [customExtraText, setCustomExtraText] = useState<{[key: string]: string}>({})
 
@@ -304,6 +325,7 @@ export default function DocumentsPage() {
             { key: 'licenses', label: language === 'es' ? 'Licencias' : 'Licenses', icon: '🛡️' },
             { key: 'ratings', label: language === 'es' ? 'Habilitaciones' : 'Type Ratings', icon: '✈️' },
             { key: 'certificates', label: language === 'es' ? 'Certificados' : 'Certificates', icon: '📋' },
+            { key: 'logbook', label: language === 'es' ? 'Logbook' : 'Logbook', icon: '📖' },
             { key: 'additional', label: language === 'es' ? 'Adicionales' : 'Additional', icon: '📎' },
           ].map((tab) => (
             <button
@@ -622,7 +644,80 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        {/* Additional Documents Tab (Logbook + CV) */}
+        {/* Logbook Tab */}
+        {activeTab === 'logbook' && (
+          <div className="space-y-4">
+            {!hasLogbookAccess && (
+              <UpgradeBanner feature="logbook" />
+            )}
+
+            {hasLogbookAccess && (
+              <>
+                {(() => {
+                const doc = getDocumentForType('logbook')
+                const isUploading = uploading === 'logbook'
+                return (
+                  <div className="card p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${
+                          doc?.status === 'verified'
+                            ? 'bg-gold-500/15 border-2 border-gold-500/50'
+                            : doc
+                              ? 'bg-steel-700/30 border-2 border-steel-600/50'
+                              : 'bg-navy-800 border-2 border-steel-700/50'
+                        }`}>
+                          📖
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-white">Technical Logbook (PDF)</h3>
+                          <p className="text-xs text-steel-500 mt-0.5">
+                            {language === 'es'
+                              ? 'Visible para empresas cuando revisan tu perfil.'
+                              : 'Visible to companies when they review your profile.'}
+                          </p>
+                          {doc && (
+                            <div className="flex items-center gap-2 mt-2">
+                              {getStatusBadge(doc.status)}
+                              <span className="text-xs text-steel-500">{doc.file_name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <label className={`btn-secondary text-sm cursor-pointer ${isUploading ? 'opacity-50' : ''}`}>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf"
+                          disabled={isUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleUpload('logbook', file)
+                          }}
+                        />
+                        {isUploading ? t.common.processing : doc ? t.documents.update : t.documents.upload}
+                      </label>
+                    </div>
+                  </div>
+                )
+                })()}
+
+            <div className="card p-5">
+              <p className="font-medium text-white mb-1">
+                {language === 'es' ? 'Análisis disponible próximamente' : 'Analysis available soon'}
+              </p>
+              <p className="text-sm text-steel-400">
+                {language === 'es'
+                  ? 'Pronto podrás ver análisis automático de experiencia y trazabilidad del logbook.'
+                  : 'Soon you will see automatic analysis of experience and logbook traceability.'}
+              </p>
+            </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Additional Documents Tab */}
         {activeTab === 'additional' && (
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-navy-800/50 border border-steel-700/30 mb-6">

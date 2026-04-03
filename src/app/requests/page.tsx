@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/ui/AppLayout'
 import { AcceptJobModal } from '@/components/requests/AcceptJobModal'
 import { RatingModal, RatingData } from '@/components/ratings/RatingModal'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { AMXSummaryModal } from '@/components/search/AMXSummaryModal'
 
 interface JobRequest {
   id: string
@@ -30,6 +31,8 @@ interface JobRequest {
   work_mode?: string
   umbrella_provider_name?: string
   uk_eligibility_mode?: string
+  has_logbook?: boolean
+  is_test?: boolean
 }
 
 export default function RequestsPage() {
@@ -51,11 +54,16 @@ export default function RequestsPage() {
   // Rating modal state
   const [ratingModalOpen, setRatingModalOpen] = useState(false)
   const [ratingRequest, setRatingRequest] = useState<JobRequest | null>(null)
+  const [showAMXModal, setShowAMXModal] = useState(false)
+  const [amxRequest, setAmxRequest] = useState<JobRequest | null>(null)
 
   // Delete confirmation modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [requestToDelete, setRequestToDelete] = useState<JobRequest | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [rejectModalOpen, setRejectModalOpen] = useState(false)
+  const [rejectingRequest, setRejectingRequest] = useState<JobRequest | null>(null)
+  const [rejectionReason, setRejectionReason] = useState('')
 
   const labels = {
     title: language === 'es' ? 'Solicitudes Recibidas' : 'Received Requests',
@@ -92,10 +100,17 @@ export default function RequestsPage() {
     required: language === 'es' ? 'Requerido' : 'Required',
     deleteRequest: language === 'es' ? 'Eliminar solicitud' : 'Delete request',
     deleteConfirmTitle: language === 'es' ? '¿Eliminar solicitud?' : 'Delete request?',
-    deleteConfirmText: language === 'es' ? 'Esta acción no se puede deshacer. La solicitud será cancelada.' : 'This action cannot be undone. The request will be cancelled.',
+    deleteConfirmText: language === 'es'
+      ? 'Esta acción no se puede deshacer. La solicitud se eliminará definitivamente.'
+      : 'This action cannot be undone. The request will be permanently deleted.',
     delete: language === 'es' ? 'Eliminar' : 'Delete',
     cancel: language === 'es' ? 'Cancelar' : 'Cancel',
     cannotDeleteAccepted: language === 'es' ? 'No se puede eliminar una solicitud aceptada' : 'Cannot delete an accepted request',
+    rejectModalTitle: language === 'es' ? 'Rechazar oferta' : 'Reject offer',
+    rejectModalBody: language === 'es' ? 'Lamentablemente no puedo aceptar la oferta en este momento.' : 'Unfortunately I cannot accept this offer right now.',
+    rejectModalFooter: language === 'es' ? 'Quedo disponible para futuras oportunidades.' : 'I remain available for future opportunities.',
+    rejectReasonLabel: language === 'es' ? 'Motivo (mínimo 10 caracteres)' : 'Reason (minimum 10 characters)',
+    confirmReject: language === 'es' ? 'Confirmar rechazo' : 'Confirm rejection',
   }
 
   const workModeLabels: Record<string, string> = {
@@ -138,6 +153,7 @@ export default function RequestsPage() {
         .from('job_requests')
         .select('*')
         .eq('technician_id', user.id)
+        .neq('status', 'draft')
         .order('created_at', { ascending: false })
 
       // For accepted requests, load workflow data
@@ -154,6 +170,14 @@ export default function RequestsPage() {
             `)
             .in('job_request_id', acceptedIds)
 
+          const techIds = [...new Set(requestsData.map(r => r.technician_id))]
+          const { data: logbookDocs } = await supabase
+            .from('documents')
+            .select('technician_id')
+            .eq('doc_type', 'logbook')
+            .in('technician_id', techIds)
+          const hasLogbookSet = new Set((logbookDocs || []).map((d: any) => d.technician_id))
+
           // Merge workflow data into requests
           const enrichedRequests = requestsData.map(req => {
             const workflow = workflowData?.find((w: any) => w.job_request_id === req.id)
@@ -161,6 +185,7 @@ export default function RequestsPage() {
               ...req,
               work_mode: workflow?.work_mode,
               umbrella_provider_name: (workflow as any)?.umbrella_providers?.name,
+              has_logbook: hasLogbookSet.has(req.technician_id),
             }
           })
           setRequests(enrichedRequests)
@@ -217,7 +242,20 @@ export default function RequestsPage() {
     loadData()
   }
 
-  const handleReject = async (requestId: string) => {
+  const openRejectModal = (request: JobRequest) => {
+    setRejectingRequest(request)
+    setRejectionReason('')
+    setRejectModalOpen(true)
+  }
+
+  const handleReject = async () => {
+    if (!rejectingRequest) return
+    if ((rejectionReason || '').trim().length < 10) {
+      setError(language === 'es' ? 'El motivo debe tener al menos 10 caracteres' : 'Reason must be at least 10 characters')
+      return
+    }
+
+    const requestId = rejectingRequest.id
     setUpdating(requestId)
     setError(null)
 
@@ -225,7 +263,7 @@ export default function RequestsPage() {
       const response = await fetch(`/api/job-requests/${requestId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'rejected' })
+        body: JSON.stringify({ status: 'rejected', rejection_reason: rejectionReason.trim() })
       })
 
       const data = await response.json()
@@ -235,6 +273,9 @@ export default function RequestsPage() {
       setRequests(requests.map(r => 
         r.id === requestId ? { ...r, status: 'rejected' } : r
       ))
+      setRejectModalOpen(false)
+      setRejectingRequest(null)
+      setRejectionReason('')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -271,7 +312,7 @@ export default function RequestsPage() {
 
   // Check if a job should show rating prompt (accepted + end_date passed + not rated)
   const shouldShowRatingPrompt = (request: JobRequest) => {
-    if (request.status !== 'accepted' || request.rated) return false
+    if (request.is_test || request.status !== 'accepted' || request.rated) return false
     const endDate = new Date(request.end_date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -312,8 +353,17 @@ export default function RequestsPage() {
 
   // Check if request can be deleted
   const canDeleteRequest = (request: JobRequest) => {
-    // Only pending and rejected requests can be deleted
-    return request.status === 'pending' || request.status === 'rejected'
+    const status = (request.status || '').toLowerCase()
+    if (request.is_test) return true
+    if (status === 'rejected' || status === 'cancelled') return true
+    // Allow deleting accepted requests only after they are completed (end_date passed)
+    if (status === 'accepted') {
+      const endDate = new Date(request.end_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return endDate < today
+    }
+    return false
   }
 
   const getStatusBadge = (request: JobRequest) => {
@@ -399,6 +449,11 @@ export default function RequestsPage() {
                   <div>
                     <h3 className="font-semibold text-white">{request.final_client_name}</h3>
                     <p className="text-sm text-steel-400">{request.work_location}</p>
+                    {request.is_test && (
+                      <p className="text-xs text-gold-400 mt-1">
+                        {language === 'es' ? 'Oferta de prueba (sin efectos reales)' : 'Test offer (no real effects)'}
+                      </p>
+                    )}
                   </div>
                   {getStatusBadge(request)}
                 </div>
@@ -445,6 +500,28 @@ export default function RequestsPage() {
                   </div>
                 )}
 
+                {!isTechnician && request.status === 'accepted' && (
+                  <div className="mb-4 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setAmxRequest(request)
+                        setShowAMXModal(true)
+                      }}
+                      className="btn-secondary flex-1 text-center"
+                    >
+                      {language === 'es' ? 'Ver AMX' : 'View AMX'}
+                    </button>
+                    <a
+                      href={`/api/technicians/${request.technician_id}/logbook/download`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`btn-secondary flex-1 text-center ${request.has_logbook ? '' : 'opacity-50 pointer-events-none'}`}
+                    >
+                      {language === 'es' ? 'Ver Logbook' : 'View Logbook'}
+                    </a>
+                  </div>
+                )}
+
                 {/* UK Right to Work Warning for technicians on pending requests */}
                 {isTechnician && request.status === 'pending' && request.requires_right_to_work_uk && technicianData?.right_to_work_uk !== true && (
                   <div className="mb-4 p-4 rounded-xl bg-warning-500/10 border border-warning-500/30">
@@ -484,12 +561,20 @@ export default function RequestsPage() {
                       {labels.accept}
                     </button>
                     <button
-                      onClick={() => handleReject(request.id)}
+                      onClick={() => openRejectModal(request)}
                       disabled={updating === request.id}
                       className="btn-danger flex-1"
                     >
                       {updating === request.id ? labels.processing : labels.reject}
                     </button>
+                  </div>
+                )}
+
+                {isTechnician && request.is_test && request.status !== 'pending' && (
+                  <div className="mt-4 p-3 rounded-lg bg-success-500/10 border border-success-500/30 text-success-300 text-sm">
+                    {language === 'es'
+                      ? '¡Perfecto! Así es exactamente como funciona cuando recibes una oferta real. Tu respuesta no ha generado ningún efecto.'
+                      : 'Perfect! This is exactly how real offers work. Your response generated no real effects.'}
                   </div>
                 )}
 
@@ -518,13 +603,13 @@ export default function RequestsPage() {
                   </div>
                 )}
 
-                {/* Delete button for companies */}
+                {/* Delete button (technicians + companies) */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-steel-700/30">
                   <p className="text-xs text-steel-600">
                     {labels.created}: {new Date(request.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-GB')}
                   </p>
                   
-                  {!isTechnician && canDeleteRequest(request) && (
+                  {canDeleteRequest(request) && (
                     <button
                       onClick={() => handleDeleteClick(request)}
                       className="text-xs text-steel-500 hover:text-error-400 transition-colors flex items-center gap-1"
@@ -536,7 +621,7 @@ export default function RequestsPage() {
                     </button>
                   )}
                   
-                  {!isTechnician && request.status === 'accepted' && (
+                  {!canDeleteRequest(request) && request.status === 'accepted' && (
                     <span className="text-xs text-steel-600 italic">
                       {labels.cannotDeleteAccepted}
                     </span>
@@ -560,7 +645,38 @@ export default function RequestsPage() {
           onAccepted={handleAccepted}
           technicianHasRightToWorkUK={technicianData?.right_to_work_uk === true}
           technicianVerificationStatus={technicianData?.verification_status || 'unverified'}
+          initialPresentationMessage={profile?.presentation_message_template || undefined}
         />
+      )}
+
+      {/* Reject Modal */}
+      {rejectModalOpen && rejectingRequest && (
+        <div className="modal-overlay" onClick={() => setRejectModalOpen(false)}>
+          <div className="modal p-6 max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-4">{labels.rejectModalTitle}</h3>
+            <p className="text-steel-300 mb-2">{labels.rejectModalBody}</p>
+            <label className="label">{labels.rejectReasonLabel}</label>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="textarea h-28"
+              placeholder={language === 'es' ? 'Escribe el motivo...' : 'Write your reason...'}
+            />
+            <p className="text-steel-300 mt-2">{labels.rejectModalFooter}</p>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setRejectModalOpen(false)} className="btn-secondary flex-1">
+                {labels.cancel}
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={updating === rejectingRequest.id || rejectionReason.trim().length < 10}
+                className="btn-danger flex-1"
+              >
+                {updating === rejectingRequest.id ? labels.processing : labels.confirmReject}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Rating Modal (for companies) */}
@@ -574,6 +690,18 @@ export default function RequestsPage() {
           technicianName={ratingRequest.technician_name || 'Técnico'}
           jobTitle={ratingRequest.final_client_name}
           onSubmit={handleSubmitRating}
+        />
+      )}
+
+      {amxRequest && (
+        <AMXSummaryModal
+          isOpen={showAMXModal}
+          onClose={() => {
+            setShowAMXModal(false)
+            setAmxRequest(null)
+          }}
+          technicianId={amxRequest.technician_id}
+          techId={amxRequest.technician_id.substring(0, 8).toUpperCase()}
         />
       )}
 

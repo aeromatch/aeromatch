@@ -42,6 +42,8 @@ export default async function DashboardPage() {
   let companyData = null
   let availabilitySlots: any[] = []
   let pendingRequests: any[] = []
+  let ratingsSummary: any = null
+  let canUseTestOffer = false
 
   if (isTechnician) {
     const { data: tech } = await supabase
@@ -65,8 +67,46 @@ export default async function DashboardPage() {
         .select('*')
         .eq('technician_id', user.id)
         .eq('status', 'pending')
+        .eq('is_test', false)
         .order('created_at', { ascending: false })
       pendingRequests = requests || []
+
+      const { count: realOffersCount } = await supabase
+        .from('job_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('technician_id', user.id)
+        .eq('is_test', false)
+      canUseTestOffer = (realOffersCount || 0) === 0
+
+      const { data: ratings } = await supabase
+        .from('job_ratings')
+        .select(`
+          overall_rating,
+          reliability_rating,
+          documentation_rating,
+          skills_match_rating,
+          communication_rating,
+          safety_compliance_rating
+        `)
+        .eq('technician_user_id', user.id)
+
+      const count = ratings?.length || 0
+      if (count > 0) {
+        const avg = (items: (number | null | undefined)[]) => {
+          const valid = items.filter((v): v is number => typeof v === 'number')
+          if (valid.length === 0) return null
+          return Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10
+        }
+        ratingsSummary = {
+          count,
+          overall: avg((ratings || []).map((r: any) => r.overall_rating)),
+          punctuality: avg((ratings || []).map((r: any) => r.reliability_rating)),
+          documentation: avg((ratings || []).map((r: any) => r.documentation_rating)),
+          technical: avg((ratings || []).map((r: any) => r.skills_match_rating)),
+          communication: avg((ratings || []).map((r: any) => r.communication_rating)),
+          safety: avg((ratings || []).map((r: any) => r.safety_compliance_rating)),
+        }
+      }
     }
   } else {
     const { data: company } = await supabase
@@ -94,6 +134,8 @@ export default async function DashboardPage() {
       company={companyData}
       availabilitySlots={availabilitySlots}
       pendingRequests={pendingRequests}
+      ratingsSummary={ratingsSummary}
+      canUseTestOffer={canUseTestOffer}
     />
   )
 }

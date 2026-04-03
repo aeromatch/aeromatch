@@ -14,16 +14,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const STORAGE_KEY = 'aeromatch-language'
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en')
+  const [language, setLanguageState] = useState<Language>('es')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Load from localStorage on mount
     const stored = localStorage.getItem(STORAGE_KEY) as Language
     if (stored && (stored === 'en' || stored === 'es')) {
       setLanguageState(stored)
     } else {
-      // Detect browser language
       const browserLang = navigator.language.startsWith('es') ? 'es' : 'en'
       setLanguageState(browserLang)
     }
@@ -35,17 +33,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, lang)
   }
 
-  // Prevent hydration mismatch
   if (!mounted) {
     return (
-      <LanguageContext.Provider value={{ language: 'en', setLanguage, t: translations.en }}>
+      <LanguageContext.Provider
+        value={{ language: 'es', setLanguage, t: translations.es as unknown as TranslationKeys }}
+      >
         {children}
       </LanguageContext.Provider>
     )
   }
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t: translations[language] as TranslationKeys }}>
+    <LanguageContext.Provider
+      value={{ language, setLanguage, t: translations[language] as unknown as TranslationKeys }}
+    >
       {children}
     </LanguageContext.Provider>
   )

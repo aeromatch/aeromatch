@@ -13,8 +13,9 @@ interface RatingModalProps {
 
 export interface RatingData {
   overall: number
-  reliability?: number
-  skillsMatch?: number
+  punctualityAvailability?: number
+  documentationCompliance?: number
+  technicalCompetence?: number
   communication?: number
   safetyCompliance?: number
   privateComment?: string
@@ -55,8 +56,9 @@ function StarRating({
 export function RatingModal({ isOpen, onClose, onSubmit, technicianName, jobTitle }: RatingModalProps) {
   const { language } = useLanguage()
   const [overall, setOverall] = useState(0)
-  const [reliability, setReliability] = useState(0)
-  const [skillsMatch, setSkillsMatch] = useState(0)
+  const [punctualityAvailability, setPunctualityAvailability] = useState(0)
+  const [documentationCompliance, setDocumentationCompliance] = useState(0)
+  const [technicalCompetence, setTechnicalCompetence] = useState(0)
   const [communication, setCommunication] = useState(0)
   const [safetyCompliance, setSafetyCompliance] = useState(0)
   const [privateComment, setPrivateComment] = useState('')
@@ -68,8 +70,9 @@ export function RatingModal({ isOpen, onClose, onSubmit, technicianName, jobTitl
     subtitle: language === 'es' ? 'Tu valoración ayuda a otros a encontrar buenos técnicos' : 'Your rating helps others find great technicians',
     overall: language === 'es' ? 'Valoración general' : 'Overall Rating',
     overallRequired: language === 'es' ? '(requerido)' : '(required)',
-    reliability: language === 'es' ? 'Fiabilidad' : 'Reliability',
-    skillsMatch: language === 'es' ? 'Habilidades técnicas' : 'Technical Skills',
+    punctualityAvailability: language === 'es' ? 'Puntualidad y disponibilidad' : 'Punctuality and availability',
+    documentationCompliance: language === 'es' ? 'Documentación en regla' : 'Documentation in order',
+    technicalCompetence: language === 'es' ? 'Competencia técnica' : 'Technical competence',
     communication: language === 'es' ? 'Comunicación' : 'Communication',
     safetyCompliance: language === 'es' ? 'Cumplimiento de seguridad' : 'Safety Compliance',
     privateComment: language === 'es' ? 'Comentario privado (solo visible para el técnico)' : 'Private comment (only visible to technician)',
@@ -92,8 +95,9 @@ export function RatingModal({ isOpen, onClose, onSubmit, technicianName, jobTitl
     try {
       await onSubmit({
         overall,
-        reliability: reliability || undefined,
-        skillsMatch: skillsMatch || undefined,
+        punctualityAvailability: punctualityAvailability || undefined,
+        documentationCompliance: documentationCompliance || undefined,
+        technicalCompetence: technicalCompetence || undefined,
         communication: communication || undefined,
         safetyCompliance: safetyCompliance || undefined,
         privateComment: privateComment || undefined,
@@ -149,8 +153,9 @@ export function RatingModal({ isOpen, onClose, onSubmit, technicianName, jobTitl
 
           {/* Optional Ratings */}
           <div className="space-y-4 mb-6">
-            <StarRating value={reliability} onChange={setReliability} label={labels.reliability} />
-            <StarRating value={skillsMatch} onChange={setSkillsMatch} label={labels.skillsMatch} />
+            <StarRating value={punctualityAvailability} onChange={setPunctualityAvailability} label={labels.punctualityAvailability} />
+            <StarRating value={documentationCompliance} onChange={setDocumentationCompliance} label={labels.documentationCompliance} />
+            <StarRating value={technicalCompetence} onChange={setTechnicalCompetence} label={labels.technicalCompetence} />
             <StarRating value={communication} onChange={setCommunication} label={labels.communication} />
             <StarRating value={safetyCompliance} onChange={setSafetyCompliance} label={labels.safetyCompliance} />
           </div>

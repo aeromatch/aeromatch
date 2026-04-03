@@ -90,6 +90,7 @@ export default function RoleSelectionPage() {
           id: userId,
           email: userEmail,
           role: role,
+          plan: 'premium',
           onboarding_completed: false
         }, { onConflict: 'id' })
 

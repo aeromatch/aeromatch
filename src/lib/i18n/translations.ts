@@ -19,6 +19,8 @@ export const translations = {
       requests: 'Requests',
       signOut: 'Sign Out',
       demo: 'Demo',
+      visibleForOffers: 'Visible for offers',
+      visibleForOffersHint: 'When off, your profile is hidden from search',
     },
     // Home Hero
     hero: {
@@ -342,6 +344,8 @@ export const translations = {
       requests: 'Solicitudes',
       signOut: 'Cerrar Sesión',
       demo: 'Demo',
+      visibleForOffers: 'Visible para ofertas',
+      visibleForOffersHint: 'Desactivado: no apareces en búsquedas',
     },
     // Home Hero
     hero: {

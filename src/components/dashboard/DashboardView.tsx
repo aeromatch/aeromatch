@@ -14,6 +14,16 @@ interface DashboardViewProps {
   company: any
   availabilitySlots: any[]
   pendingRequests: any[]
+  ratingsSummary?: {
+    count: number
+    overall: number | null
+    punctuality: number | null
+    documentation: number | null
+    technical: number | null
+    communication: number | null
+    safety: number | null
+  } | null
+  canUseTestOffer?: boolean
 }
 
 type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected'
@@ -194,7 +204,7 @@ function VerificationProgressWidget({
   )
 }
 
-export function DashboardView({ profile, technician, company, availabilitySlots, pendingRequests }: DashboardViewProps) {
+export function DashboardView({ profile, technician, company, availabilitySlots, pendingRequests, ratingsSummary, canUseTestOffer }: DashboardViewProps) {
   const { t, language } = useLanguage()
   const isTechnician = profile.role === 'technician'
   const supabase = createClient()
@@ -217,6 +227,8 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
 
   // Dismiss reminders state
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([])
+  const [creatingTestOffer, setCreatingTestOffer] = useState(false)
+  const [showTestOfferEmailMessage, setShowTestOfferEmailMessage] = useState(false)
 
   // Load documents
   const [documentTypes, setDocumentTypes] = useState<string[]>([])
@@ -280,7 +292,7 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
 
   const reminderTexts = {
     es: {
-      completeProfile: '¡Completa tu perfil para activar Premium GRATIS!',
+      completeProfile: 'Completa tu perfil para desbloquear más oportunidades.',
       addBasicLicense: 'Sube tu licencia básica (EASA, UK CAA o FAA)',
       addAircraftDocs: 'Sube documentos teórico + práctico de tus aviones',
       addAvailability: 'Añade tus períodos de disponibilidad',
@@ -288,7 +300,7 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
       goTo: 'Ir a'
     },
     en: {
-      completeProfile: 'Complete your profile to activate FREE Premium!',
+      completeProfile: 'Complete your profile to unlock more opportunities.',
       addBasicLicense: 'Upload your basic license (EASA, UK CAA or FAA)',
       addAircraftDocs: 'Upload theory + practical docs for your aircraft',
       addAvailability: 'Add your availability periods',
@@ -382,6 +394,27 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     en: '🎉 Premium activated for 12 months! Thanks for completing your profile before launch.'
   }
 
+  const renderStars = (value: number | null) => {
+    if (typeof value !== 'number') return '—'
+    const rounded = Math.round(value)
+    return `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`
+  }
+
+  const createTestOffer = async () => {
+    if (creatingTestOffer) return
+    setCreatingTestOffer(true)
+    try {
+      const response = await fetch('/api/job-requests/test', { method: 'POST' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'No se pudo crear la oferta de prueba')
+      setShowTestOfferEmailMessage(true)
+    } catch (err: any) {
+      alert(err?.message || 'Error al crear oferta de prueba')
+    } finally {
+      setCreatingTestOffer(false)
+    }
+  }
+
   return (
     <AppLayout userEmail={profile.email} userRole={profile.role}>
       {/* Premium Granted Toast */}
@@ -395,6 +428,27 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
             <button 
               onClick={() => setShowPremiumToast(false)}
               className="ml-2 text-navy-950/60 hover:text-navy-950"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showTestOfferEmailMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-navy-800 border border-gold-500/40 text-white px-6 py-4 rounded-xl shadow-2xl flex items-start gap-3 max-w-lg">
+            <span className="text-xl flex-shrink-0">📧</span>
+            <p className="font-medium text-sm text-steel-100">
+              {language === 'es'
+                ? 'Te hemos enviado una oferta de prueba a tu email. Ábrela y sigue el proceso desde ahí.'
+                : 'We sent a test offer to your email. Open it and continue the flow from there.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowTestOfferEmailMessage(false)}
+              className="ml-1 text-steel-500 hover:text-white flex-shrink-0"
+              aria-label={language === 'es' ? 'Cerrar' : 'Close'}
             >
               ✕
             </button>
@@ -582,6 +636,15 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
               </>
             )}
           </div>
+          {isTechnician && canUseTestOffer && (
+            <div className="mt-4">
+              <button onClick={createTestOffer} disabled={creatingTestOffer} className="btn-secondary">
+                {creatingTestOffer
+                  ? (language === 'es' ? 'Creando oferta de prueba...' : 'Creating test offer...')
+                  : (language === 'es' ? '¿Cómo funciona una oferta?' : 'How does an offer work?')}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Subscription Section */}
@@ -695,6 +758,69 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
             )}
           </div>
         </div>
+
+        {/* Technician Ratings */}
+        {isTechnician && ratingsSummary && (
+          <div className="mt-8 card p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              {language === 'es' ? 'Mis valoraciones' : 'My Ratings'}
+            </h3>
+            <div className="mb-4 p-4 rounded-lg bg-navy-800/50 border border-steel-700/30">
+              <p className="text-sm text-steel-400">
+                {language === 'es' ? 'Puntuación media general' : 'Overall average score'}
+              </p>
+              <p className="text-2xl font-bold text-gold-400">
+                {ratingsSummary.overall ? `${ratingsSummary.overall.toFixed(1)} / 5` : '—'}
+              </p>
+              <p className="text-sm text-steel-300 mt-1">{renderStars(ratingsSummary.overall)}</p>
+              <p className="text-xs text-steel-500 mt-2">
+                {language === 'es'
+                  ? `Total valoraciones: ${ratingsSummary.count}`
+                  : `Total ratings: ${ratingsSummary.count}`}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              {[
+                { key: 'punctuality', label: language === 'es' ? 'Puntualidad y disponibilidad' : 'Punctuality and availability', value: ratingsSummary.punctuality },
+                { key: 'documentation', label: language === 'es' ? 'Documentación en regla' : 'Documentation in order', value: ratingsSummary.documentation },
+                { key: 'technical', label: language === 'es' ? 'Competencia técnica' : 'Technical competence', value: ratingsSummary.technical },
+                { key: 'communication', label: language === 'es' ? 'Comunicación' : 'Communication', value: ratingsSummary.communication },
+                { key: 'safety', label: language === 'es' ? 'Cumplimiento de procedimientos de seguridad' : 'Safety procedures compliance', value: ratingsSummary.safety },
+              ].map((row) => (
+                <div key={row.key} className="p-3 rounded-lg bg-navy-800/40 border border-steel-700/30">
+                  <p className="text-steel-400">{row.label}</p>
+                  <p className="text-white font-medium">
+                    {typeof row.value === 'number' ? `${row.value.toFixed(1)} / 5` : '—'}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {[
+              ratingsSummary.punctuality !== null && ratingsSummary.punctuality < 3 ? (language === 'es' ? 'Mejora puntualidad/disponibilidad: confirma fechas con antelación y mantén respuesta rápida.' : 'Improve punctuality/availability: confirm dates in advance and reply quickly.') : null,
+              ratingsSummary.documentation !== null && ratingsSummary.documentation < 3 ? (language === 'es' ? 'Mejora documentación: revisa vigencias y sube versiones actualizadas.' : 'Improve documentation: check expirations and upload updated files.') : null,
+              ratingsSummary.technical !== null && ratingsSummary.technical < 3 ? (language === 'es' ? 'Mejora competencia técnica: refuerza formación específica de tipo y tareas críticas.' : 'Improve technical competence: reinforce type-specific and critical-task training.') : null,
+              ratingsSummary.communication !== null && ratingsSummary.communication < 3 ? (language === 'es' ? 'Mejora comunicación: reporta estado diario y confirma instrucciones por escrito.' : 'Improve communication: report status daily and confirm instructions in writing.') : null,
+              ratingsSummary.safety !== null && ratingsSummary.safety < 3 ? (language === 'es' ? 'Mejora seguridad: repasa SOPs y registra cumplimiento de procedimientos.' : 'Improve safety: review SOPs and record procedure compliance.') : null,
+            ].filter(Boolean).length > 0 && (
+              <div className="mt-4 p-4 rounded-lg bg-warning-500/10 border border-warning-500/30">
+                <p className="text-sm font-medium text-warning-400 mb-2">
+                  {language === 'es' ? 'Orientación privada de mejora (solo visible para ti)' : 'Private improvement guidance (visible only to you)'}
+                </p>
+                <ul className="text-sm text-steel-300 space-y-1">
+                  {[
+                    ratingsSummary.punctuality !== null && ratingsSummary.punctuality < 3 ? (language === 'es' ? 'Mejora puntualidad/disponibilidad: confirma fechas con antelación y mantén respuesta rápida.' : 'Improve punctuality/availability: confirm dates in advance and reply quickly.') : null,
+                    ratingsSummary.documentation !== null && ratingsSummary.documentation < 3 ? (language === 'es' ? 'Mejora documentación: revisa vigencias y sube versiones actualizadas.' : 'Improve documentation: check expirations and upload updated files.') : null,
+                    ratingsSummary.technical !== null && ratingsSummary.technical < 3 ? (language === 'es' ? 'Mejora competencia técnica: refuerza formación específica de tipo y tareas críticas.' : 'Improve technical competence: reinforce type-specific and critical-task training.') : null,
+                    ratingsSummary.communication !== null && ratingsSummary.communication < 3 ? (language === 'es' ? 'Mejora comunicación: reporta estado diario y confirma instrucciones por escrito.' : 'Improve communication: report status daily and confirm instructions in writing.') : null,
+                    ratingsSummary.safety !== null && ratingsSummary.safety < 3 ? (language === 'es' ? 'Mejora seguridad: repasa SOPs y registra cumplimiento de procedimientos.' : 'Improve safety: review SOPs and record procedure compliance.') : null,
+                  ].filter(Boolean).map((tip, idx) => (
+                    <li key={idx}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Settings Section - Company only */}
         {!isTechnician && (

@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { Logo } from './Logo'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { useLanguage, LanguageSwitch } from '@/lib/i18n/LanguageContext'
+import { TechnicianVisibilityToggle } from '@/components/ui/TechnicianVisibilityToggle'
+import { GraduationCap } from 'lucide-react'
 
 interface NavItem {
   href: string
@@ -65,6 +67,8 @@ const IconRequests = () => (
   </svg>
 )
 
+const IconTraining = () => <GraduationCap className="w-5 h-5" />
+
 const IconSearch = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -90,10 +94,12 @@ export function AppLayout({ children, userEmail, userRole }: AppLayoutProps) {
     { href: '/profile/availability', label: t.nav.availability, icon: <IconCalendar /> },
     { href: '/profile/documents', label: t.nav.documents, icon: <IconDocument /> },
     { href: '/requests', label: t.nav.requests, icon: <IconRequests /> },
+    { href: '/simulator', label: 'Training', icon: <IconTraining /> },
   ]
 
   const companyNav: NavItem[] = [
     { href: '/dashboard', label: t.nav.dashboard, icon: <IconDashboard /> },
+    { href: '/profile/edit', label: t.nav.editProfile, icon: <IconProfile /> },
     { href: '/search', label: t.nav.searchTechnicians, icon: <IconSearch /> },
     { href: '/requests', label: t.nav.myRequests, icon: <IconRequests /> },
   ]
@@ -149,8 +155,11 @@ export function AppLayout({ children, userEmail, userRole }: AppLayoutProps) {
         {/* Navigation */}
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || 
-              (item.href === '/profile' && pathname.startsWith('/profile/edit'))
+            const isActive =
+              pathname === item.href ||
+              (item.href === '/profile' && pathname.startsWith('/profile/edit')) ||
+              (item.href === '/simulator' && pathname.startsWith('/simulator'))
+            const showBeta = item.href === '/simulator'
             return (
               <Link
                 key={item.href}
@@ -159,7 +168,14 @@ export function AppLayout({ children, userEmail, userRole }: AppLayoutProps) {
                 className={isActive ? 'nav-item-active' : 'nav-item'}
               >
                 {item.icon}
-                {item.label}
+                <span className="flex items-center gap-2">
+                  <span>{item.label}</span>
+                  {showBeta && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-300 tracking-wide">
+                      BETA
+                    </span>
+                  )}
+                </span>
               </Link>
             )
           })}
@@ -167,6 +183,7 @@ export function AppLayout({ children, userEmail, userRole }: AppLayoutProps) {
 
         {/* Footer */}
         <div className="p-4 border-t border-steel-800/20">
+          {userRole === 'technician' && <TechnicianVisibilityToggle />}
           <div className="flex items-center gap-3 px-3 py-2 mb-3">
             <div className="w-8 h-8 rounded bg-navy-800 border border-steel-700/50 flex items-center justify-center text-steel-300 text-xs font-medium">
               {userInitial}

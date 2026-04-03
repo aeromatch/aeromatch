@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { CertificateSection } from '@/components/profile/CertificateSection'
+import { featuresForPlan, normalizePlan, planLabel, type FeatureKey } from '@/lib/plans'
 
 interface Certificate {
   id: string
@@ -23,6 +24,29 @@ interface MyProfileViewProps {
 
 export function MyProfileView({ profile, technician, documents, availabilitySlots, certificate }: MyProfileViewProps) {
   const { t, language } = useLanguage()
+  const plan = normalizePlan(profile?.plan)
+  const planName = planLabel(plan)
+  const features = featuresForPlan(plan)
+
+  const featureLabel = (k: FeatureKey) => {
+    const es: Record<FeatureKey, string> = {
+      jobBoard: 'Job board',
+      applyJobs: 'Aplicar a ofertas',
+      logbook: 'Logbook',
+      simulatorTrial: 'Simulador (trial)',
+      simulatorFull: 'Simulador (full)',
+      customExam: 'Custom Exam',
+    }
+    const en: Record<FeatureKey, string> = {
+      jobBoard: 'Job board',
+      applyJobs: 'Apply to jobs',
+      logbook: 'Logbook',
+      simulatorTrial: 'Simulator (trial)',
+      simulatorFull: 'Simulator (full)',
+      customExam: 'Custom Exam',
+    }
+    return (language === 'es' ? es : en)[k]
+  }
 
   const uploadedDocs = documents.filter(d => d.status === 'uploaded' || d.status === 'verified')
   
@@ -60,6 +84,51 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
             {t.profile.editProfile}
           </Link>
         </div>
+
+        {/* Plan */}
+        <div className="card p-5 mb-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-steel-400">{language === 'es' ? 'Plan actual' : 'Current plan'}</p>
+              <div className="mt-2 inline-flex items-center gap-2">
+                <span className="text-xs px-3 py-1 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-300">
+                  {planName}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {features.map((f) => (
+              <div
+                key={f.key}
+                className={`p-3 rounded-lg border ${
+                  f.enabled
+                    ? 'bg-success-500/5 border-success-500/20'
+                    : 'bg-navy-800/40 border-steel-700/30'
+                }`}
+              >
+                <p className="text-sm text-white font-medium flex items-center justify-between gap-3">
+                  <span>{featureLabel(f.key)}</span>
+                  <span className={f.enabled ? 'text-success-300' : 'text-steel-500'}>
+                    {f.enabled ? '✓' : '—'}
+                  </span>
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {typeof technician?.average_rating === 'number' && (
+          <div className="card p-5 mb-6">
+            <p className="text-sm text-steel-400">
+              {language === 'es' ? 'Valoración media' : 'Average rating'}
+            </p>
+            <p className="text-2xl font-bold text-gold-400 mt-1">
+              {technician.average_rating.toFixed(1)} / 5
+            </p>
+          </div>
+        )}
 
         {/* Verification Badge */}
         <div className="card p-5 mb-6">
