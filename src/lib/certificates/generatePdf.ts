@@ -333,8 +333,8 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     y = drawPills(data.technician.aircraftTypes, y, COLORS.lightBg, COLORS.navy950, COLORS.border)
   }
 
-  // EXPERIENCE
-  if (data.technician.yearsExperience) {
+  // EXPERIENCE (0 años es válido; no usar truthy)
+  if (data.technician.yearsExperience != null) {
     y = drawSectionLabel('EXPERIENCE', y)
     page.drawText(`${data.technician.yearsExperience} years`, {
       x: MARGIN,
@@ -383,7 +383,59 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   const rowAdvance = 18
   let lastPage = page
 
-  const startDocContinuationPage = (): number => {
+  const docOrder = [
+    'EASA Part-66 License',
+    'UK CAA License',
+    'FAA A&P License',
+    'Type ratings certificates',
+    'Medical certificate',
+    'Passport / ID',
+    'Technical Logbook',
+    'CV / Resume',
+  ]
+
+  const docGroups = new Map<string, { name: string; status: string }>()
+  for (const doc of data.documents) {
+    const label = getDocTypeLabel(doc.docType)
+    const existing = docGroups.get(label)
+    if (!existing || (existing.status === 'verified' && doc.status !== 'verified')) {
+      docGroups.set(label, { name: label, status: doc.status })
+    }
+  }
+  if (docGroups.size === 0) {
+    docGroups.set('_none', { name: 'No documents listed in this export', status: 'uploaded' })
+  }
+
+  /** Altura aproximada del bloque: título + cabecera tabla + filas */
+  const docBlockMinHeight = 38 + 22 + Math.max(docGroups.size, 1) * rowAdvance
+
+  const drawDocTableHeaders = (p: typeof page, yHeader: number): number => {
+    let yy = yHeader
+    p.drawText('Document', {
+      x: MARGIN,
+      y: yy,
+      size: 7.5,
+      font: helveticaBold,
+      color: COLORS.muted,
+    })
+    p.drawText('Status', {
+      x: colStatus,
+      y: yy,
+      size: 7.5,
+      font: helveticaBold,
+      color: COLORS.muted,
+    })
+    yy -= 7
+    p.drawLine({
+      start: { x: MARGIN, y: yy },
+      end: { x: width - MARGIN, y: yy },
+      thickness: 0.5,
+      color: COLORS.border,
+    })
+    return yy - 15
+  }
+
+  const startDocContinuationPage = (withTableHeaders: boolean): number => {
     page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
     lastPage = page
     const pw = page.getSize().width
@@ -404,12 +456,16 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
       font: helveticaBold,
       color: COLORS.navy950,
     })
-    return ph - 56
+    let yy = ph - 56
+    if (withTableHeaders) {
+      yy = drawDocTableHeaders(page, yy)
+    }
+    return yy
   }
 
   y -= 10
-  if (y < contentBottomY + 95) {
-    y = startDocContinuationPage()
+  if (y < contentBottomY + docBlockMinHeight) {
+    y = startDocContinuationPage(false)
   }
 
   page.drawLine({
@@ -454,28 +510,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   })
   y -= 15
 
-  // Group documents by type
-  const docGroups = new Map<string, { name: string; status: string }>()
-  const docOrder = [
-    'EASA Part-66 License',
-    'UK CAA License',
-    'FAA A&P License',
-    'Type ratings certificates',
-    'Medical certificate',
-    'Passport / ID',
-    'Technical Logbook',
-    'CV / Resume',
-  ]
-
-  for (const doc of data.documents) {
-    const label = getDocTypeLabel(doc.docType)
-    const existing = docGroups.get(label)
-    
-    if (!existing || (existing.status === 'verified' && doc.status !== 'verified')) {
-      docGroups.set(label, { name: label, status: doc.status })
-    }
-  }
-
   // Draw documents in preferred order
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -483,6 +517,8 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         return { label: 'Checked', color: COLORS.success500, bg: COLORS.successBg }
       case 'uploaded':
         return { label: 'Uploaded', color: COLORS.warning500, bg: COLORS.warningBg }
+      case 'pending_verification':
+        return { label: 'Pending review', color: COLORS.warning500, bg: COLORS.warningBg }
       case 'pending':
         return { label: 'Pending', color: COLORS.warning500, bg: COLORS.warningBg }
       case 'expired':
@@ -497,12 +533,13 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   // Con certificado AMX verificado (checked), el PDF debe mostrar "Checked" en cada ítem
   // (no depender de que cada fila en `documents` esté en verified).
   const certificateAmxVerified = data.certificateStatus === 'checked'
-  const effectiveDocStatusForPdf = (raw: string): string => {
+  const effectiveDocStatusForPdf = (raw: string | undefined): string => {
+    const s = raw ?? ''
     if (certificateAmxVerified) {
-      if (raw === 'rejected' || raw === 'expired') return raw
+      if (s === 'rejected' || s === 'expired') return s
       return 'verified'
     }
-    return raw
+    return s
   }
 
   const drawnDocs = new Set<string>()
@@ -512,7 +549,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     const doc = docGroups.get(docName)
     if (doc && !drawnDocs.has(docName)) {
       if (y < contentBottomY + rowAdvance) {
-        y = startDocContinuationPage()
+        y = startDocContinuationPage(true)
       }
       drawnDocs.add(docName)
       const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
@@ -532,6 +569,8 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         width: statusWidth,
         height: 15,
         color: config.bg,
+        borderColor: COLORS.border,
+        borderWidth: 0.35,
       })
       page.drawText(config.label, {
         x: colStatus + 6,
@@ -556,7 +595,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   for (const [docName, doc] of docGroups) {
     if (!drawnDocs.has(docName)) {
       if (y < contentBottomY + rowAdvance) {
-        y = startDocContinuationPage()
+        y = startDocContinuationPage(true)
       }
       drawnDocs.add(docName)
       const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
@@ -576,6 +615,8 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         width: statusWidth,
         height: 15,
         color: config.bg,
+        borderColor: COLORS.border,
+        borderWidth: 0.35,
       })
       page.drawText(config.label, {
         x: colStatus + 6,
