@@ -277,8 +277,20 @@ export default function AdminPage() {
   const handleViewCertPdf = async () => {
     if (!selectedCertificate) return
     try {
-      const res = await fetch(`/api/certificates/${selectedCertificate.id}/download`)
-      if (!res.ok) throw new Error('Error fetching PDF')
+      const res = await fetch(`/api/certificates/${selectedCertificate.id}/download`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        let detail = res.statusText
+        try {
+          const j = JSON.parse(errText)
+          if (j?.error) detail = j.error
+        } catch {
+          if (errText) detail = errText.slice(0, 120)
+        }
+        throw new Error(`PDF ${res.status}: ${detail}`)
+      }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       setViewingCertPdf(url)
@@ -291,8 +303,20 @@ export default function AdminPage() {
   const handleDownloadCertPdf = async () => {
     if (!selectedCertificate) return
     try {
-      const res = await fetch(`/api/certificates/${selectedCertificate.id}/download`)
-      if (!res.ok) throw new Error('Error fetching PDF')
+      const res = await fetch(`/api/certificates/${selectedCertificate.id}/download`, {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        let detail = res.statusText
+        try {
+          const j = JSON.parse(errText)
+          if (j?.error) detail = j.error
+        } catch {
+          if (errText) detail = errText.slice(0, 120)
+        }
+        throw new Error(`PDF ${res.status}: ${detail}`)
+      }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

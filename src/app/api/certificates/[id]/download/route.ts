@@ -44,16 +44,26 @@ export async function GET(
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
     }
 
-    // Check authorization
-    if (!isAdmin && certificate.technician_id !== user.id) {
+    // Check authorization: admin o el técnico dueño del certificado
+    const isOwner = certificate.technician_id === user.id
+    if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Technicians can only download checked certificates
-    if (!isAdmin && certificate.status !== 'checked') {
-      return NextResponse.json({ 
-        error: 'Certificate not yet approved for download' 
-      }, { status: 403 })
+    // Técnicos: pueden descargar borrador (pending) y revisado (checked), no rechazado
+    if (!isAdmin && isOwner) {
+      if (certificate.status === 'rejected') {
+        return NextResponse.json(
+          { error: 'Certificate rejected — download not available' },
+          { status: 403 }
+        )
+      }
+      if (certificate.status !== 'pending' && certificate.status !== 'checked') {
+        return NextResponse.json(
+          { error: 'Certificate not available for download' },
+          { status: 403 }
+        )
+      }
     }
 
     // Get technician data to regenerate PDF

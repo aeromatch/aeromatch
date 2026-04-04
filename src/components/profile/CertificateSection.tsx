@@ -61,9 +61,18 @@ export function CertificateSection({ certificate }: CertificateSectionProps) {
     
     setDownloading(true)
     try {
-      const res = await fetch(`/api/certificates/${certificate.id}/download`)
+      const res = await fetch(`/api/certificates/${certificate.id}/download`, {
+        credentials: 'include',
+      })
       if (!res.ok) {
-        throw new Error('Error downloading certificate')
+        let msg = res.statusText
+        try {
+          const j = await res.json()
+          if (j?.error) msg = j.error
+        } catch {
+          /* ignore */
+        }
+        throw new Error(msg || 'Error downloading certificate')
       }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
