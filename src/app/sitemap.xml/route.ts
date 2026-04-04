@@ -18,6 +18,18 @@ export async function GET() {
     '    <changefreq>monthly</changefreq>',
     '    <priority>0.8</priority>',
     '  </url>',
+    '  <url>',
+    '    <loc>https://aeromatch.eu/privacy</loc>',
+    '    <lastmod>2026-04-04</lastmod>',
+    '    <changefreq>monthly</changefreq>',
+    '    <priority>0.5</priority>',
+    '  </url>',
+    '  <url>',
+    '    <loc>https://aeromatch.eu/terms</loc>',
+    '    <lastmod>2026-04-04</lastmod>',
+    '    <changefreq>monthly</changefreq>',
+    '    <priority>0.5</priority>',
+    '  </url>',
     '</urlset>',
   ].join('\n')
 

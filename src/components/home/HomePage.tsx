@@ -380,12 +380,12 @@ No paperwork. No middlemen. No commissions.`,
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-steel-500">
-              <a href="#" className="hover:text-white transition-colors">
+              <Link href="/privacy" className="hover:text-white transition-colors">
                 {content.footer.privacy}
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </Link>
+              <Link href="/terms" className="hover:text-white transition-colors">
                 {content.footer.terms}
-              </a>
+              </Link>
               <span>{content.footer.copyright}</span>
             </div>
           </div>
