@@ -21,21 +21,28 @@ export const AIRCRAFT_SERIES: Record<string, string> = {
   'A350-1000': 'A350',
   // Airbus wide body A380
   A380: 'A380',
-  // Boeing narrow body (catálogo usa prefijo B)
-  'B737-700': 'B737',
-  'B737-800': 'B737',
-  'B737-900': 'B737',
-  'B737 MAX 8': 'B737',
-  'B737 MAX 9': 'B737',
-  '737 Classic': 'B737',
-  '737 NG': 'B737',
-  '737 MAX': 'B737',
-  // Boeing wide body B757/B767
-  'B757-200': 'B757/B767',
-  'B757-300': 'B757/B767',
-  'B767-200': 'B757/B767',
-  'B767-300': 'B757/B767',
-  'B767-400': 'B757/B767',
+  // Boeing 737 — tres familias (cursos / habilitaciones distintas)
+  'B737-300': 'B737 Classic',
+  'B737-400': 'B737 Classic',
+  'B737-500': 'B737 Classic',
+  'B737-600': 'B737 NG',
+  'B737-700': 'B737 NG',
+  'B737-800': 'B737 NG',
+  'B737-900': 'B737 NG',
+  'B737 MAX 7': 'B737 MAX',
+  'B737 MAX 8': 'B737 MAX',
+  'B737 MAX 9': 'B737 MAX',
+  'B737 MAX 10': 'B737 MAX',
+  // Alias por si aparecen sin prefijo B
+  '737 Classic': 'B737 Classic',
+  '737 NG': 'B737 NG',
+  '737 MAX': 'B737 MAX',
+  // Boeing wide body — B757 y B767 independientes
+  'B757-200': 'B757',
+  'B757-300': 'B757',
+  'B767-200': 'B767',
+  'B767-300': 'B767',
+  'B767-400': 'B767',
   // Boeing wide body B777
   'B777-200': 'B777',
   'B777-300': 'B777',
@@ -59,14 +66,17 @@ export const AIRCRAFT_SERIES: Record<string, string> = {
   'ATR 72-600': 'ATR42/72',
 }
 
-/** Orden de botones de serie en el selector (nivel 1) */
+/** Orden de acordeones / filas AMX (nivel 1) */
 export const SERIES_UI_ORDER: string[] = [
   'A318/A319/A320/A321',
   'A330',
   'A350',
   'A380',
-  'B737',
-  'B757/B767',
+  'B737 Classic',
+  'B737 NG',
+  'B737 MAX',
+  'B757',
+  'B767',
   'B777',
   'B787',
   'B747',
@@ -92,6 +102,11 @@ export function typeRatingPracticalKeyFromSeries(series: string): string {
   return `type_${seriesToDocSlug(series)}_practical`
 }
 
+/** Un solo PDF que cubre teórico + práctico (EASA combinado). */
+export function typeRatingCombinedKeyFromSeries(series: string): string {
+  return `type_${seriesToDocSlug(series)}_combined`
+}
+
 export function typeRatingExtraKeyFromSeries(series: string, extraKey: string): string {
   return `type_${seriesToDocSlug(series)}_${extraKey}`
 }
@@ -102,12 +117,12 @@ export function getUniqueSeries(aircraftTypes: string[]): string[] {
   return [...new Set(series)]
 }
 
-/** Variantes del catálogo que pertenecen a una serie (para selección masiva) */
+/** Variantes del catálogo que pertenecen a una serie (selección masiva / acordeón) */
 export function getVariantsForSeries(series: string, catalogAircraft: string[]): string[] {
   return catalogAircraft.filter((ac) => (AIRCRAFT_SERIES[ac] || ac) === series)
 }
 
-/** Orden estable para PDF / UI: primero SERIES_UI_ORDER, luego el resto alfabético */
+/** Orden estable para PDF / UI */
 export function sortSeriesForDisplay(seriesList: string[]): string[] {
   return [...seriesList].sort((a, b) => {
     const ia = SERIES_UI_ORDER.indexOf(a)
@@ -117,4 +132,27 @@ export function sortSeriesForDisplay(seriesList: string[]): string[] {
     if (ib !== -1) return 1
     return a.localeCompare(b)
   })
+}
+
+/**
+ * Type rating completo: documento combinado, o teórico + práctico.
+ * Incluye filas legacy type_b757_b767_* hasta migración.
+ */
+export function isTypeRatingDocSetComplete(docTypes: string[], series: string): boolean {
+  const slug = seriesToDocSlug(series)
+  const combined = `type_${slug}_combined`
+  if (docTypes.includes(combined)) return true
+  const theory = typeRatingTheoryKeyFromSeries(series)
+  const practical = typeRatingPracticalKeyFromSeries(series)
+  if (docTypes.includes(theory) && docTypes.includes(practical)) return true
+  // Legacy B757/B767 fusionado (pre-split)
+  if (series === 'B757' || series === 'B767') {
+    const legT = 'type_b757_b767_theory'
+    const legP = 'type_b757_b767_practical'
+    if (docTypes.includes(legT) && docTypes.includes(legP)) return true
+    const legLegT = 'type_b757_b767_legacy_theory'
+    const legLegP = 'type_b757_b767_legacy_practical'
+    if (docTypes.includes(legLegT) && docTypes.includes(legLegP)) return true
+  }
+  return false
 }

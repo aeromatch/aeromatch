@@ -112,6 +112,9 @@ function getDocTypeLabel(docType: string): string {
   if (docType.startsWith('type_') && docType.endsWith('_practical')) {
     return 'Type ratings certificates'
   }
+  if (docType.startsWith('type_') && docType.endsWith('_combined')) {
+    return 'Type ratings certificates'
+  }
   if (docType.startsWith('cert_')) {
     const sub = docType.slice(5)
     if (CERT_SUBLABELS[sub]) {

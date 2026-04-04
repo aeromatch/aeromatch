@@ -231,6 +231,10 @@ export default function AdminPage() {
       const slug = docType.replace('type_', '').replace('_practical', '')
       return `Práctico: ${slug.replace(/_/g, '/').toUpperCase()}`
     }
+    if (docType.startsWith('type_') && docType.endsWith('_combined')) {
+      const slug = docType.replace('type_', '').replace('_combined', '')
+      return `Combinado: ${slug.replace(/_/g, '/').toUpperCase()}`
+    }
     return labels[docType] || docType
   }
 

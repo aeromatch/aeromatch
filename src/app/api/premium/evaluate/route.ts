@@ -1,11 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import {
-  getUniqueSeries,
-  typeRatingTheoryKeyFromSeries,
-  typeRatingPracticalKeyFromSeries,
-} from '@/lib/aircraft-series'
+import { getUniqueSeries, isTypeRatingDocSetComplete } from '@/lib/aircraft-series'
 
 // Admin client for inserting premium grants
 function getAdminClient() {
@@ -91,10 +87,7 @@ export async function POST() {
     const missingAircraftDocs: string[] = []
 
     for (const series of getUniqueSeries(aircraftTypes)) {
-      const hasTheory = docTypes.includes(typeRatingTheoryKeyFromSeries(series))
-      const hasPractical = docTypes.includes(typeRatingPracticalKeyFromSeries(series))
-
-      if (!hasTheory || !hasPractical) {
+      if (!isTypeRatingDocSetComplete(docTypes, series)) {
         missingAircraftDocs.push(series)
       }
     }

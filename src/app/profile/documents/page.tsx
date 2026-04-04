@@ -11,7 +11,9 @@ import {
   getUniqueSeries,
   typeRatingTheoryKeyFromSeries,
   typeRatingPracticalKeyFromSeries,
+  typeRatingCombinedKeyFromSeries,
   typeRatingExtraKeyFromSeries,
+  isTypeRatingDocSetComplete,
 } from '@/lib/aircraft-series'
 
 interface Document {
@@ -110,6 +112,8 @@ export default function DocumentsPage() {
   /** Extras por serie EASA (clave = serie, ej. A318/A319/A320/A321) */
   const [selectedExtras, setSelectedExtras] = useState<{ [series: string]: string[] }>({})
   const [customExtraText, setCustomExtraText] = useState<{[key: string]: string}>({})
+  /** Type rating: certificado único vs teórico/práctico separados */
+  const [trUploadMode, setTrUploadMode] = useState<Record<string, 'combined' | 'separate'>>({})
 
   useEffect(() => {
     loadData()
@@ -424,6 +428,17 @@ export default function DocumentsPage() {
         {/* Type Ratings Tab */}
         {activeTab === 'ratings' && (
           <div className="space-y-6">
+            {documents.some(
+              (d) =>
+                d.doc_type === 'type_b757_b767_legacy_theory' ||
+                d.doc_type === 'type_b757_b767_legacy_practical'
+            ) && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                {language === 'es'
+                  ? 'Tienes documentos de tipo B757/B767 sin clasificar por modelo. Vuelve a subir el certificado o contacta con soporte para migrar tu expediente.'
+                  : 'Your B757/B767 type rating documents could not be split automatically. Please re-upload or contact support.'}
+              </div>
+            )}
             {selectedAircraft.length === 0 ? (
               <div className="card p-8 text-center">
                 <svg className="w-12 h-12 text-steel-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -436,18 +451,23 @@ export default function DocumentsPage() {
               uniqueSeriesForRatings.map((series: string) => {
                 const theoryKey = typeRatingTheoryKeyFromSeries(series)
                 const practicalKey = typeRatingPracticalKeyFromSeries(series)
+                const combinedKey = typeRatingCombinedKeyFromSeries(series)
                 const theoryDoc = getDocumentForType(theoryKey)
                 const practicalDoc = getDocumentForType(practicalKey)
+                const combinedDoc = getDocumentForType(combinedKey)
                 const seriesExtras = selectedExtras[series] || []
+                const mode = trUploadMode[series] ?? 'combined'
+                const docTypeList = documents.map((d) => d.doc_type)
+                const trComplete = isTypeRatingDocSetComplete(docTypeList, series)
 
                 return (
                   <div key={series} className="card p-5">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                       <h3 className="font-semibold text-white flex items-center gap-2 flex-wrap">
                         <span className="chip-blue max-w-full break-words">
                           {language === 'es' ? 'Serie' : 'Series'}: {series}
                         </span>
-                        {theoryDoc?.status === 'checked' && practicalDoc?.status === 'checked' && (
+                        {trComplete && (
                           <span className="chip-verified text-xs">
                             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -457,77 +477,140 @@ export default function DocumentsPage() {
                         )}
                       </h3>
                     </div>
-                    
-                    {/* Required: Theory + Practical */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                      {/* Theory */}
-                      <div className="p-4 bg-navy-800/50 rounded-lg border-2 border-steel-700/40">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-white">{t.documents.theoretical}</span>
-                            <span className="text-gold-500 text-xs">*</span>
-                          </div>
-                          {theoryDoc && getStatusBadge(theoryDoc.status)}
-                        </div>
-                        <p className="text-xs text-steel-500 mb-3">
-                          {language === 'es' ? 'Certificado teórico del tipo (serie EASA)' : 'Type theoretical certificate (EASA series)'}
-                        </p>
-                        <label className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
-                          theoryDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
-                        } py-2`}>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={uploading === theoryKey}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) handleUpload(theoryKey, file)
-                            }}
-                          />
-                          {uploading === theoryKey
-                            ? t.common.processing 
-                            : theoryDoc 
-                              ? t.documents.update
-                              : t.documents.uploadFile
-                          }
-                        </label>
-                      </div>
 
-                      {/* Practical */}
-                      <div className="p-4 bg-navy-800/50 rounded-lg border-2 border-steel-700/40">
+                    <div className="flex flex-col gap-2 mb-4">
+                      <label className="flex items-center gap-2 text-sm text-steel-300 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`tr-mode-${series.replace(/\//g, '-')}`}
+                          checked={mode === 'combined'}
+                          onChange={() => setTrUploadMode((m) => ({ ...m, [series]: 'combined' }))}
+                          className="text-gold-500"
+                        />
+                        {language === 'es'
+                          ? 'Tengo un solo certificado combinado (teórico + práctico)'
+                          : 'I have a single combined certificate (theory + practical)'}
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-steel-300 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`tr-mode-${series.replace(/\//g, '-')}`}
+                          checked={mode === 'separate'}
+                          onChange={() => setTrUploadMode((m) => ({ ...m, [series]: 'separate' }))}
+                          className="text-gold-500"
+                        />
+                        {language === 'es'
+                          ? 'Tengo teórico y práctico en documentos separados'
+                          : 'I have separate theory and practical documents'}
+                      </label>
+                    </div>
+
+                    {mode === 'combined' ? (
+                      <div className="p-4 bg-navy-800/50 rounded-lg border-2 border-steel-700/40 mb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-white">{t.documents.practical}</span>
-                            <span className="text-gold-500 text-xs">*</span>
-                          </div>
-                          {practicalDoc && getStatusBadge(practicalDoc.status)}
+                          <span className="text-sm font-medium text-white">
+                            {language === 'es' ? 'Certificado de tipo (combinado)' : 'Type rating certificate (combined)'}
+                          </span>
+                          {combinedDoc && getStatusBadge(combinedDoc.status)}
                         </div>
                         <p className="text-xs text-steel-500 mb-3">
-                          {language === 'es' ? 'Certificado práctico del tipo (serie EASA)' : 'Type practical certificate (EASA series)'}
+                          {language === 'es'
+                            ? 'Un solo PDF que acredite teórico y práctico para esta serie EASA.'
+                            : 'One PDF covering both theory and practical for this EASA series.'}
                         </p>
-                        <label className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
-                          practicalDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
-                        } py-2`}>
+                        <label
+                          className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
+                            combinedDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
+                          } py-2`}
+                        >
                           <input
                             type="file"
                             className="hidden"
                             accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={uploading === practicalKey}
+                            disabled={uploading === combinedKey}
                             onChange={(e) => {
                               const file = e.target.files?.[0]
-                              if (file) handleUpload(practicalKey, file)
+                              if (file) handleUpload(combinedKey, file)
                             }}
                           />
-                          {uploading === practicalKey
-                            ? t.common.processing 
-                            : practicalDoc 
+                          {uploading === combinedKey
+                            ? t.common.processing
+                            : combinedDoc
                               ? t.documents.update
-                              : t.documents.uploadFile
-                          }
+                              : t.documents.uploadFile}
                         </label>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div className="p-4 bg-navy-800/50 rounded-lg border-2 border-steel-700/40">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{t.documents.theoretical}</span>
+                              <span className="text-gold-500 text-xs">*</span>
+                            </div>
+                            {theoryDoc && getStatusBadge(theoryDoc.status)}
+                          </div>
+                          <p className="text-xs text-steel-500 mb-3">
+                            {language === 'es' ? 'Certificado teórico del tipo (serie EASA)' : 'Type theoretical certificate (EASA series)'}
+                          </p>
+                          <label
+                            className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
+                              theoryDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
+                            } py-2`}
+                          >
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={uploading === theoryKey}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) handleUpload(theoryKey, file)
+                              }}
+                            />
+                            {uploading === theoryKey
+                              ? t.common.processing
+                              : theoryDoc
+                                ? t.documents.update
+                                : t.documents.uploadFile}
+                          </label>
+                        </div>
+
+                        <div className="p-4 bg-navy-800/50 rounded-lg border-2 border-steel-700/40">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{t.documents.practical}</span>
+                              <span className="text-gold-500 text-xs">*</span>
+                            </div>
+                            {practicalDoc && getStatusBadge(practicalDoc.status)}
+                          </div>
+                          <p className="text-xs text-steel-500 mb-3">
+                            {language === 'es' ? 'Certificado práctico del tipo (serie EASA)' : 'Type practical certificate (EASA series)'}
+                          </p>
+                          <label
+                            className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
+                              practicalDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
+                            } py-2`}
+                          >
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={uploading === practicalKey}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) handleUpload(practicalKey, file)
+                              }}
+                            />
+                            {uploading === practicalKey
+                              ? t.common.processing
+                              : practicalDoc
+                                ? t.documents.update
+                                : t.documents.uploadFile}
+                          </label>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Optional Extras */}
                     <div className="border-t border-steel-700/30 pt-4">

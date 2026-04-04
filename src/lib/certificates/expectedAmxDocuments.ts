@@ -6,6 +6,7 @@ import {
   getUniqueSeries,
   sortSeriesForDisplay,
   seriesToDocSlug,
+  typeRatingCombinedKeyFromSeries,
 } from '@/lib/aircraft-series'
 
 export type AmxDocTier = 'checked' | 'pending' | 'not_uploaded'
@@ -51,16 +52,57 @@ function detailForTier(tier: AmxDocTier, verifiedAt: string | null | undefined):
   return '--'
 }
 
-/** TR por serie: theory + practical bajo type_${slug}_* */
+/** TR por serie: combinado, o teórico+práctico, o legacy B757/B767 fusionado */
 function typeRatingTiersForSeries(
   series: string,
   docsByType: Map<string, DocRow>
 ): { tier: AmxDocTier; detail: string } {
   const slug = seriesToDocSlug(series)
+  const combinedKey = typeRatingCombinedKeyFromSeries(series)
+  const combined = docsByType.get(combinedKey)
+  if (combined) {
+    const tc = rowTier(combined)
+    if (tc === 'checked' && combined.verified_at) {
+      return { tier: 'checked', detail: formatDateEn(new Date(combined.verified_at)) }
+    }
+    if (tc === 'checked') {
+      return { tier: 'checked', detail: formatDateEn(new Date()) }
+    }
+    if (tc === 'not_uploaded') {
+      return { tier: 'not_uploaded', detail: '--' }
+    }
+    return { tier: 'pending', detail: 'Awaiting review' }
+  }
+
   const theory = docsByType.get(`type_${slug}_theory`)
   const practical = docsByType.get(`type_${slug}_practical`)
   const tTheory = theory ? rowTier(theory) : 'not_uploaded'
   const tPractical = practical ? rowTier(practical) : 'not_uploaded'
+
+  // Legacy: type_b757_b767_* antes de separar B757/B767
+  const legTheory = docsByType.get('type_b757_b767_theory')
+  const legPractical = docsByType.get('type_b757_b767_practical')
+  const legLegacyT = docsByType.get('type_b757_b767_legacy_theory')
+  const legLegacyP = docsByType.get('type_b757_b767_legacy_practical')
+  if (series === 'B757' || series === 'B767') {
+    const useLegacy = legTheory && legPractical
+    const useLegacySplit = legLegacyT && legLegacyP
+    if (useLegacy || useLegacySplit) {
+      const lt = useLegacy ? legTheory! : legLegacyT!
+      const lp = useLegacy ? legPractical! : legLegacyP!
+      const rt = rowTier(lt)
+      const rp = rowTier(lp)
+      if (rt === 'not_uploaded' && rp === 'not_uploaded') {
+        return { tier: 'not_uploaded', detail: '--' }
+      }
+      if (rt === 'checked' && rp === 'checked') {
+        const d1 = lt.verified_at ? new Date(lt.verified_at).getTime() : 0
+        const d2 = lp.verified_at ? new Date(lp.verified_at).getTime() : 0
+        return { tier: 'checked', detail: formatDateEn(new Date(Math.max(d1, d2))) }
+      }
+      return { tier: 'pending', detail: 'Awaiting review' }
+    }
+  }
 
   if (tTheory === 'not_uploaded' && tPractical === 'not_uploaded') {
     return { tier: 'not_uploaded', detail: '--' }

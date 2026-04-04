@@ -9,8 +9,7 @@ import { SubscriptionSection } from '@/components/billing/SubscriptionSection'
 import { VERIFICATION_BADGES } from '@/lib/config/features'
 import {
   getUniqueSeries,
-  typeRatingTheoryKeyFromSeries,
-  typeRatingPracticalKeyFromSeries,
+  isTypeRatingDocSetComplete,
 } from '@/lib/aircraft-series'
 
 interface DashboardViewProps {
@@ -45,9 +44,7 @@ function getProfileCompletion(technician: any, availabilitySlots: any[], documen
   const seriesList = getUniqueSeries(aircraftTypes)
 
   for (const series of seriesList) {
-    const hasTheory = documentTypes.includes(typeRatingTheoryKeyFromSeries(series))
-    const hasPractical = documentTypes.includes(typeRatingPracticalKeyFromSeries(series))
-    if (!hasTheory || !hasPractical) {
+    if (!isTypeRatingDocSetComplete(documentTypes, series)) {
       aircraftDocsComplete = false
       break
     }
@@ -263,9 +260,7 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
       let hasAllAircraftDocs = true
 
       for (const series of getUniqueSeries(aircraftTypes)) {
-        const hasTheory = documentTypes.includes(typeRatingTheoryKeyFromSeries(series))
-        const hasPractical = documentTypes.includes(typeRatingPracticalKeyFromSeries(series))
-        if (!hasTheory || !hasPractical) {
+        if (!isTypeRatingDocSetComplete(documentTypes, series)) {
           hasAllAircraftDocs = false
           break
         }

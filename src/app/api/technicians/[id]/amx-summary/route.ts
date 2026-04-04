@@ -4,6 +4,8 @@ import {
   getUniqueSeries,
   typeRatingTheoryKeyFromSeries,
   typeRatingPracticalKeyFromSeries,
+  typeRatingCombinedKeyFromSeries,
+  isTypeRatingDocSetComplete,
 } from '@/lib/aircraft-series'
 
 export async function GET(
@@ -75,25 +77,28 @@ export async function GET(
     for (const series of getUniqueSeries(technician.aircraft_types || [])) {
       const theoryKey = typeRatingTheoryKeyFromSeries(series)
       const practicalKey = typeRatingPracticalKeyFromSeries(series)
+      const combinedKey = typeRatingCombinedKeyFromSeries(series)
 
       const theoryDoc = documents?.find((d) => d.doc_type === theoryKey)
       const practicalDoc = documents?.find((d) => d.doc_type === practicalKey)
+      const combinedDoc = documents?.find((d) => d.doc_type === combinedKey)
 
-      aircraftDocs.push({
-        aircraft: series,
-        theory:
-          theoryDoc?.status === 'checked'
-            ? 'verified'
-            : theoryDoc?.status
-              ? 'pending'
-              : 'missing',
-        practical:
-          practicalDoc?.status === 'checked'
-            ? 'verified'
-            : practicalDoc?.status
-              ? 'pending'
-              : 'missing',
-      })
+      const complete = isTypeRatingDocSetComplete(docTypes, series)
+      const statusFor = (d: { status?: string } | undefined): 'verified' | 'pending' | 'missing' =>
+        d?.status === 'checked' ? 'verified' : d?.status ? 'pending' : 'missing'
+
+      if (combinedDoc) {
+        const st = statusFor(combinedDoc)
+        aircraftDocs.push({ aircraft: series, theory: st, practical: st })
+      } else if (complete) {
+        aircraftDocs.push({ aircraft: series, theory: 'verified', practical: 'verified' })
+      } else {
+        aircraftDocs.push({
+          aircraft: series,
+          theory: statusFor(theoryDoc),
+          practical: statusFor(practicalDoc),
+        })
+      }
     }
 
     // Build AMX summary
