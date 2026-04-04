@@ -116,6 +116,38 @@ function typeRatingTiersForSeries(
   return { tier: 'pending', detail: 'Awaiting review' }
 }
 
+/** HF + EWIS + FTS en una sola línea del PDF: todos checked → checked; si falta alguno → pending / not_uploaded */
+function tierForHfEwisFtsGroup(docsByType: Map<string, DocRow>): {
+  tier: AmxDocTier
+  detail: string
+} {
+  const keys = ['cert_hf', 'cert_ewis', 'cert_fts'] as const
+  const rows = keys.map((k) => docsByType.get(k))
+  const tiers = rows.map((r) => (r ? rowTier(r) : 'not_uploaded'))
+
+  if (tiers.every((t) => t === 'checked')) {
+    const times = rows.map((r) => (r?.verified_at ? new Date(r.verified_at).getTime() : 0))
+    const latest = Math.max(...times)
+    return {
+      tier: 'checked',
+      detail: formatDateEn(new Date(latest > 0 ? latest : Date.now())),
+    }
+  }
+  if (tiers.every((t) => t === 'not_uploaded')) {
+    return { tier: 'not_uploaded', detail: '--' }
+  }
+  return { tier: 'pending', detail: 'Awaiting review' }
+}
+
+/** Certificados opcionales: siempre una fila en AMX; sin subida → not_uploaded */
+const OPTIONAL_AMX_CERTS: { docType: string; label: string }[] = [
+  { docType: 'cert_rvsm', label: 'RVSM' },
+  { docType: 'cert_etops', label: 'ETOPS' },
+  { docType: 'cert_tank_entry', label: 'Tank entry' },
+  { docType: 'cert_dangerous_goods', label: 'Dangerous goods' },
+  { docType: 'cert_sms', label: 'SMS training' },
+]
+
 export function buildAmxCertificateDocumentRows(
   technician: { license_category?: string[] | null; aircraft_types?: string[] | null },
   docRows: DocRow[]
@@ -165,15 +197,36 @@ export function buildAmxCertificateDocumentRows(
     detail: detailForTier(logTier, logRow?.verified_at),
   })
 
+  const hfEwisFts = tierForHfEwisFtsGroup(byType)
+  out.push({
+    sortKey: '2_hf_ewis_fts',
+    icon: hfEwisFts.tier === 'checked' ? 'check' : hfEwisFts.tier === 'pending' ? 'hourglass' : 'warning',
+    label: 'HF, EWIS & FTS',
+    tier: hfEwisFts.tier,
+    detail: hfEwisFts.detail,
+  })
+
   const seriesList = sortSeriesForDisplay(getUniqueSeries(technician.aircraft_types || []))
   seriesList.forEach((series, i) => {
     const { tier, detail } = typeRatingTiersForSeries(series, byType)
     out.push({
-      sortKey: `2_tr_${i}_${seriesToDocSlug(series)}`,
+      sortKey: `3_tr_${i}_${seriesToDocSlug(series)}`,
       icon: tier === 'checked' ? 'check' : tier === 'pending' ? 'hourglass' : 'warning',
       label: `Type Rating ${series}`,
       tier,
       detail,
+    })
+  })
+
+  OPTIONAL_AMX_CERTS.forEach((opt, j) => {
+    const row = byType.get(opt.docType)
+    const tier = row ? rowTier(row) : 'not_uploaded'
+    out.push({
+      sortKey: `4_opt_${j}_${opt.docType}`,
+      icon: tier === 'checked' ? 'check' : tier === 'pending' ? 'hourglass' : 'warning',
+      label: opt.label,
+      tier,
+      detail: detailForTier(tier, row?.verified_at),
     })
   })
 

@@ -43,11 +43,15 @@ const TYPE_RATING_EXTRAS = [
   { key: 'custom', label: 'Other (specify)' },
 ]
 
-// General certificates (excluding run-up/borescope which moved to type ratings)
+/** Obligatorios para contratación (junto con licencia y logbook) */
+const MANDATORY_COURSE_CERTIFICATES = [
+  { key: 'hf', label: { es: 'Human Factors (HF)', en: 'Human Factors (HF)' } },
+  { key: 'ewis', label: { es: 'EWIS', en: 'EWIS' } },
+  { key: 'fts', label: { es: 'Fuel Tank Safety (FTS)', en: 'Fuel Tank Safety (FTS)' } },
+]
+
+// Certificados opcionales (en el PDF AMX aparecen como not uploaded si no hay archivo)
 const GENERAL_CERTIFICATES = [
-  { key: 'hf', label: 'Human Factors (HF)' },
-  { key: 'ewis', label: 'EWIS' },
-  { key: 'fts', label: 'Fuel Tank Safety (FTS)' },
   { key: 'rvsm', label: 'RVSM' },
   { key: 'etops', label: 'ETOPS' },
   { key: 'tank_entry', label: 'Tank Entry' },
@@ -684,10 +688,77 @@ export default function DocumentsPage() {
         {/* Certificates Tab */}
         {activeTab === 'certificates' && (
           <div className="space-y-4">
-            <p className="text-sm text-steel-400 mb-4">
-              {language === 'es' 
-                ? 'Certificaciones generales y formación adicional.' 
-                : 'General certifications and additional training.'}
+            <div className="p-4 rounded-lg bg-gold-500/10 border border-gold-500/25 mb-2">
+              <p className="text-sm text-gold-200 font-medium mb-1">
+                {language === 'es' ? 'Obligatorio para contratación' : 'Required for hiring'}
+              </p>
+              <p className="text-xs text-steel-400">
+                {language === 'es'
+                  ? 'HF, EWIS y FTS son obligatorios, al igual que la licencia (pestaña Licencias) y el logbook.'
+                  : 'HF, EWIS and FTS are required, along with your license (Licenses tab) and logbook.'}
+              </p>
+            </div>
+
+            {MANDATORY_COURSE_CERTIFICATES.map((cert) => {
+              const doc = getDocumentForType(`cert_${cert.key}`)
+              const isUploading = uploading === `cert_${cert.key}`
+              const label = cert.label[language === 'es' ? 'es' : 'en']
+
+              return (
+                <div key={cert.key} className="card p-5 border-2 border-gold-500/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        doc?.status === 'checked'
+                          ? 'bg-gold-500/15 border-2 border-gold-500/50'
+                          : doc
+                            ? 'bg-steel-700/30 border border-steel-600/50'
+                            : 'bg-navy-800 border border-steel-700/50'
+                      }`}>
+                        {doc?.status === 'checked' ? (
+                          <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className={`w-5 h-5 ${doc ? 'text-steel-400' : 'text-steel-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-white">{label}</h3>
+                          <span className="text-gold-500 text-xs">*</span>
+                        </div>
+                        {doc && (
+                          <div className="flex items-center gap-2 mt-1">
+                            {getStatusBadge(doc.status)}
+                            <span className="text-xs text-steel-500">{doc.file_name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <label className={`btn-secondary text-sm cursor-pointer ${isUploading ? 'opacity-50' : ''}`}>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        disabled={isUploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleUpload(`cert_${cert.key}`, file)
+                        }}
+                      />
+                      {isUploading ? t.common.processing : doc ? t.documents.update : t.documents.upload}
+                    </label>
+                  </div>
+                </div>
+              )
+            })}
+
+            <p className="text-sm text-steel-500 mt-6 mb-2">
+              {language === 'es' ? 'Opcional (aparecen en el certificado AMX)' : 'Optional (shown on AMX certificate)'}
             </p>
 
             {GENERAL_CERTIFICATES.map((cert) => {
@@ -772,11 +843,14 @@ export default function DocumentsPage() {
                           📖
                         </div>
                         <div>
-                          <h3 className="font-medium text-white">Technical Logbook (PDF)</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-white">Technical Logbook (PDF)</h3>
+                            <span className="text-gold-500 text-xs">*</span>
+                          </div>
                           <p className="text-xs text-steel-500 mt-0.5">
                             {language === 'es'
-                              ? 'Visible para empresas cuando revisan tu perfil.'
-                              : 'Visible to companies when they review your profile.'}
+                              ? 'Obligatorio para contratación. Visible para empresas cuando revisan tu perfil.'
+                              : 'Required for hiring. Visible to companies when they review your profile.'}
                           </p>
                           {doc && (
                             <div className="flex items-center gap-2 mt-2">

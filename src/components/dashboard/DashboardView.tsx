@@ -11,6 +11,10 @@ import {
   getUniqueSeries,
   isTypeRatingDocSetComplete,
 } from '@/lib/aircraft-series'
+import {
+  hasLogbookDoc,
+  hasMandatoryCourseDocs,
+} from '@/lib/mandatory-documents'
 
 interface DashboardViewProps {
   profile: any
@@ -52,13 +56,15 @@ function getProfileCompletion(technician: any, availabilitySlots: any[], documen
 
   const checks = {
     basicLicense: hasBasicLicense,
+    logbook: hasLogbookDoc(documentTypes),
+    mandatoryCourses: hasMandatoryCourseDocs(documentTypes),
     aircraftDocs: aircraftTypes.length === 0 || aircraftDocsComplete,
     availability: availabilitySlots.length > 0,
   }
-  
+
   const completed = Object.values(checks).filter(Boolean).length
   const total = Object.keys(checks).length
-  
+
   return { checks, completed, total, percentage: Math.round((completed / total) * 100) }
 }
 
@@ -266,8 +272,11 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
         }
       }
       
+      const hasLog = hasLogbookDoc(documentTypes)
+      const hasCourses = hasMandatoryCourseDocs(documentTypes)
+
       // If profile appears complete, call API to evaluate and grant premium
-      if (hasBasicLicense && hasAllAircraftDocs) {
+      if (hasBasicLicense && hasLog && hasCourses && hasAllAircraftDocs) {
         setPremiumChecked(true)
         
         fetch('/api/premium/evaluate', { method: 'POST' })
@@ -293,6 +302,8 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     es: {
       completeProfile: 'Completa tu perfil para desbloquear más oportunidades.',
       addBasicLicense: 'Sube tu licencia básica (EASA, UK CAA o FAA)',
+      addLogbook: 'Sube tu logbook técnico (PDF)',
+      addMandatoryCourses: 'Sube HF, EWIS y FTS (pestaña Certificados)',
       addAircraftDocs: 'Sube documentos teórico + práctico de tus aviones',
       addAvailability: 'Añade tus períodos de disponibilidad',
       profileProgress: 'Perfil completado',
@@ -301,6 +312,8 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
     en: {
       completeProfile: 'Complete your profile to unlock more opportunities.',
       addBasicLicense: 'Upload your basic license (EASA, UK CAA or FAA)',
+      addLogbook: 'Upload your technical logbook (PDF)',
+      addMandatoryCourses: 'Upload HF, EWIS and FTS (Certificates tab)',
       addAircraftDocs: 'Upload theory + practical docs for your aircraft',
       addAvailability: 'Add your availability periods',
       profileProgress: 'Profile completed',
@@ -362,24 +375,44 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
         priority: 1
       })
     }
-    
+
+    if (!profileCompletion.checks.logbook && !dismissedReminders.includes('logbook')) {
+      reminders.push({
+        key: 'logbook',
+        text: rt.addLogbook,
+        link: '/profile/documents',
+        icon: '📖',
+        priority: 2
+      })
+    }
+
+    if (!profileCompletion.checks.mandatoryCourses && !dismissedReminders.includes('mandatoryCourses')) {
+      reminders.push({
+        key: 'mandatoryCourses',
+        text: rt.addMandatoryCourses,
+        link: '/profile/documents',
+        icon: '📋',
+        priority: 3
+      })
+    }
+
     if (!profileCompletion.checks.aircraftDocs && !dismissedReminders.includes('aircraftDocs')) {
       reminders.push({
         key: 'aircraftDocs',
         text: rt.addAircraftDocs,
         link: '/profile/documents',
         icon: '✈️',
-        priority: 2
+        priority: 4
       })
     }
-    
+
     if (!profileCompletion.checks.availability && !dismissedReminders.includes('availability')) {
       reminders.push({
         key: 'availability',
         text: rt.addAvailability,
         link: '/profile/availability',
         icon: '📅',
-        priority: 3
+        priority: 5
       })
     }
     

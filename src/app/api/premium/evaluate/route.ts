@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { getUniqueSeries, isTypeRatingDocSetComplete } from '@/lib/aircraft-series'
+import { hasLogbookDoc, hasMandatoryCourseDocs } from '@/lib/mandatory-documents'
 
 // Admin client for inserting premium grants
 function getAdminClient() {
@@ -94,6 +95,9 @@ export async function POST() {
 
     const hasAllAircraftDocs = aircraftTypes.length === 0 || missingAircraftDocs.length === 0
 
+    const hasLogbook = hasLogbookDoc(docTypes)
+    const hasMandatoryCourses = hasMandatoryCourseDocs(docTypes)
+
     // 3. Has active availability
     const { count: availCount } = await supabase
       .from('availability_slots')
@@ -103,7 +107,12 @@ export async function POST() {
 
     const hasAvailability = (availCount || 0) >= 1
 
-    const isComplete = hasBasicLicense && hasAllAircraftDocs && hasAvailability
+    const isComplete =
+      hasBasicLicense &&
+      hasLogbook &&
+      hasMandatoryCourses &&
+      hasAllAircraftDocs &&
+      hasAvailability
 
     if (!isComplete) {
       return NextResponse.json({ 
@@ -111,6 +120,8 @@ export async function POST() {
         premiumGranted: false,
         missing: {
           basicLicense: !hasBasicLicense,
+          logbook: !hasLogbook,
+          mandatoryCourses: !hasMandatoryCourses,
           aircraftDocs: missingAircraftDocs,
           availability: !hasAvailability
         },
