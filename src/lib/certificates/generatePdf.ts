@@ -27,11 +27,6 @@ interface CertificateData {
   documents: DocumentData[]
   generatedAt: Date
   certificateStatus?: 'pending' | 'checked' | 'rejected'
-  /** Huella SHA-256 compuesta (hex); solo se muestra truncada en el pie. */
-  documentIntegrity?: {
-    fullFingerprintHex: string
-    verifiedAt: Date
-  }
 }
 
 // Brand colors (AeroMatch Design System)
@@ -529,20 +524,9 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // FOOTER (hash solo aquí: sin tocar el layout del cuerpo)
+  // FOOTER
   // ═══════════════════════════════════════════════════════════════════════════
-  const showIntegrity =
-    data.documentIntegrity &&
-    data.certificateStatus === 'checked' &&
-    data.documentIntegrity.fullFingerprintHex.length > 0
-
-  const full = showIntegrity ? data.documentIntegrity!.fullFingerprintHex : ''
-  const hashFoot =
-    full.length > 24 ? `${full.slice(0, 16)}...${full.slice(-8)}` : full
-
-  /** Altura pie: más si hay línea de integridad */
-  const footerHeight = showIntegrity ? 54 : 44
-
+  const footerHeight = 44
   page.drawRectangle({
     x: 0, y: 0, width, height: footerHeight,
     color: COLORS.lightBg,
@@ -558,34 +542,20 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   const disclaimer1 = 'Documents reviewed based on information provided by the technician.'
   const disclaimer2 = 'AeroMatch does not replace operator or authority validation.'
   
-  const disclaimY1 = showIntegrity ? 40 : 30
-  const disclaimY2 = showIntegrity ? 30 : 20
-
   page.drawText(disclaimer1, {
     x: (width - helvetica.widthOfTextAtSize(disclaimer1, 6.8)) / 2,
-    y: disclaimY1,
+    y: 30,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,
   })
   page.drawText(disclaimer2, {
     x: (width - helvetica.widthOfTextAtSize(disclaimer2, 6.8)) / 2,
-    y: disclaimY2,
+    y: 20,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,
   })
-
-  if (showIntegrity) {
-    const integrityLine = `Document integrity (SHA-256): ${hashFoot}`
-    page.drawText(integrityLine, {
-      x: (width - helvetica.widthOfTextAtSize(integrityLine, 6.5)) / 2,
-      y: 20,
-      size: 6.5,
-      font: helvetica,
-      color: COLORS.steel600,
-    })
-  }
 
   // Reference info at bottom
   page.drawText(`Reference ID: ${data.referenceId}     Date generated: ${dateStr}`, {

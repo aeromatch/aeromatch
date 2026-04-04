@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 import {
-  hashDocumentFilesBeforeVerification,
   promoteTechnicianDocumentsToVerified,
   regenerateAmxCertificateStoragePdf,
 } from '@/lib/certificates/finalizeAmxVerification'
@@ -318,8 +317,6 @@ export async function POST(request: Request) {
     let regenErr: Error | null = null
     if (status === 'verified') {
       try {
-        await hashDocumentFilesBeforeVerification(serviceClient, technicianId)
-
         const { error: promoErr } = await promoteTechnicianDocumentsToVerified(
           serviceClient,
           technicianId,

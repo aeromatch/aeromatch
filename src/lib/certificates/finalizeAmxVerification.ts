@@ -1,80 +1,5 @@
-import { createHash } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
-
-/**
- * Descarga cada documento pendiente desde Storage, calcula SHA-256 del fichero
- * y guarda `file_hash`. Errores: solo log, no lanza.
- */
-export async function hashDocumentFilesBeforeVerification(
-  serviceClient: SupabaseClient,
-  technicianId: string
-): Promise<void> {
-  const { data: docs, error } = await serviceClient
-    .from('documents')
-    .select('id, storage_path')
-    .eq('technician_id', technicianId)
-    .in('status', ['uploaded', 'pending_verification'])
-    .not('storage_path', 'is', null)
-
-  if (error) {
-    console.error('hashDocumentFilesBeforeVerification: query failed', error)
-    return
-  }
-
-  for (const doc of docs || []) {
-    const storagePath = doc.storage_path as string
-    try {
-      const { data: blob, error: dlErr } = await serviceClient.storage
-        .from('documents')
-        .download(storagePath)
-      if (dlErr || !blob) {
-        console.error('hash doc download failed:', doc.id, dlErr)
-        continue
-      }
-      const buf = Buffer.from(await blob.arrayBuffer())
-      const hash = createHash('sha256').update(buf).digest('hex')
-      const { error: upErr } = await serviceClient
-        .from('documents')
-        .update({ file_hash: hash })
-        .eq('id', doc.id)
-      if (upErr) {
-        console.error('hash doc update failed:', doc.id, upErr)
-      }
-    } catch (e) {
-      console.error('hash document file failed:', doc.id, e)
-    }
-  }
-}
-
-/** Usar al generar PDF on-demand (p. ej. download) para incluir el bloque SHA-256. */
-export function buildDocumentIntegrityPayload(
-  documents: { file_hash: string | null; verified_at: string | null }[],
-  certificateStatus: 'pending' | 'checked' | 'rejected'
-):
-  | {
-      fullFingerprintHex: string
-      verifiedAt: Date
-    }
-  | undefined {
-  if (certificateStatus !== 'checked') {
-    return undefined
-  }
-  const hashes = documents
-    .map((d) => d.file_hash)
-    .filter((h): h is string => typeof h === 'string' && h.length > 0)
-    .sort()
-  if (hashes.length === 0) {
-    return undefined
-  }
-  const fullFingerprintHex = createHash('sha256').update(hashes.join('|')).digest('hex')
-  const verifiedTimes = documents
-    .filter((d) => d.verified_at)
-    .map((d) => new Date(d.verified_at!).getTime())
-  const verifiedAt =
-    verifiedTimes.length > 0 ? new Date(Math.max(...verifiedTimes)) : new Date()
-  return { fullFingerprintHex, verifiedAt }
-}
 
 /**
  * Marca como verificados en BD los documentos que el técnico subió y aún no estaban revisados.
@@ -158,11 +83,8 @@ export async function regenerateAmxCertificateStoragePdf(
 
   const { data: documents } = await serviceClient
     .from('documents')
-    .select('doc_type, status, expires_on, file_hash, verified_at')
+    .select('doc_type, status, expires_on')
     .eq('technician_id', technicianId)
-
-  const docRows = documents || []
-  const documentIntegrity = buildDocumentIntegrityPayload(docRows, certificateStatus)
 
   const pdfBytes = await generateCertificatePdf({
     referenceId: cert.reference_id,
@@ -178,14 +100,13 @@ export async function regenerateAmxCertificateStoragePdf(
       drivingLicense: technician.driving_license || false,
       isAvailable: technician.is_available || false,
     },
-    documents: docRows.map((d) => ({
+    documents: (documents || []).map((d) => ({
       docType: d.doc_type,
       status: d.status,
       expiresOn: d.expires_on,
     })),
     generatedAt: new Date(cert.generated_at),
     certificateStatus,
-    documentIntegrity,
   })
 
   const { error: uploadError } = await serviceClient.storage

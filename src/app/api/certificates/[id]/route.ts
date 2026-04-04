@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import {
-  hashDocumentFilesBeforeVerification,
   promoteTechnicianDocumentsToVerified,
   regenerateAmxCertificateStoragePdf,
 } from '@/lib/certificates/finalizeAmxVerification'
@@ -113,8 +112,6 @@ export async function PATCH(
 
     // Mismo resultado que "Verificar" en admin: documentos verificados + técnico AMX verified
     if (status === 'checked') {
-      await hashDocumentFilesBeforeVerification(serviceClient, existingCert.technician_id)
-
       const { error: promoErr } = await promoteTechnicianDocumentsToVerified(
         serviceClient,
         existingCert.technician_id,
