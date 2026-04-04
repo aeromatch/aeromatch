@@ -8,6 +8,7 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { AircraftMultiSelect } from '@/components/profile/AircraftMultiSelect'
 import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal'
 import { LICENSE_CATEGORIES, SPECIALTIES, LANGUAGES_LIST } from '@/lib/aircraftCatalog'
+import { ChevronDown } from 'lucide-react'
 
 export default function EditProfilePage() {
   const router = useRouter()
@@ -43,6 +44,7 @@ export default function EditProfilePage() {
   const [aogLocation, setAogLocation] = useState('')
   const [experienceAmos, setExperienceAmos] = useState(false)
   const [experienceTrax, setExperienceTrax] = useState(false)
+  const [aircraftTypesExpanded, setAircraftTypesExpanded] = useState(false)
 
   const buildDefaultPresentationTemplate = (name?: string) =>
     language === 'es'
@@ -206,6 +208,12 @@ export default function EditProfilePage() {
     capabilities: language === 'es' ? 'Capacidades' : 'Capabilities',
     licenses: language === 'es' ? 'Licencias' : 'Licenses',
     aircraftTypes: language === 'es' ? 'Tipos de Aeronave' : 'Aircraft Types',
+    aircraftTypesCollapsedHint:
+      language === 'es'
+        ? 'Despliega para elegir tus tipos de aeronave (habilitaciones / TR).'
+        : 'Expand to choose your aircraft types (type ratings).',
+    aircraftTypesExpandAction:
+      language === 'es' ? 'Despliega para modificar la selección.' : 'Expand to edit your selection.',
     specialties: language === 'es' ? 'Especialidades' : 'Specialties',
     additionalInfo: language === 'es' ? 'Información Adicional' : 'Additional Information',
     ownTools: language === 'es' ? 'Tengo herramientas propias' : 'I have my own tools',
@@ -386,13 +394,57 @@ export default function EditProfilePage() {
                 </div>
               </div>
 
-              {/* Aircraft Types - Using unified selector */}
+              {/* Aircraft Types — colapsado: título + nota; expandido: selector completo */}
               <div className="card p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">{labels.aircraftTypes}</h2>
-                <AircraftMultiSelect
-                  selected={aircraftTypes}
-                  onChange={setAircraftTypes}
-                />
+                <button
+                  type="button"
+                  onClick={() => setAircraftTypesExpanded((v) => !v)}
+                  className="w-full flex items-start justify-between gap-3 text-left rounded-lg -m-1 p-1 hover:bg-navy-800/40 transition-colors"
+                  aria-expanded={aircraftTypesExpanded}
+                >
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg font-semibold text-white">{labels.aircraftTypes}</h2>
+                    {!aircraftTypesExpanded && (
+                      <p className="text-sm text-steel-400 mt-1.5 leading-relaxed">
+                        {aircraftTypes.length === 0 ? (
+                          labels.aircraftTypesCollapsedHint
+                        ) : language === 'es' ? (
+                          <>
+                            <span className="text-steel-300">
+                              {aircraftTypes.length === 1
+                                ? '1 tipo seleccionado'
+                                : `${aircraftTypes.length} tipos seleccionados`}
+                            </span>
+                            {' · '}
+                            {labels.aircraftTypesExpandAction}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-steel-300">
+                              {aircraftTypes.length} type{aircraftTypes.length === 1 ? '' : 's'} selected
+                            </span>
+                            {' · '}
+                            {labels.aircraftTypesExpandAction}
+                          </>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronDown
+                    className={`w-5 h-5 shrink-0 text-gold-500/90 mt-0.5 transition-transform duration-200 ${
+                      aircraftTypesExpanded ? 'rotate-180' : ''
+                    }`}
+                    aria-hidden
+                  />
+                </button>
+                {aircraftTypesExpanded && (
+                  <div className="mt-4 pt-4 border-t border-steel-700/40">
+                    <AircraftMultiSelect
+                      selected={aircraftTypes}
+                      onChange={setAircraftTypes}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Specialties - Including Sheet Metal */}
