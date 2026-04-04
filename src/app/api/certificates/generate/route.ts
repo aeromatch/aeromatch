@@ -108,8 +108,8 @@ export async function POST(request: Request) {
         rightToWorkUk: technician.right_to_work_uk || false,
         drivingLicense: technician.driving_license || false,
         isAvailable: technician.is_available || false,
-        experienceAmos: technician.experience_amos,
-        experienceTrax: technician.experience_trax,
+        experienceAmos: !!technician.experience_amos,
+        experienceTrax: !!technician.experience_trax,
       },
       documents: docRowsForPdf.map(d => ({
         docType: d.doc_type,

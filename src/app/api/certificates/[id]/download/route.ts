@@ -112,8 +112,8 @@ export async function GET(
         rightToWorkUk: technician.right_to_work_uk || false,
         drivingLicense: technician.driving_license || false,
         isAvailable: technician.is_available || false,
-        experienceAmos: technician.experience_amos,
-        experienceTrax: technician.experience_trax,
+        experienceAmos: !!technician.experience_amos,
+        experienceTrax: !!technician.experience_trax,
       },
       documents: docRows.map(d => ({
         docType: d.doc_type,

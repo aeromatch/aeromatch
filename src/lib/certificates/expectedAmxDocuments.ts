@@ -187,14 +187,33 @@ export function buildAmxCertificateDocumentRows(
     detail: detailForTier(easaTier, easaRow?.verified_at),
   })
 
-  const logRow = byType.get('logbook')
-  const logTier = logRow ? rowTier(logRow) : 'not_uploaded'
+  const logbookRows = docRows.filter((r) => r.doc_type === 'logbook')
+  let logTier: AmxDocTier = 'not_uploaded'
+  let logVerifiedAt: string | null | undefined
+  if (logbookRows.length > 0) {
+    const tiers = logbookRows.map((r) => rowTier(r))
+    if (tiers.every((t) => t === 'checked')) {
+      logTier = 'checked'
+      const latestMs = logbookRows.reduce((max, r) => {
+        const t = r.verified_at ? new Date(r.verified_at).getTime() : 0
+        return t > max ? t : max
+      }, 0)
+      const pick = logbookRows.find((r) =>
+        (r.verified_at ? new Date(r.verified_at).getTime() : 0) === latestMs
+      )
+      logVerifiedAt = pick?.verified_at
+    } else if (tiers.some((t) => t === 'pending')) {
+      logTier = 'pending'
+    } else {
+      logTier = 'not_uploaded'
+    }
+  }
   out.push({
     sortKey: '1_logbook',
     icon: logTier === 'checked' ? 'check' : logTier === 'pending' ? 'hourglass' : 'warning',
     label: 'Logbook',
     tier: logTier,
-    detail: detailForTier(logTier, logRow?.verified_at),
+    detail: detailForTier(logTier, logVerifiedAt),
   })
 
   const hfEwisFts = tierForHfEwisFtsGroup(byType)

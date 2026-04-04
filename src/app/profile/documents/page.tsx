@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AppLayout } from '@/components/ui/AppLayout'
@@ -156,79 +156,82 @@ export default function DocumentsPage() {
     setLoading(false)
   }
 
+  /** Subida a storage + fila en `documents`. Logbook: siempre nueva fila (varios archivos). Resto: sustituye si ya existe. */
+  const uploadDocumentFile = async (docType: string, file: File) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error(t.common.notAuthenticated)
+
+    if (!technician) {
+      const { error: techError } = await supabase
+        .from('technicians')
+        .upsert({
+          user_id: user.id,
+          license_category: [],
+          aircraft_types: [],
+          specialties: [],
+          languages: [],
+          is_available: false,
+          visibility_anonymous: true
+        }, { onConflict: 'user_id' })
+
+      if (techError) {
+        console.error('Error creating technician record:', techError)
+        throw new Error(language === 'es' ? 'Error al preparar el perfil' : 'Error preparing profile')
+      }
+      const { data: techData } = await supabase
+        .from('technicians')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+      setTechnician(techData)
+    }
+
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+    const path = `${user.id}/${docType}/${unique}-${sanitizedFileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(path, file)
+
+    if (uploadError) throw uploadError
+
+    const existing =
+      docType === 'logbook' ? undefined : documents.find((d) => d.doc_type === docType)
+
+    if (existing) {
+      const { error: dbError } = await supabase
+        .from('documents')
+        .update({
+          storage_path: path,
+          file_name: file.name,
+          status: 'pending'
+        })
+        .eq('id', existing.id)
+
+      if (dbError) throw dbError
+    } else {
+      const { error: dbError } = await supabase
+        .from('documents')
+        .insert({
+          technician_id: user.id,
+          doc_type: docType,
+          status: 'pending',
+          storage_path: path,
+          file_name: file.name
+        })
+
+      if (dbError) throw dbError
+    }
+  }
+
   const handleUpload = async (docType: string, file: File) => {
     setUploading(docType)
     setError(null)
     setSuccess(null)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error(t.common.notAuthenticated)
-
-      // Ensure technician record exists (required for FK constraint)
-      if (!technician) {
-        const { error: techError } = await supabase
-          .from('technicians')
-          .upsert({
-            user_id: user.id,
-            license_category: [],
-            aircraft_types: [],
-            specialties: [],
-            languages: [],
-            is_available: false,
-            visibility_anonymous: true
-          }, { onConflict: 'user_id' })
-        
-        if (techError) {
-          console.error('Error creating technician record:', techError)
-          throw new Error(language === 'es' ? 'Error al preparar el perfil' : 'Error preparing profile')
-        }
-        // Reload technician data
-        const { data: techData } = await supabase
-          .from('technicians')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-        setTechnician(techData)
-      }
-
-      const timestamp = Date.now()
-      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-      const path = `${user.id}/${docType}/${timestamp}-${sanitizedFileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(path, file)
-
-      if (uploadError) throw uploadError
-
-      const existing = documents.find(d => d.doc_type === docType)
-
-      if (existing) {
-        const { error: dbError } = await supabase
-          .from('documents')
-          .update({
-            storage_path: path,
-            file_name: file.name,
-            status: 'pending'
-          })
-          .eq('id', existing.id)
-
-        if (dbError) throw dbError
-      } else {
-        const { error: dbError } = await supabase
-          .from('documents')
-          .insert({
-            technician_id: user.id,
-            doc_type: docType,
-            status: 'pending',
-            storage_path: path,
-            file_name: file.name
-          })
-
-        if (dbError) throw dbError
-      }
-
+      await uploadDocumentFile(docType, file)
       await loadData()
       setSuccess(language === 'es' ? 'Documento subido correctamente' : 'Document uploaded successfully')
       try {
@@ -244,6 +247,44 @@ export default function DocumentsPage() {
       setError(err.message)
     } finally {
       setUploading(null)
+    }
+  }
+
+  const handleLogbookFilesSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files
+    if (!list?.length) return
+    const files = Array.from(list)
+    setUploading('logbook')
+    setError(null)
+    setSuccess(null)
+    try {
+      for (const file of files) {
+        await uploadDocumentFile('logbook', file)
+      }
+      await loadData()
+      setSuccess(
+        language === 'es'
+          ? files.length > 1
+            ? `${files.length} archivos de logbook subidos correctamente`
+            : 'Documento subido correctamente'
+          : files.length > 1
+            ? `${files.length} logbook files uploaded successfully`
+            : 'Document uploaded successfully'
+      )
+      try {
+        await fetch('/api/documents/notify-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docType: 'logbook' }),
+        })
+      } catch {
+        /* opcional */
+      }
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setUploading(null)
+      e.target.value = ''
     }
   }
 
@@ -263,6 +304,14 @@ export default function DocumentsPage() {
   const getDocumentForType = (docType: string) => {
     return documents.find(d => d.doc_type === docType)
   }
+
+  const getDocumentsForType = (docType: string) =>
+    documents
+      .filter((d) => d.doc_type === docType)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
 
   const selectedAircraft = technician?.aircraft_types || []
   const uniqueSeriesForRatings = getUniqueSeries(selectedAircraft)
@@ -827,16 +876,18 @@ export default function DocumentsPage() {
             {hasLogbookAccess && (
               <>
                 {(() => {
-                const doc = getDocumentForType('logbook')
+                const logbookDocs = getDocumentsForType('logbook')
+                const anyChecked = logbookDocs.some((d) => d.status === 'checked')
+                const anyUploaded = logbookDocs.length > 0
                 const isUploading = uploading === 'logbook'
                 return (
                   <div className="card p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${
-                          doc?.status === 'checked'
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-12 h-12 shrink-0 rounded-lg flex items-center justify-center text-2xl ${
+                          anyChecked
                             ? 'bg-gold-500/15 border-2 border-gold-500/50'
-                            : doc
+                            : anyUploaded
                               ? 'bg-steel-700/30 border-2 border-steel-600/50'
                               : 'bg-navy-800 border-2 border-steel-700/50'
                         }`}>
@@ -849,31 +900,44 @@ export default function DocumentsPage() {
                           </div>
                           <p className="text-xs text-steel-500 mt-0.5">
                             {language === 'es'
-                              ? 'Obligatorio para contratación. Visible para empresas cuando revisan tu perfil.'
-                              : 'Required for hiring. Visible to companies when they review your profile.'}
+                              ? 'Obligatorio para contratación. Puedes subir varios PDFs (sin límite). Visible para empresas cuando revisan tu perfil.'
+                              : 'Required for hiring. You can upload multiple PDFs (no limit). Visible to companies when they review your profile.'}
                           </p>
-                          {doc && (
-                            <div className="flex items-center gap-2 mt-2">
-                              {getStatusBadge(doc.status)}
-                              <span className="text-xs text-steel-500">{doc.file_name}</span>
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <label className={`btn-secondary text-sm cursor-pointer ${isUploading ? 'opacity-50' : ''}`}>
+                      <label className={`btn-secondary text-sm cursor-pointer shrink-0 self-start ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                         <input
                           type="file"
                           className="hidden"
                           accept=".pdf"
+                          multiple
                           disabled={isUploading}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleUpload('logbook', file)
-                          }}
+                          onChange={handleLogbookFilesSelected}
                         />
-                        {isUploading ? t.common.processing : doc ? t.documents.update : t.documents.upload}
+                        {isUploading
+                          ? t.common.processing
+                          : language === 'es'
+                            ? anyUploaded
+                              ? 'Añadir más archivos'
+                              : 'Subir PDF'
+                            : anyUploaded
+                              ? 'Add more files'
+                              : 'Upload PDF'}
                       </label>
                     </div>
+                    {logbookDocs.length > 0 && (
+                      <ul className="mt-4 space-y-2 border-t border-steel-700/40 pt-4">
+                        {logbookDocs.map((doc) => (
+                          <li
+                            key={doc.id}
+                            className="flex flex-wrap items-center gap-2 text-sm"
+                          >
+                            {getStatusBadge(doc.status)}
+                            <span className="text-steel-300">{doc.file_name || '—'}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )
                 })()}

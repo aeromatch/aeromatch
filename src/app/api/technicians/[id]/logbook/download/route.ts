@@ -49,12 +49,15 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { data: logbook } = await service
+    const { data: logbookRows } = await service
       .from('documents')
       .select('storage_path, file_name')
       .eq('technician_id', technicianId)
       .eq('doc_type', 'logbook')
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    const logbook = logbookRows?.[0]
 
     if (!logbook?.storage_path) {
       return NextResponse.json({ error: 'Logbook not found' }, { status: 404 })

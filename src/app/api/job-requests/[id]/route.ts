@@ -263,7 +263,7 @@ export async function PATCH(
         supabase.from('technicians').select('*').eq('user_id', existingRequest.technician_id).single(),
         supabase.from('profiles').select('email').eq('id', existingRequest.company_id).single(),
         supabase.from('companies').select('company_name').eq('user_id', existingRequest.company_id).single(),
-        supabase.from('documents').select('id').eq('technician_id', existingRequest.technician_id).eq('doc_type', 'logbook').maybeSingle()
+        supabase.from('documents').select('id').eq('technician_id', existingRequest.technician_id).eq('doc_type', 'logbook').limit(1).maybeSingle()
       ])
       const readableRequestId = `Solicitud #${existingRequest.id.substring(0, 8).toUpperCase()}`
       const technicianFullName =
