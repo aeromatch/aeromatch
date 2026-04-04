@@ -5,19 +5,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  async headers() {
-    return [
-      {
-        source: '/sitemap.xml',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/xml',
-          },
-        ],
-      },
-    ]
-  },
+  // No añadir Content-Type aquí para /sitemap.xml: duplica la cabecera con la del Route Handler
+  // y algunos clientes (p. ej. Google) rechazan respuestas con Content-Type duplicado o ambiguo.
 }
 
 module.exports = nextConfig
