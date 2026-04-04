@@ -15,7 +15,7 @@ export async function hashDocumentFilesBeforeVerification(
     .from('documents')
     .select('id, storage_path')
     .eq('technician_id', technicianId)
-    .eq('status', 'pending')
+    .in('status', ['pending', 'uploaded', 'pending_verification', 'verified'])
     .not('storage_path', 'is', null)
 
   if (error) {
@@ -126,27 +126,62 @@ export function buildDocumentIntegrityPayload(
 }
 
 /**
- * Marca como checked solo las filas que estaban en pending (no toca ausencias lógicas not_uploaded).
+ * Marca como checked los documentos subidos del técnico al verificar en admin.
+ * Incluye estados legacy (uploaded, pending_verification, verified) o NULL si la migración 024 no corrió.
  */
 export async function promoteTechnicianDocumentsToVerified(
   serviceClient: SupabaseClient,
   technicianId: string,
   verifiedByUserId: string
-): Promise<{ error: Error | null }> {
-  const { error } = await serviceClient
+): Promise<{ error: Error | null; updatedCount?: number }> {
+  const payload = {
+    status: 'checked' as const,
+    verified_at: new Date().toISOString(),
+    verified_by: verifiedByUserId,
+  }
+
+  const promotable = [
+    'pending',
+    'uploaded',
+    'pending_verification',
+    'verified', // pre-024 (antes de CHECK documents_status_check)
+  ] as const
+
+  const { data, error } = await serviceClient
     .from('documents')
-    .update({
-      status: 'checked',
-      verified_at: new Date().toISOString(),
-      verified_by: verifiedByUserId,
-    })
+    .update(payload)
     .eq('technician_id', technicianId)
-    .eq('status', 'pending')
+    .in('status', [...promotable])
+    .select('id')
 
   if (error) {
     return { error: new Error(error.message) }
   }
-  return { error: null }
+
+  const n1 = data?.length ?? 0
+
+  // Filas con status NULL (raras, sin migración)
+  const { data: dataNull, error: errNull } = await serviceClient
+    .from('documents')
+    .update(payload)
+    .eq('technician_id', technicianId)
+    .is('status', null)
+    .select('id')
+
+  if (errNull) {
+    return { error: new Error(errNull.message) }
+  }
+
+  const updatedCount = n1 + (dataNull?.length ?? 0)
+  if (updatedCount === 0) {
+    console.warn(
+      'promoteTechnicianDocumentsToVerified: 0 rows updated for technician',
+      technicianId,
+      '(no matching status or already checked)'
+    )
+  }
+
+  return { error: null, updatedCount }
 }
 
 type CertPdfRow = {
