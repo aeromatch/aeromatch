@@ -31,6 +31,7 @@ function formatDateEn(d: Date): string {
 function rowTier(row: DocRow | undefined): AmxDocTier {
   if (!row) return 'not_uploaded'
   if (row.status === 'checked') return 'checked'
+  if (row.status === 'not_uploaded') return 'not_uploaded'
   return 'pending'
 }
 

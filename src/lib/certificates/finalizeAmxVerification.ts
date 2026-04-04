@@ -15,7 +15,7 @@ export async function hashDocumentFilesBeforeVerification(
     .from('documents')
     .select('id, storage_path')
     .eq('technician_id', technicianId)
-    .in('status', ['pending', 'uploaded', 'pending_verification', 'verified'])
+    .in('status', ['pending', 'not_uploaded', 'uploaded', 'pending_verification', 'verified'])
     .not('storage_path', 'is', null)
 
   if (error) {
@@ -127,7 +127,8 @@ export function buildDocumentIntegrityPayload(
 
 /**
  * Marca como checked los documentos subidos del técnico al verificar en admin.
- * Incluye estados legacy (uploaded, pending_verification, verified) o NULL si la migración 024 no corrió.
+ * - Incluye `not_uploaded` solo si hay `storage_path` (fichero real); sin fichero no se marca checked.
+ * - Legacy: uploaded, pending_verification, verified; status NULL en BDs antiguas.
  */
 export async function promoteTechnicianDocumentsToVerified(
   serviceClient: SupabaseClient,
@@ -142,6 +143,7 @@ export async function promoteTechnicianDocumentsToVerified(
 
   const promotable = [
     'pending',
+    'not_uploaded',
     'uploaded',
     'pending_verification',
     'verified', // pre-024 (antes de CHECK documents_status_check)
@@ -151,6 +153,7 @@ export async function promoteTechnicianDocumentsToVerified(
     .from('documents')
     .update(payload)
     .eq('technician_id', technicianId)
+    .not('storage_path', 'is', null)
     .in('status', [...promotable])
     .select('id')
 
@@ -160,11 +163,12 @@ export async function promoteTechnicianDocumentsToVerified(
 
   const n1 = data?.length ?? 0
 
-  // Filas con status NULL (raras, sin migración)
+  // Filas con status NULL (raras) pero con fichero subido
   const { data: dataNull, error: errNull } = await serviceClient
     .from('documents')
     .update(payload)
     .eq('technician_id', technicianId)
+    .not('storage_path', 'is', null)
     .is('status', null)
     .select('id')
 
