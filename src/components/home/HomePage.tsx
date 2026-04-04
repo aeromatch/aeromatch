@@ -288,8 +288,8 @@ No paperwork. No middlemen. No commissions.`,
 
         <div className="relative z-10 w-full max-w-6xl mx-auto px-6 lg:px-8 py-16">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="mb-12 flex justify-center overflow-visible pt-2 sm:pt-4">
-              <div className="overflow-visible [filter:drop-shadow(0_8px_32px_rgba(201,162,77,0.25))]">
+            <div className="mb-12 flex w-full justify-center overflow-visible pt-2 sm:pt-4 -translate-x-3">
+              <div className="inline-flex shrink-0 overflow-visible [filter:drop-shadow(0_8px_28px_rgba(201,162,77,0.22))]">
                 <LogoGoldA size={128} />
               </div>
             </div>

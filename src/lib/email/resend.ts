@@ -136,6 +136,132 @@ function buildDemoOfferEmailHtml(opts: {
 `
 }
 
+export type AmxVerificationReadyEmailData = {
+  to: string
+  fullName: string
+  amxReferenceId: string
+  technicianId: string
+}
+
+function buildAmxVerificationReadyEmailHtml(data: AmxVerificationReadyEmailData): string {
+  const { fullName, amxReferenceId, technicianId } = data
+  const base = APP_URL.replace(/\/$/, '')
+  const docsUrl = `${base}/profile/documents`
+  const profilePublicUrl = `${base}/technician/${technicianId}`
+  const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profilePublicUrl)}`
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0B132B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0B132B; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #1A2642; border-radius: 16px; overflow: hidden; border: 1px solid #3A4A6B;">
+          <tr>
+            <td style="background: #1A2642; padding: 40px 30px 30px; text-align: center; border-bottom: 3px solid #C9A24D;">
+              <img src="${base}/logo-email.svg" alt="aeroMatch" width="180" style="display:block;margin:0 auto 8px;max-width:180px;height:auto;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px 28px;">
+              <h1 style="color: #ffffff; font-size: 22px; margin: 0 0 10px; font-weight: 700;">
+                Tu perfil ha sido verificado.
+              </h1>
+              <p style="color: #8899AA; font-size: 16px; margin: 0 0 28px; line-height: 1.5;">
+                Ya eres visible para empresas en aeroMatch.
+              </p>
+              <p style="color: #E6EDF7; font-size: 16px; margin: 0 0 18px; line-height: 1.65;">
+                Hola <strong style="color: #ffffff;">${escapeHtml(fullName)}</strong>,
+              </p>
+              <p style="color: #8899AA; font-size: 15px; margin: 0 0 16px; line-height: 1.65;">
+                Hemos revisado tu documentación y todo está en orden.
+                A partir de ahora tu perfil aparece en los resultados
+                de búsqueda de MROs, operadoras y contractors que
+                buscan técnicos con tu perfil.
+              </p>
+              <p style="color: #8899AA; font-size: 15px; margin: 0 0 28px; line-height: 1.65;">
+                Tu Certificado AMX — <strong style="color: #C9A24D;">${escapeHtml(amxReferenceId)}</strong> — está disponible
+                para descarga en tu perfil.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${docsUrl}"
+                       style="display: inline-block; background: linear-gradient(135deg, #C9A24D 0%, #D4B366 100%); color: #0B132B; text-decoration: none; padding: 16px 32px; border-radius: 10px; font-weight: bold; font-size: 15px;">
+                      Descargar mi certificado AMX
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #0B132B; padding: 28px 30px; border-top: 1px solid #3A4A6B;">
+              <p style="color: #C9A24D; font-size: 13px; font-weight: 700; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.06em;">
+                Comparte tu verificación
+              </p>
+              <p style="color: #8899AA; font-size: 14px; margin: 0 0 22px; line-height: 1.65;">
+                Los técnicos verificados generan más confianza.
+                Comparte tu certificado AMX en LinkedIn para que
+                empresas y reclutadores sepan que estás verificado
+                y disponible.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${linkedInUrl}"
+                       style="display: inline-block; background: transparent; color: #C9A24D; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; border: 2px solid #C9A24D;">
+                      Compartir en LinkedIn →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #0B132B; padding: 22px 30px 28px; border-top: 1px solid #3A4A6B;">
+              <p style="color: #6B809A; font-size: 12px; margin: 0 0 8px; text-align: center;">
+                aeroMatch · aeromatch.eu
+              </p>
+              <p style="color: #5a6a7a; font-size: 11px; margin: 0; text-align: center; line-height: 1.5;">
+                Este email confirma la verificación manual de tus
+                documentos por el equipo de aeroMatch.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
+}
+
+/**
+ * Email al técnico cuando un admin verifica documentos y el AMX pasa a checked.
+ * No lanzar errores al caller: usar try/catch en la ruta si hace falta.
+ */
+export async function sendAmxVerificationReadyEmail(data: AmxVerificationReadyEmailData): Promise<void> {
+  if (!resend) {
+    console.warn('sendAmxVerificationReadyEmail: RESEND_API_KEY not set')
+    return
+  }
+  const from = process.env.RESEND_FROM_EMAIL || 'aeroMatch <onboarding@resend.dev>'
+  const html = buildAmxVerificationReadyEmailHtml(data)
+  await resend.emails.send({
+    from,
+    to: data.to,
+    subject: '✓ Tu certificado AMX está listo — aeroMatch',
+    html,
+  })
+}
+
 export async function sendJobRequestNotification(data: JobRequestEmailData) {
   const {
     technicianEmail,

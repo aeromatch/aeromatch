@@ -7,6 +7,7 @@ import {
   regenerateAmxCertificateStoragePdf,
 } from '@/lib/certificates/finalizeAmxVerification'
 import { Resend } from 'resend'
+import { sendAmxVerificationReadyEmail } from '@/lib/email/resend'
 
 // Admin emails from environment
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
@@ -313,6 +314,7 @@ export async function POST(request: Request) {
 
     // When verified: documentos -> verified (PDF "Checked"), certificado -> checked, PDF en Storage
     let certificateChecked = false
+    let regenErr: Error | null = null
     if (status === 'verified') {
       try {
         const { error: promoErr } = await promoteTechnicianDocumentsToVerified(
@@ -349,7 +351,7 @@ export async function POST(request: Request) {
             }
           }
 
-          const { error: regenErr } = await regenerateAmxCertificateStoragePdf(
+          const regenResult = await regenerateAmxCertificateStoragePdf(
             serviceClient,
             technicianId,
             'checked',
@@ -359,8 +361,35 @@ export async function POST(request: Request) {
               generated_at: cert.generated_at,
             }
           )
+          regenErr = regenResult.error
           if (regenErr) {
             console.error('regenerateAmxCertificateStoragePdf:', regenErr)
+          }
+
+          // Email al técnico: solo si el certificado pasó a checked en esta petición y el PDF se regeneró bien
+          if (certificateChecked && !regenErr && cert.reference_id && process.env.RESEND_API_KEY) {
+            try {
+              const { data: techProfile } = await serviceClient
+                .from('profiles')
+                .select('email, full_name')
+                .eq('id', technicianId)
+                .single()
+
+              const to = techProfile?.email?.trim()
+              if (to) {
+                await sendAmxVerificationReadyEmail({
+                  to,
+                  fullName: techProfile?.full_name || 'Técnico',
+                  amxReferenceId: cert.reference_id,
+                  technicianId,
+                })
+                console.log('AMX verification ready email sent to:', to)
+              } else {
+                console.warn('sendAmxVerificationReadyEmail: no email for technician', technicianId)
+              }
+            } catch (emailErr) {
+              console.error('sendAmxVerificationReadyEmail failed (verification still OK):', emailErr)
+            }
           }
         }
       } catch (certErr) {
