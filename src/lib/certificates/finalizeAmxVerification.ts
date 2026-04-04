@@ -1,29 +1,47 @@
 import { createHash } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
-import { buildAmxCertificateDocumentRows } from '@/lib/certificates/expectedAmxDocuments'
+import {
+  buildAmxCertificateDocumentRows,
+  normalizeDocStatus,
+} from '@/lib/certificates/expectedAmxDocuments'
 
 /**
  * Descarga documentos pendientes desde Storage, SHA-256 del fichero → `file_hash`.
  * Fallos: solo log, no bloquea la verificación.
  */
+function hasStoragePath(p: unknown): boolean {
+  return typeof p === 'string' && p.trim().length > 0
+}
+
 export async function hashDocumentFilesBeforeVerification(
   serviceClient: SupabaseClient,
   technicianId: string
 ): Promise<void> {
-  const { data: docs, error } = await serviceClient
+  const q1 = await serviceClient
     .from('documents')
-    .select('id, storage_path')
+    .select('id, storage_path, status, is_deleted')
     .eq('technician_id', technicianId)
-    .in('status', ['pending', 'not_uploaded', 'uploaded', 'pending_verification', 'verified'])
-    .not('storage_path', 'is', null)
+
+  const q2 = q1.error
+    ? await serviceClient.from('documents').select('id, storage_path, status').eq('technician_id', technicianId)
+    : null
+
+  const docs = (q2?.data ?? q1.data) as Record<string, unknown>[] | null
+  const error = q2 ? q2.error : q1.error
 
   if (error) {
     console.error('hashDocumentFilesBeforeVerification: query failed', error)
     return
   }
 
-  for (const doc of docs || []) {
+  const toHash = (docs || []).filter((d: Record<string, unknown>) => {
+    if (d.is_deleted === true) return false
+    if (!hasStoragePath(d.storage_path)) return false
+    return normalizeDocStatus(d.status as string) !== 'checked'
+  })
+
+  for (const doc of toHash) {
     const storagePath = doc.storage_path as string
     try {
       const { data: blob, error: dlErr } = await serviceClient.storage
@@ -78,7 +96,7 @@ export async function fetchDocumentsRowsForAmxPdf(
     }
     return (fallback || []).map((d: Record<string, unknown>) => ({
       doc_type: String(d.doc_type),
-      status: String(d.status),
+      status: normalizeDocStatus(d.status as string) || String(d.status),
       expires_on: (d.expires_on as string | null) ?? null,
       file_hash: null,
       verified_at: (d.verified_at as string | null) ?? null,
@@ -89,7 +107,7 @@ export async function fetchDocumentsRowsForAmxPdf(
     .filter((d: { is_deleted?: boolean }) => d.is_deleted !== true)
     .map((d: Record<string, unknown>) => ({
       doc_type: String(d.doc_type),
-      status: String(d.status),
+      status: normalizeDocStatus(d.status as string) || String(d.status),
       expires_on: (d.expires_on as string | null) ?? null,
       file_hash: (d.file_hash as string | null) ?? null,
       verified_at: (d.verified_at as string | null) ?? null,
@@ -109,7 +127,7 @@ export function buildDocumentIntegrityPayload(
     return undefined
   }
   const hashes = documents
-    .filter((d) => d.status === 'checked')
+    .filter((d) => normalizeDocStatus(d.status) === 'checked')
     .map((d) => d.file_hash)
     .filter((h): h is string => typeof h === 'string' && h.length > 0)
     .sort()
@@ -127,8 +145,8 @@ export function buildDocumentIntegrityPayload(
 
 /**
  * Marca como checked los documentos subidos del técnico al verificar en admin.
- * - Incluye `not_uploaded` solo si hay `storage_path` (fichero real); sin fichero no se marca checked.
- * - Legacy: uploaded, pending_verification, verified; status NULL en BDs antiguas.
+ * Selecciona por `id` en código (evita fallos de filtros encadenados en PostgREST y status con basura en BD).
+ * Solo filas con `storage_path` no vacío; excluye soft-delete; cualquier status distinto de `checked` (normalizado).
  */
 export async function promoteTechnicianDocumentsToVerified(
   serviceClient: SupabaseClient,
@@ -141,48 +159,63 @@ export async function promoteTechnicianDocumentsToVerified(
     verified_by: verifiedByUserId,
   }
 
-  const promotable = [
-    'pending',
-    'not_uploaded',
-    'uploaded',
-    'pending_verification',
-    'verified', // pre-024 (antes de CHECK documents_status_check)
-  ] as const
+  type DocCand = {
+    id: string
+    status?: string | null
+    storage_path?: string | null
+    is_deleted?: boolean | null
+  }
 
-  const { data, error } = await serviceClient
+  const sel = await serviceClient
     .from('documents')
-    .update(payload)
+    .select('id, status, storage_path, is_deleted')
     .eq('technician_id', technicianId)
-    .not('storage_path', 'is', null)
-    .in('status', [...promotable])
-    .select('id')
+
+  let candidates: DocCand[] | null
+  let selErr = sel.error
+
+  if (selErr) {
+    const fallback = await serviceClient
+      .from('documents')
+      .select('id, status, storage_path')
+      .eq('technician_id', technicianId)
+    candidates = fallback.data as DocCand[] | null
+    selErr = fallback.error
+  } else {
+    candidates = sel.data as DocCand[] | null
+  }
+
+  if (selErr) {
+    return { error: new Error(selErr.message) }
+  }
+
+  const ids = (candidates || [])
+    .filter((r) => {
+      if (r.is_deleted === true) return false
+      if (!hasStoragePath(r.storage_path)) return false
+      return normalizeDocStatus(r.status) !== 'checked'
+    })
+    .map((r) => r.id)
+
+  if (ids.length === 0) {
+    console.warn(
+      'promoteTechnicianDocumentsToVerified: 0 candidate rows for technician',
+      technicianId,
+      '(already checked, no file, or deleted)'
+    )
+    return { error: null, updatedCount: 0 }
+  }
+
+  const { data, error } = await serviceClient.from('documents').update(payload).in('id', ids).select('id')
 
   if (error) {
+    console.error('promoteTechnicianDocumentsToVerified: update failed', error.message, { technicianId, ids })
     return { error: new Error(error.message) }
   }
 
-  const n1 = data?.length ?? 0
-
-  // Filas con status NULL (raras) pero con fichero subido
-  const { data: dataNull, error: errNull } = await serviceClient
-    .from('documents')
-    .update(payload)
-    .eq('technician_id', technicianId)
-    .not('storage_path', 'is', null)
-    .is('status', null)
-    .select('id')
-
-  if (errNull) {
-    return { error: new Error(errNull.message) }
-  }
-
-  const updatedCount = n1 + (dataNull?.length ?? 0)
+  const updatedCount = data?.length ?? 0
   if (updatedCount === 0) {
-    console.warn(
-      'promoteTechnicianDocumentsToVerified: 0 rows updated for technician',
-      technicianId,
-      '(no matching status or already checked)'
-    )
+    console.warn('promoteTechnicianDocumentsToVerified: update returned 0 rows', technicianId, ids)
   }
 
   return { error: null, updatedCount }

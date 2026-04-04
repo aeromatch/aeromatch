@@ -24,14 +24,22 @@ type DocRow = {
   verified_at?: string | null
 }
 
+/** Normaliza status desde BD (espacios, mayúsculas, rarezas) para comparar con el esquema AMX. */
+export function normalizeDocStatus(raw: string | null | undefined): string {
+  return String(raw ?? '')
+    .trim()
+    .toLowerCase()
+}
+
 function formatDateEn(d: Date): string {
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function rowTier(row: DocRow | undefined): AmxDocTier {
   if (!row) return 'not_uploaded'
-  if (row.status === 'checked') return 'checked'
-  if (row.status === 'not_uploaded') return 'not_uploaded'
+  const s = normalizeDocStatus(row.status)
+  if (s === 'checked') return 'checked'
+  if (s === 'not_uploaded') return 'not_uploaded'
   return 'pending'
 }
 
@@ -78,9 +86,24 @@ export function buildAmxCertificateDocumentRows(
   const out: AmxCertificateDocumentRow[] = []
 
   const lc = technician.license_category?.[0]
-  const easaLabel = lc ? `EASA License ${lc}` : 'EASA Part-66 License'
+  const hasEasa = byType.has('easa_license')
+  const hasUk = byType.has('uk_license')
+  const hasFaa = byType.has('faa_ap')
+  const easaRow = byType.get('easa_license') || byType.get('uk_license') || byType.get('faa_ap')
+  const easaLabel = hasEasa
+    ? lc
+      ? `EASA License ${lc}`
+      : 'EASA Part-66 License'
+    : hasUk
+      ? lc
+        ? `UK CAA License ${lc}`
+        : 'UK CAA License'
+      : hasFaa
+        ? 'FAA A&P License'
+        : lc
+          ? `EASA License ${lc}`
+          : 'EASA Part-66 License'
 
-  const easaRow = byType.get('easa_license')
   const easaTier = easaRow ? rowTier(easaRow) : 'not_uploaded'
   out.push({
     sortKey: '0_easa',
