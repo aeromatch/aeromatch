@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 import {
+  hashDocumentFilesBeforeVerification,
   promoteTechnicianDocumentsToVerified,
   regenerateAmxCertificateStoragePdf,
 } from '@/lib/certificates/finalizeAmxVerification'
@@ -211,7 +212,7 @@ export async function POST(request: Request) {
           // Get technician data
           const { data: technician } = await serviceClient
             .from('technicians')
-            .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license')
+            .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license, contract_type_preference')
             .eq('user_id', technicianId)
             .single()
 
@@ -243,6 +244,7 @@ export async function POST(request: Request) {
                 yearsExperience: technician.years_experience,
                 specialties: technician.specialties || [],
                 languages: technician.languages || [],
+                contractPreference: technician.contract_type_preference,
                 ownTools: technician.own_tools || false,
                 rightToWorkUk: technician.right_to_work_uk || false,
                 drivingLicense: technician.driving_license || false,
@@ -317,6 +319,8 @@ export async function POST(request: Request) {
     let regenErr: Error | null = null
     if (status === 'verified') {
       try {
+        await hashDocumentFilesBeforeVerification(serviceClient, technicianId)
+
         const { error: promoErr } = await promoteTechnicianDocumentsToVerified(
           serviceClient,
           technicianId,

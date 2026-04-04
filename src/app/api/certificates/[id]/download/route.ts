@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { buildDocumentIntegrityPayload } from '@/lib/certificates/finalizeAmxVerification'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
@@ -54,7 +55,7 @@ export async function GET(
     // Get technician data to regenerate PDF
     const { data: technician } = await serviceClient
       .from('technicians')
-      .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license')
+      .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license, contract_type_preference')
       .eq('user_id', certificate.technician_id)
       .single()
 
@@ -66,14 +67,18 @@ export async function GET(
 
     const { data: documents } = await serviceClient
       .from('documents')
-      .select('doc_type, status, expires_on')
+      .select('doc_type, status, expires_on, file_hash, verified_at')
       .eq('technician_id', certificate.technician_id)
 
     if (!technician) {
       return NextResponse.json({ error: 'Technician not found' }, { status: 404 })
     }
 
-    // Generate PDF on-the-fly with current template
+    const docRows = documents || []
+    const certStatus = certificate.status as 'pending' | 'checked' | 'rejected'
+    const documentIntegrity = buildDocumentIntegrityPayload(docRows, certStatus)
+
+    // Generate PDF on-the-fly with current template (incl. huella SHA-256 si checked + hashes en BD)
     const pdfBytes = await generateCertificatePdf({
       referenceId: certificate.reference_id,
       technician: {
@@ -83,18 +88,20 @@ export async function GET(
         yearsExperience: technician.years_experience,
         specialties: technician.specialties || [],
         languages: technician.languages || [],
+        contractPreference: technician.contract_type_preference,
         ownTools: technician.own_tools || false,
         rightToWorkUk: technician.right_to_work_uk || false,
         drivingLicense: technician.driving_license || false,
         isAvailable: technician.is_available || false,
       },
-      documents: (documents || []).map(d => ({
+      documents: docRows.map(d => ({
         docType: d.doc_type,
         status: d.status,
         expiresOn: d.expires_on,
       })),
       generatedAt: new Date(certificate.generated_at),
-      certificateStatus: certificate.status,
+      certificateStatus: certStatus,
+      documentIntegrity,
     })
 
     // Return PDF directly as binary
