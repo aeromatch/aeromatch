@@ -1,4 +1,4 @@
-import { PDFDocument, PDFImage, PDFPage, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, PDFImage, PDFPage, PDFFont, rgb, StandardFonts } from 'pdf-lib'
 import fs from 'fs'
 import path from 'path'
 import QRCode from 'qrcode'
@@ -110,6 +110,11 @@ function getDocTypeLabel(docType: string): string {
     return `Cert ${sub.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`
   }
   return DOC_TYPE_LABELS[docType] || docType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+/** Línea base del texto para centrarlo ópticamente en un rectángulo (Helvetica / similar). */
+function baselineInRect(rectBottom: number, rectHeight: number, fontSize: number): number {
+  return rectBottom + rectHeight / 2 - fontSize * 0.38
 }
 
 async function loadImage(pdfDoc: PDFDocument, imagePath: string): Promise<any> {
@@ -305,8 +310,16 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   }
 
   // Helper to draw pills
-  const drawPills = (items: string[], yPos: number, bgColor: any, textColor: any, borderColor?: any): number => {
+  const drawPills = (
+    items: string[],
+    yPos: number,
+    bgColor: any,
+    textColor: any,
+    borderColor?: any,
+    textFont: PDFFont = helvetica
+  ): number => {
     const pillHeight = 15
+    const fontSize = 8
     const paddingX = 8
     const gapH = 5
     const gapV = 5
@@ -314,7 +327,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     let currentY = yPos
 
     for (const item of items) {
-      const textWidth = helvetica.widthOfTextAtSize(item, 8)
+      const textWidth = textFont.widthOfTextAtSize(item, fontSize)
       const pillWidth = textWidth + paddingX * 2
 
       if (x + pillWidth > width - MARGIN) {
@@ -322,10 +335,12 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         currentY -= (pillHeight + gapV)
       }
 
+      const rectBottom = currentY - 4
+
       // Draw pill background
       page.drawRectangle({
         x,
-        y: currentY - 4,
+        y: rectBottom,
         width: pillWidth,
         height: pillHeight,
         color: bgColor,
@@ -333,12 +348,12 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         borderWidth: borderColor ? 0.6 : 0,
       })
 
-      // Draw pill text
+      // Draw pill text (centrado verticalmente en el recuadro)
       page.drawText(item, {
         x: x + paddingX,
-        y: currentY + 3,
-        size: 8,
-        font: helvetica,
+        y: baselineInRect(rectBottom, pillHeight, fontSize),
+        size: fontSize,
+        font: textFont,
         color: textColor,
       })
 
@@ -351,7 +366,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   // LICENCES
   if (data.technician.licenseCategory && data.technician.licenseCategory.length > 0) {
     y = drawSectionLabel('LICENCES', y)
-    y = drawPills(data.technician.licenseCategory, y, COLORS.navy950, COLORS.steel100)
+    y = drawPills(data.technician.licenseCategory, y, COLORS.navy950, COLORS.steel100, undefined, helveticaBold)
   }
 
   // TYPE RATINGS
@@ -583,20 +598,23 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         color: COLORS.body,
       })
 
-      const statusWidth = helveticaBold.widthOfTextAtSize(config.label, 8) + 14
+      const statusFontSize = 8
+      const statusH = 14
+      const statusRectBottom = y - 3
+      const statusWidth = helveticaBold.widthOfTextAtSize(config.label, statusFontSize) + 14
       page.drawRectangle({
         x: colStatus - 2,
-        y: y - 3,
+        y: statusRectBottom,
         width: statusWidth,
-        height: 14,
+        height: statusH,
         color: config.bg,
         borderColor: COLORS.border,
         borderWidth: 0.35,
       })
       page.drawText(config.label, {
         x: colStatus + 6,
-        y: y + 3,
-        size: 8,
+        y: baselineInRect(statusRectBottom, statusH, statusFontSize),
+        size: statusFontSize,
         font: helveticaBold,
         color: config.color,
       })
@@ -632,20 +650,23 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
       color: COLORS.body,
     })
 
-    const statusWidth = helveticaBold.widthOfTextAtSize(config.label, 8) + 14
+    const statusFontSize = 8
+    const statusH = 14
+    const statusRectBottom = y - 3
+    const statusWidth = helveticaBold.widthOfTextAtSize(config.label, statusFontSize) + 14
     page.drawRectangle({
       x: colStatus - 2,
-      y: y - 3,
+      y: statusRectBottom,
       width: statusWidth,
-      height: 14,
+      height: statusH,
       color: config.bg,
       borderColor: COLORS.border,
       borderWidth: 0.35,
     })
     page.drawText(config.label, {
       x: colStatus + 6,
-      y: y + 3,
-      size: 8,
+      y: baselineInRect(statusRectBottom, statusH, statusFontSize),
+      size: statusFontSize,
       font: helveticaBold,
       color: config.color,
     })
