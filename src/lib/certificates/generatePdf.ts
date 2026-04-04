@@ -437,8 +437,9 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   const colStatusXAmx = 248
   const amxRows = data.amxDocumentRows
 
+  // Helvetica/WinAnsi no codifica emoji (⏳ ✓ ⚠); usar ASCII para pdf-lib
   const tierSymbol = (row: AmxCertificateDocumentRow) =>
-    row.icon === 'check' ? '✓' : row.icon === 'hourglass' ? '⏳' : '⚠'
+    row.icon === 'check' ? '+' : row.icon === 'hourglass' ? '*' : '!'
 
   const tierStatusLabel = (tier: AmxCertificateDocumentRow['tier']) =>
     tier === 'checked' ? 'CHECKED' : tier === 'pending' ? 'PENDING' : 'NOT UPLOADED'

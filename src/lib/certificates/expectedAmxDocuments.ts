@@ -13,7 +13,7 @@ export type AmxCertificateDocumentRow = {
   /** Texto primera columna (símbolo + etiqueta) */
   label: string
   tier: AmxDocTier
-  /** Columna derecha: fecha DD Mon YYYY, "Awaiting review", o "—" */
+  /** Columna derecha: fecha DD Mon YYYY, "Awaiting review", o "--" (ASCII para PDF/WinAnsi) */
   detail: string
 }
 
@@ -38,7 +38,7 @@ function detailForTier(tier: AmxDocTier, verifiedAt: string | null | undefined):
     return formatDateEn(new Date(verifiedAt))
   }
   if (tier === 'pending') return 'Awaiting review'
-  return '—'
+  return '--'
 }
 
 /** TR: requiere theory + practical para considerar checked */
@@ -53,7 +53,7 @@ function typeRatingTiers(
   const tPractical = practical ? rowTier(practical) : 'not_uploaded'
 
   if (tTheory === 'not_uploaded' && tPractical === 'not_uploaded') {
-    return { tier: 'not_uploaded', detail: '—' }
+    return { tier: 'not_uploaded', detail: '--' }
   }
   if (tTheory === 'checked' && tPractical === 'checked') {
     const d1 = theory?.verified_at ? new Date(theory.verified_at).getTime() : 0
