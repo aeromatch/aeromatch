@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import {
+  getUniqueSeries,
+  typeRatingTheoryKeyFromSeries,
+  typeRatingPracticalKeyFromSeries,
+} from '@/lib/aircraft-series'
 
 // Admin client for inserting premium grants
 function getAdminClient() {
@@ -81,17 +86,16 @@ export async function POST() {
     const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
     const hasBasicLicense = basicLicenseTypes.some(type => docTypes.includes(type))
 
-    // Check aircraft type ratings - for each aircraft selected, must have theory + practical
+    // Type ratings por serie EASA
     const aircraftTypes = technician?.aircraft_types || []
-    let missingAircraftDocs: string[] = []
-    
-    for (const aircraft of aircraftTypes) {
-      const aircraftLower = aircraft.toLowerCase()
-      const hasTheory = docTypes.includes(`type_${aircraftLower}_theory`)
-      const hasPractical = docTypes.includes(`type_${aircraftLower}_practical`)
-      
+    const missingAircraftDocs: string[] = []
+
+    for (const series of getUniqueSeries(aircraftTypes)) {
+      const hasTheory = docTypes.includes(typeRatingTheoryKeyFromSeries(series))
+      const hasPractical = docTypes.includes(typeRatingPracticalKeyFromSeries(series))
+
       if (!hasTheory || !hasPractical) {
-        missingAircraftDocs.push(aircraft)
+        missingAircraftDocs.push(series)
       }
     }
 

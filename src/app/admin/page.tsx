@@ -218,12 +218,14 @@ export default function AdminPage() {
       medical: 'Certificado Médico',
       training: 'Certificado Formación',
     }
-    // Handle aircraft type docs
+    // Type rating por serie (slug con _ → serie legible)
     if (docType.startsWith('type_') && docType.endsWith('_theory')) {
-      return `Teórico: ${docType.replace('type_', '').replace('_theory', '').toUpperCase()}`
+      const slug = docType.replace('type_', '').replace('_theory', '')
+      return `Teórico: ${slug.replace(/_/g, '/').toUpperCase()}`
     }
     if (docType.startsWith('type_') && docType.endsWith('_practical')) {
-      return `Práctico: ${docType.replace('type_', '').replace('_practical', '').toUpperCase()}`
+      const slug = docType.replace('type_', '').replace('_practical', '')
+      return `Práctico: ${slug.replace(/_/g, '/').toUpperCase()}`
     }
     return labels[docType] || docType
   }

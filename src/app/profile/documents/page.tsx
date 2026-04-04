@@ -7,6 +7,12 @@ import { AppLayout } from '@/components/ui/AppLayout'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { useAccess } from '@/hooks/useAccess'
 import { UpgradeBanner } from '@/components/ui/UpgradeBanner'
+import {
+  getUniqueSeries,
+  typeRatingTheoryKeyFromSeries,
+  typeRatingPracticalKeyFromSeries,
+  typeRatingExtraKeyFromSeries,
+} from '@/lib/aircraft-series'
 
 interface Document {
   id: string
@@ -101,7 +107,8 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'licenses' | 'ratings' | 'certificates' | 'logbook' | 'additional'>('licenses')
-  const [selectedExtras, setSelectedExtras] = useState<{[aircraft: string]: string[]}>({})
+  /** Extras por serie EASA (clave = serie, ej. A318/A319/A320/A321) */
+  const [selectedExtras, setSelectedExtras] = useState<{ [series: string]: string[] }>({})
   const [customExtraText, setCustomExtraText] = useState<{[key: string]: string}>({})
 
   useEffect(() => {
@@ -250,18 +257,19 @@ export default function DocumentsPage() {
   }
 
   const selectedAircraft = technician?.aircraft_types || []
+  const uniqueSeriesForRatings = getUniqueSeries(selectedAircraft)
 
-  const toggleExtra = (aircraft: string, extra: string) => {
-    const current = selectedExtras[aircraft] || []
+  const toggleExtra = (series: string, extra: string) => {
+    const current = selectedExtras[series] || []
     if (current.includes(extra)) {
       setSelectedExtras({
         ...selectedExtras,
-        [aircraft]: current.filter(e => e !== extra)
+        [series]: current.filter((e) => e !== extra),
       })
     } else {
       setSelectedExtras({
         ...selectedExtras,
-        [aircraft]: [...current, extra]
+        [series]: [...current, extra],
       })
     }
   }
@@ -425,16 +433,20 @@ export default function DocumentsPage() {
                 <p className="text-steel-500 text-sm mt-1">{t.documents.selectAircraftHint}</p>
               </div>
             ) : (
-              selectedAircraft.map((aircraft: string) => {
-                const theoryDoc = getDocumentForType(`type_${aircraft.toLowerCase()}_theory`)
-                const practicalDoc = getDocumentForType(`type_${aircraft.toLowerCase()}_practical`)
-                const aircraftExtras = selectedExtras[aircraft] || []
+              uniqueSeriesForRatings.map((series: string) => {
+                const theoryKey = typeRatingTheoryKeyFromSeries(series)
+                const practicalKey = typeRatingPracticalKeyFromSeries(series)
+                const theoryDoc = getDocumentForType(theoryKey)
+                const practicalDoc = getDocumentForType(practicalKey)
+                const seriesExtras = selectedExtras[series] || []
 
                 return (
-                  <div key={aircraft} className="card p-5">
+                  <div key={series} className="card p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-white flex items-center gap-2">
-                        <span className="chip-blue">{aircraft}</span>
+                      <h3 className="font-semibold text-white flex items-center gap-2 flex-wrap">
+                        <span className="chip-blue max-w-full break-words">
+                          {language === 'es' ? 'Serie' : 'Series'}: {series}
+                        </span>
                         {theoryDoc?.status === 'checked' && practicalDoc?.status === 'checked' && (
                           <span className="chip-verified text-xs">
                             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +470,7 @@ export default function DocumentsPage() {
                           {theoryDoc && getStatusBadge(theoryDoc.status)}
                         </div>
                         <p className="text-xs text-steel-500 mb-3">
-                          {language === 'es' ? 'Certificado teórico del tipo' : 'Type theoretical certificate'}
+                          {language === 'es' ? 'Certificado teórico del tipo (serie EASA)' : 'Type theoretical certificate (EASA series)'}
                         </p>
                         <label className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
                           theoryDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
@@ -467,13 +479,13 @@ export default function DocumentsPage() {
                             type="file"
                             className="hidden"
                             accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={uploading === `type_${aircraft.toLowerCase()}_theory`}
+                            disabled={uploading === theoryKey}
                             onChange={(e) => {
                               const file = e.target.files?.[0]
-                              if (file) handleUpload(`type_${aircraft.toLowerCase()}_theory`, file)
+                              if (file) handleUpload(theoryKey, file)
                             }}
                           />
-                          {uploading === `type_${aircraft.toLowerCase()}_theory` 
+                          {uploading === theoryKey
                             ? t.common.processing 
                             : theoryDoc 
                               ? t.documents.update
@@ -492,7 +504,7 @@ export default function DocumentsPage() {
                           {practicalDoc && getStatusBadge(practicalDoc.status)}
                         </div>
                         <p className="text-xs text-steel-500 mb-3">
-                          {language === 'es' ? 'Certificado práctico del tipo' : 'Type practical certificate'}
+                          {language === 'es' ? 'Certificado práctico del tipo (serie EASA)' : 'Type practical certificate (EASA series)'}
                         </p>
                         <label className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
                           practicalDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
@@ -501,13 +513,13 @@ export default function DocumentsPage() {
                             type="file"
                             className="hidden"
                             accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={uploading === `type_${aircraft.toLowerCase()}_practical`}
+                            disabled={uploading === practicalKey}
                             onChange={(e) => {
                               const file = e.target.files?.[0]
-                              if (file) handleUpload(`type_${aircraft.toLowerCase()}_practical`, file)
+                              if (file) handleUpload(practicalKey, file)
                             }}
                           />
-                          {uploading === `type_${aircraft.toLowerCase()}_practical` 
+                          {uploading === practicalKey
                             ? t.common.processing 
                             : practicalDoc 
                               ? t.documents.update
@@ -526,20 +538,22 @@ export default function DocumentsPage() {
                         {TYPE_RATING_EXTRAS.map((extra) => (
                           <button
                             key={extra.key}
-                            onClick={() => toggleExtra(aircraft, extra.key)}
-                            className={aircraftExtras.includes(extra.key) ? 'chip-selected' : 'chip-selectable'}
+                            type="button"
+                            onClick={() => toggleExtra(series, extra.key)}
+                            className={seriesExtras.includes(extra.key) ? 'chip-selected' : 'chip-selectable'}
                           >
                             {extra.label}
                           </button>
                         ))}
                       </div>
 
-                      {/* Show upload slots for selected extras */}
-                      {aircraftExtras.length > 0 && (
+                      {seriesExtras.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {aircraftExtras.map((extraKey) => {
+                          {seriesExtras.map((extraKey) => {
                             const extra = TYPE_RATING_EXTRAS.find(e => e.key === extraKey)
-                            const extraDoc = getDocumentForType(`type_${aircraft.toLowerCase()}_${extraKey}`)
+                            const extraDocType = typeRatingExtraKeyFromSeries(series, extraKey)
+                            const extraDoc = getDocumentForType(extraDocType)
+                            const customKey = `${series}|||${extraKey}`
 
                             return (
                               <div key={extraKey} className="p-3 bg-navy-800/30 rounded-lg border border-steel-700/30">
@@ -551,10 +565,10 @@ export default function DocumentsPage() {
                                   <input
                                     type="text"
                                     placeholder={language === 'es' ? 'Especificar...' : 'Specify...'}
-                                    value={customExtraText[`${aircraft}_${extraKey}`] || ''}
+                                    value={customExtraText[customKey] || ''}
                                     onChange={(e) => setCustomExtraText({
                                       ...customExtraText,
-                                      [`${aircraft}_${extraKey}`]: e.target.value
+                                      [customKey]: e.target.value
                                     })}
                                     className="input text-xs py-1.5 mb-2"
                                   />
@@ -566,7 +580,7 @@ export default function DocumentsPage() {
                                     accept=".pdf,.jpg,.jpeg,.png"
                                     onChange={(e) => {
                                       const file = e.target.files?.[0]
-                                      if (file) handleUpload(`type_${aircraft.toLowerCase()}_${extraKey}`, file)
+                                      if (file) handleUpload(extraDocType, file)
                                     }}
                                   />
                                   {extraDoc ? t.documents.update : t.documents.uploadFile}

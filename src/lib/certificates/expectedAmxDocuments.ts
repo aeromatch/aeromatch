@@ -1,19 +1,20 @@
 /**
- * Filas esperadas para el certificado AMX: EASA, logbook, un bloque TR por aircraft_type.
- * Estados: checked | pending | not_uploaded (según filas en `documents`).
+ * Filas esperadas para el certificado AMX: EASA, logbook, un bloque TR por serie EASA (no por variante).
  */
+
+import {
+  getUniqueSeries,
+  sortSeriesForDisplay,
+  seriesToDocSlug,
+} from '@/lib/aircraft-series'
 
 export type AmxDocTier = 'checked' | 'pending' | 'not_uploaded'
 
 export type AmxCertificateDocumentRow = {
-  /** Clave estable para ordenar */
   sortKey: string
-  /** Icono en PDF: checkmark, hourglass, warning */
   icon: 'check' | 'hourglass' | 'warning'
-  /** Texto primera columna (símbolo + etiqueta) */
   label: string
   tier: AmxDocTier
-  /** Columna derecha: fecha DD Mon YYYY, "Awaiting review", o "--" (ASCII para PDF/WinAnsi) */
   detail: string
 }
 
@@ -41,14 +42,14 @@ function detailForTier(tier: AmxDocTier, verifiedAt: string | null | undefined):
   return '--'
 }
 
-/** TR: requiere theory + practical para considerar checked */
-function typeRatingTiers(
-  aircraft: string,
+/** TR por serie: theory + practical bajo type_${slug}_* */
+function typeRatingTiersForSeries(
+  series: string,
   docsByType: Map<string, DocRow>
 ): { tier: AmxDocTier; detail: string } {
-  const a = aircraft.toLowerCase()
-  const theory = docsByType.get(`type_${a}_theory`)
-  const practical = docsByType.get(`type_${a}_practical`)
+  const slug = seriesToDocSlug(series)
+  const theory = docsByType.get(`type_${slug}_theory`)
+  const practical = docsByType.get(`type_${slug}_practical`)
   const tTheory = theory ? rowTier(theory) : 'not_uploaded'
   const tPractical = practical ? rowTier(practical) : 'not_uploaded'
 
@@ -76,9 +77,7 @@ export function buildAmxCertificateDocumentRows(
   const out: AmxCertificateDocumentRow[] = []
 
   const lc = technician.license_category?.[0]
-  const easaLabel = lc
-    ? `EASA License ${lc}`
-    : 'EASA Part-66 License'
+  const easaLabel = lc ? `EASA License ${lc}` : 'EASA Part-66 License'
 
   const easaRow = byType.get('easa_license')
   const easaTier = easaRow ? rowTier(easaRow) : 'not_uploaded'
@@ -100,13 +99,13 @@ export function buildAmxCertificateDocumentRows(
     detail: detailForTier(logTier, logRow?.verified_at),
   })
 
-  const aircrafts = technician.aircraft_types || []
-  aircrafts.forEach((ac, i) => {
-    const { tier, detail } = typeRatingTiers(ac, byType)
+  const seriesList = sortSeriesForDisplay(getUniqueSeries(technician.aircraft_types || []))
+  seriesList.forEach((series, i) => {
+    const { tier, detail } = typeRatingTiersForSeries(series, byType)
     out.push({
-      sortKey: `2_tr_${i}_${ac}`,
+      sortKey: `2_tr_${i}_${seriesToDocSlug(series)}`,
       icon: tier === 'checked' ? 'check' : tier === 'pending' ? 'hourglass' : 'warning',
-      label: `Type Rating ${ac}`,
+      label: `Type Rating ${series}`,
       tier,
       detail,
     })

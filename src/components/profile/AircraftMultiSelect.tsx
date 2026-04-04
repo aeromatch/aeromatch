@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
-import { AIRCRAFT_CATALOG, searchAircraft } from '@/lib/aircraftCatalog'
+import { AIRCRAFT_CATALOG, searchAircraft, ALL_AIRCRAFT } from '@/lib/aircraftCatalog'
+import { SERIES_UI_ORDER, getVariantsForSeries } from '@/lib/aircraft-series'
 
 interface AircraftMultiSelectProps {
   selected: string[]
@@ -27,6 +28,31 @@ export function AircraftMultiSelect({
     clearAll: language === 'es' ? 'Limpiar todos' : 'Clear all',
     selected: language === 'es' ? 'Seleccionados' : 'Selected',
     selectTypes: language === 'es' ? 'Selecciona los tipos' : 'Select the types',
+    seriesTitle: language === 'es' ? 'Series EASA (type rating)' : 'EASA series (type rating)',
+    variantsToggle: language === 'es' ? 'Variantes específicas' : 'Specific variants',
+  }
+
+  const [showVariants, setShowVariants] = useState(false)
+
+  const toggleSeries = (series: string) => {
+    if (disabled) return
+    const variants = getVariantsForSeries(series, ALL_AIRCRAFT)
+    if (variants.length === 0) return
+    const allIn = variants.every((v) => selected.includes(v))
+    if (allIn) {
+      onChange(selected.filter((s) => !variants.includes(s)))
+    } else {
+      onChange([...new Set([...selected, ...variants])])
+    }
+  }
+
+  const seriesSelectionState = (series: string): 'none' | 'partial' | 'all' => {
+    const variants = getVariantsForSeries(series, ALL_AIRCRAFT)
+    if (variants.length === 0) return 'none'
+    const n = variants.filter((v) => selected.includes(v)).length
+    if (n === 0) return 'none'
+    if (n === variants.length) return 'all'
+    return 'partial'
   }
 
   // Filter aircraft by search
@@ -100,6 +126,37 @@ export function AircraftMultiSelect({
         )}
       </div>
 
+      {/* Nivel 1 — series EASA */}
+      {!filteredResults && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-steel-400">{labels.seriesTitle}</p>
+          <div className="flex flex-wrap gap-2">
+            {SERIES_UI_ORDER.map((series) => {
+              const variants = getVariantsForSeries(series, ALL_AIRCRAFT)
+              if (variants.length === 0) return null
+              const st = seriesSelectionState(series)
+              return (
+                <button
+                  key={series}
+                  type="button"
+                  onClick={() => toggleSeries(series)}
+                  disabled={disabled}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    st === 'all'
+                      ? 'bg-gold-500/20 border-gold-500/50 text-gold-200'
+                      : st === 'partial'
+                        ? 'bg-navy-800 border-amber-500/40 text-amber-200'
+                        : 'bg-navy-900/80 border-steel-700/50 text-steel-300 hover:border-steel-600'
+                  }`}
+                >
+                  {series}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Search Results */}
       {filteredResults && (
         <div className="border border-steel-700/40 rounded-lg p-4 bg-navy-900/50">
@@ -122,9 +179,27 @@ export function AircraftMultiSelect({
         </div>
       )}
 
-      {/* Category Groups */}
+      {/* Nivel 2 — variantes por fabricante (colapsable) */}
       {!filteredResults && (
-        <div className="space-y-2" style={{ maxHeight, overflowY: 'auto' }}>
+        <div className="border border-steel-700/40 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowVariants(!showVariants)}
+            className="w-full px-4 py-3 flex items-center justify-between bg-navy-900 hover:bg-navy-800 text-left"
+            disabled={disabled}
+          >
+            <span className="text-sm font-medium text-white">{labels.variantsToggle}</span>
+            <svg
+              className={`w-5 h-5 text-steel-400 transition-transform ${showVariants ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {showVariants && (
+            <div className="p-3 pt-0 space-y-2" style={{ maxHeight, overflowY: 'auto' }}>
           {AIRCRAFT_CATALOG.map((group) => {
             const selectedInGroup = getSelectedCountInGroup(group.aircraft)
             const isExpanded = expandedGroup === group.key
@@ -208,6 +283,8 @@ export function AircraftMultiSelect({
               </div>
             )
           })}
+            </div>
+          )}
         </div>
       )}
 

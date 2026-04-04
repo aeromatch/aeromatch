@@ -12,12 +12,12 @@ function getServiceClient() {
 
 function labelForDocType(docType: string): string {
   if (docType.startsWith('type_') && docType.endsWith('_theory')) {
-    const ac = docType.replace(/^type_/, '').replace(/_theory$/, '')
-    return `Type rating theory (${ac})`
+    const slug = docType.replace(/^type_/, '').replace(/_theory$/, '')
+    return `Type rating theory (${slug.replace(/_/g, '/')})`
   }
   if (docType.startsWith('type_') && docType.endsWith('_practical')) {
-    const ac = docType.replace(/^type_/, '').replace(/_practical$/, '')
-    return `Type rating practical (${ac})`
+    const slug = docType.replace(/^type_/, '').replace(/_practical$/, '')
+    return `Type rating practical (${slug.replace(/_/g, '/')})`
   }
   const map: Record<string, string> = {
     easa_license: 'EASA Part-66 License',

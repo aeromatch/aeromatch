@@ -1,5 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import {
+  getUniqueSeries,
+  typeRatingTheoryKeyFromSeries,
+  typeRatingPracticalKeyFromSeries,
+} from '@/lib/aircraft-series'
 
 export async function GET(
   request: Request,
@@ -65,21 +70,29 @@ export async function GET(
     const hasLicense = docTypes.some(dt => ['easa_license', 'uk_license', 'faa_ap'].includes(dt))
     const licenseVerified = verifiedDocs.some(d => ['easa_license', 'uk_license', 'faa_ap'].includes(d.doc_type))
 
-    // Type ratings documents
+    // Type ratings por serie EASA
     const aircraftDocs: { aircraft: string; theory: string; practical: string }[] = []
-    for (const aircraft of technician.aircraft_types || []) {
-      const theoryKey = `type_${aircraft.toLowerCase()}_theory`
-      const practicalKey = `type_${aircraft.toLowerCase()}_practical`
-      
-      const theoryDoc = documents?.find(d => d.doc_type === theoryKey)
-      const practicalDoc = documents?.find(d => d.doc_type === practicalKey)
-      
+    for (const series of getUniqueSeries(technician.aircraft_types || [])) {
+      const theoryKey = typeRatingTheoryKeyFromSeries(series)
+      const practicalKey = typeRatingPracticalKeyFromSeries(series)
+
+      const theoryDoc = documents?.find((d) => d.doc_type === theoryKey)
+      const practicalDoc = documents?.find((d) => d.doc_type === practicalKey)
+
       aircraftDocs.push({
-        aircraft,
-        theory: theoryDoc?.status === 'checked' ? 'verified' : 
-                theoryDoc?.status ? 'pending' : 'missing',
-        practical: practicalDoc?.status === 'checked' ? 'verified' :
-                   practicalDoc?.status ? 'pending' : 'missing'
+        aircraft: series,
+        theory:
+          theoryDoc?.status === 'checked'
+            ? 'verified'
+            : theoryDoc?.status
+              ? 'pending'
+              : 'missing',
+        practical:
+          practicalDoc?.status === 'checked'
+            ? 'verified'
+            : practicalDoc?.status
+              ? 'pending'
+              : 'missing',
       })
     }
 

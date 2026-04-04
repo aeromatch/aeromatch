@@ -7,6 +7,11 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { createClient } from '@/lib/supabase/client'
 import { SubscriptionSection } from '@/components/billing/SubscriptionSection'
 import { VERIFICATION_BADGES } from '@/lib/config/features'
+import {
+  getUniqueSeries,
+  typeRatingTheoryKeyFromSeries,
+  typeRatingPracticalKeyFromSeries,
+} from '@/lib/aircraft-series'
 
 interface DashboardViewProps {
   profile: any
@@ -34,20 +39,20 @@ function getProfileCompletion(technician: any, availabilitySlots: any[], documen
   const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
   const hasBasicLicense = basicLicenseTypes.some(type => documentTypes.includes(type))
   
-  // Aircraft docs check - for each aircraft, need theory + practical
+  // Type ratings por serie EASA: theory + practical por serie
   const aircraftTypes = technician?.aircraft_types || []
   let aircraftDocsComplete = true
-  
-  for (const aircraft of aircraftTypes) {
-    const aircraftLower = aircraft.toLowerCase()
-    const hasTheory = documentTypes.includes(`type_${aircraftLower}_theory`)
-    const hasPractical = documentTypes.includes(`type_${aircraftLower}_practical`)
+  const seriesList = getUniqueSeries(aircraftTypes)
+
+  for (const series of seriesList) {
+    const hasTheory = documentTypes.includes(typeRatingTheoryKeyFromSeries(series))
+    const hasPractical = documentTypes.includes(typeRatingPracticalKeyFromSeries(series))
     if (!hasTheory || !hasPractical) {
       aircraftDocsComplete = false
       break
     }
   }
-  
+
   const checks = {
     basicLicense: hasBasicLicense,
     aircraftDocs: aircraftTypes.length === 0 || aircraftDocsComplete,
@@ -256,11 +261,10 @@ export function DashboardView({ profile, technician, company, availabilitySlots,
       // Check aircraft docs
       const aircraftTypes = technician?.aircraft_types || []
       let hasAllAircraftDocs = true
-      
-      for (const aircraft of aircraftTypes) {
-        const aircraftLower = aircraft.toLowerCase()
-        const hasTheory = documentTypes.includes(`type_${aircraftLower}_theory`)
-        const hasPractical = documentTypes.includes(`type_${aircraftLower}_practical`)
+
+      for (const series of getUniqueSeries(aircraftTypes)) {
+        const hasTheory = documentTypes.includes(typeRatingTheoryKeyFromSeries(series))
+        const hasPractical = documentTypes.includes(typeRatingPracticalKeyFromSeries(series))
         if (!hasTheory || !hasPractical) {
           hasAllAircraftDocs = false
           break
