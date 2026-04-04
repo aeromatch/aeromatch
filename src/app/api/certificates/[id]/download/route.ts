@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { buildDocumentIntegrityPayload } from '@/lib/certificates/finalizeAmxVerification'
+import {
+  buildDocumentIntegrityPayload,
+  fetchDocumentsRowsForAmxPdf,
+} from '@/lib/certificates/finalizeAmxVerification'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
@@ -65,17 +68,12 @@ export async function GET(
       .eq('id', certificate.technician_id)
       .single()
 
-    const { data: documents } = await serviceClient
-      .from('documents')
-      .select('doc_type, status, expires_on, file_hash, verified_at')
-      .eq('technician_id', certificate.technician_id)
-
     if (!technician) {
       return NextResponse.json({ error: 'Technician not found' }, { status: 404 })
     }
 
     const certStatus = certificate.status as 'pending' | 'checked' | 'rejected'
-    const docRows = documents || []
+    const docRows = await fetchDocumentsRowsForAmxPdf(serviceClient, certificate.technician_id)
     const documentIntegrity = buildDocumentIntegrityPayload(docRows, certStatus)
 
     const pdfBytes = await generateCertificatePdf({

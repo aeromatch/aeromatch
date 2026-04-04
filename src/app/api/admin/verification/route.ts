@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 import {
+  fetchDocumentsRowsForAmxPdf,
   hashDocumentFilesBeforeVerification,
   promoteTechnicianDocumentsToVerified,
   regenerateAmxCertificateStoragePdf,
@@ -223,11 +224,7 @@ export async function POST(request: Request) {
             .eq('id', technicianId)
             .single()
 
-          // Get documents
-          const { data: documents } = await serviceClient
-            .from('documents')
-            .select('doc_type, status, expires_on')
-            .eq('technician_id', technicianId)
+          const docRowsForPdf = await fetchDocumentsRowsForAmxPdf(serviceClient, technicianId)
 
           if (technician) {
             // Generate reference ID
@@ -249,7 +246,7 @@ export async function POST(request: Request) {
                 drivingLicense: technician.driving_license || false,
                 isAvailable: technician.is_available || false,
               },
-              documents: (documents || []).map(d => ({
+              documents: docRowsForPdf.map(d => ({
                 docType: d.doc_type,
                 status: d.status,
                 expiresOn: d.expires_on,

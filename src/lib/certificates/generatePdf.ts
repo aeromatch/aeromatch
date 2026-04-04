@@ -63,7 +63,7 @@ const PAGE_WIDTH = 595.28  // A4 width in points
 const PAGE_HEIGHT = 841.89 // A4 height in points
 const MARGIN = 26 * 2.83465 // 26mm in points
 
-// Document type labels
+// Document type labels (alineado con profile/documents: licencias, cert_*, adicionales)
 const DOC_TYPE_LABELS: Record<string, string> = {
   easa_license: 'EASA Part-66 License',
   uk_license: 'UK CAA License',
@@ -73,6 +73,21 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   medical: 'Medical certificate',
   training: 'Training Certificate',
   logbook: 'Technical Logbook',
+  driving_license_doc: 'Driving license',
+  avsaf: 'AVSAF',
+  other_additional: 'Other documents',
+}
+
+/** Subclaves `cert_${key}` en perfil (HF, EWIS, FTS, etc.) */
+const CERT_SUBLABELS: Record<string, string> = {
+  hf: 'Cert HF',
+  ewis: 'Cert EWIS',
+  fts: 'Cert FTS',
+  rvsm: 'Cert RVSM',
+  etops: 'Cert ETOPS',
+  tank_entry: 'Cert Tank Entry',
+  dangerous_goods: 'Cert Dangerous Goods',
+  sms: 'Cert SMS',
 }
 
 function getDocTypeLabel(docType: string): string {
@@ -81,6 +96,13 @@ function getDocTypeLabel(docType: string): string {
   }
   if (docType.startsWith('type_') && docType.endsWith('_practical')) {
     return 'Type ratings certificates'
+  }
+  if (docType.startsWith('cert_')) {
+    const sub = docType.slice(5)
+    if (CERT_SUBLABELS[sub]) {
+      return CERT_SUBLABELS[sub]
+    }
+    return `Cert ${sub.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`
   }
   return DOC_TYPE_LABELS[docType] || docType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
@@ -402,10 +424,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
       docGroups.set(label, { name: label, status: doc.status })
     }
   }
-  if (docGroups.size === 0) {
-    docGroups.set('_none', { name: 'No documents listed in this export', status: 'uploaded' })
-  }
-
   /** Altura aproximada del bloque: título + cabecera tabla + filas */
   const docBlockMinHeight = 38 + 22 + Math.max(docGroups.size, 1) * rowAdvance
 
@@ -591,50 +609,52 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     }
   }
 
-  // Then draw any remaining docs
-  for (const [docName, doc] of docGroups) {
-    if (!drawnDocs.has(docName)) {
-      if (y < contentBottomY + rowAdvance) {
-        y = startDocContinuationPage(true)
-      }
-      drawnDocs.add(docName)
-      const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
-
-      page.drawText(doc.name, {
-        x: MARGIN,
-        y,
-        size: 9.5,
-        font: helvetica,
-        color: COLORS.body,
-      })
-
-      const statusWidth = helveticaBold.widthOfTextAtSize(config.label, 8) + 16
-      page.drawRectangle({
-        x: colStatus - 2,
-        y: y - 3,
-        width: statusWidth,
-        height: 15,
-        color: config.bg,
-        borderColor: COLORS.border,
-        borderWidth: 0.35,
-      })
-      page.drawText(config.label, {
-        x: colStatus + 6,
-        y: y + 3,
-        size: 8,
-        font: helveticaBold,
-        color: config.color,
-      })
-
-      y -= 4
-      page.drawLine({
-        start: { x: MARGIN, y },
-        end: { x: width - MARGIN, y },
-        thickness: 0.3,
-        color: rgb(0.91, 0.925, 0.94),
-      })
-      y -= 14
+  // Then draw any remaining docs (orden estable por etiqueta)
+  const remainingNames = Array.from(docGroups.keys())
+    .filter((n) => !drawnDocs.has(n))
+    .sort((a, b) => a.localeCompare(b, 'en'))
+  for (const docName of remainingNames) {
+    const doc = docGroups.get(docName)!
+    if (y < contentBottomY + rowAdvance) {
+      y = startDocContinuationPage(true)
     }
+    drawnDocs.add(docName)
+    const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
+
+    page.drawText(doc.name, {
+      x: MARGIN,
+      y,
+      size: 9.5,
+      font: helvetica,
+      color: COLORS.body,
+    })
+
+    const statusWidth = helveticaBold.widthOfTextAtSize(config.label, 8) + 16
+    page.drawRectangle({
+      x: colStatus - 2,
+      y: y - 3,
+      width: statusWidth,
+      height: 15,
+      color: config.bg,
+      borderColor: COLORS.border,
+      borderWidth: 0.35,
+    })
+    page.drawText(config.label, {
+      x: colStatus + 6,
+      y: y + 3,
+      size: 8,
+      font: helveticaBold,
+      color: config.color,
+    })
+
+    y -= 4
+    page.drawLine({
+      start: { x: MARGIN, y },
+      end: { x: width - MARGIN, y },
+      thickness: 0.3,
+      color: rgb(0.91, 0.925, 0.94),
+    })
+    y -= 14
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

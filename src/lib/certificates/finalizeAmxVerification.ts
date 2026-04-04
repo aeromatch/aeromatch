@@ -47,6 +47,54 @@ export async function hashDocumentFilesBeforeVerification(
   }
 }
 
+/** Filas para PDF / huella: tolera BD sin columnas nuevas; excluye soft-deletes. */
+export type DocumentRowForAmxPdf = {
+  doc_type: string
+  status: string
+  expires_on: string | null
+  file_hash: string | null
+  verified_at: string | null
+}
+
+export async function fetchDocumentsRowsForAmxPdf(
+  serviceClient: SupabaseClient,
+  technicianId: string
+): Promise<DocumentRowForAmxPdf[]> {
+  const { data, error } = await serviceClient
+    .from('documents')
+    .select('*')
+    .eq('technician_id', technicianId)
+
+  if (error) {
+    console.error('fetchDocumentsRowsForAmxPdf: select * failed', error)
+    const { data: fallback, error: err2 } = await serviceClient
+      .from('documents')
+      .select('doc_type, status, expires_on, verified_at')
+      .eq('technician_id', technicianId)
+    if (err2) {
+      console.error('fetchDocumentsRowsForAmxPdf: fallback failed', err2)
+      return []
+    }
+    return (fallback || []).map((d: Record<string, unknown>) => ({
+      doc_type: String(d.doc_type),
+      status: String(d.status),
+      expires_on: (d.expires_on as string | null) ?? null,
+      file_hash: null,
+      verified_at: (d.verified_at as string | null) ?? null,
+    }))
+  }
+
+  return (data || [])
+    .filter((d: { is_deleted?: boolean }) => d.is_deleted !== true)
+    .map((d: Record<string, unknown>) => ({
+      doc_type: String(d.doc_type),
+      status: String(d.status),
+      expires_on: (d.expires_on as string | null) ?? null,
+      file_hash: (d.file_hash as string | null) ?? null,
+      verified_at: (d.verified_at as string | null) ?? null,
+    }))
+}
+
 export function buildDocumentIntegrityPayload(
   documents: { file_hash: string | null; verified_at: string | null }[],
   certificateStatus: 'pending' | 'checked' | 'rejected'
@@ -156,12 +204,7 @@ export async function regenerateAmxCertificateStoragePdf(
     .eq('id', technicianId)
     .single()
 
-  const { data: documents } = await serviceClient
-    .from('documents')
-    .select('doc_type, status, expires_on, file_hash, verified_at')
-    .eq('technician_id', technicianId)
-
-  const docRows = documents || []
+  const docRows = await fetchDocumentsRowsForAmxPdf(serviceClient, technicianId)
   const documentIntegrity = buildDocumentIntegrityPayload(docRows, certificateStatus)
 
   const pdfBytes = await generateCertificatePdf({
