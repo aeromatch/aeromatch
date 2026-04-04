@@ -22,6 +22,8 @@ export interface Technician {
   min_daily_rate_eur: number | null
   visibility_anonymous: boolean
   is_available: boolean
+  experience_amos?: string | null
+  experience_trax?: string | null
   created_at: string
 }
 

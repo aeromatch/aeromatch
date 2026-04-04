@@ -214,7 +214,7 @@ export async function POST(request: Request) {
           // Get technician data
           const { data: technician } = await serviceClient
             .from('technicians')
-            .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license')
+            .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license, experience_amos, experience_trax')
             .eq('user_id', technicianId)
             .single()
 
@@ -257,6 +257,8 @@ export async function POST(request: Request) {
                 rightToWorkUk: technician.right_to_work_uk || false,
                 drivingLicense: technician.driving_license || false,
                 isAvailable: technician.is_available || false,
+                experienceAmos: technician.experience_amos,
+                experienceTrax: technician.experience_trax,
               },
               documents: docRowsForPdf.map(d => ({
                 docType: d.doc_type,

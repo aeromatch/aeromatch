@@ -41,6 +41,8 @@ export default function EditProfilePage() {
   const [yearsExperience, setYearsExperience] = useState<number | ''>()
   const [aogAvailable, setAogAvailable] = useState(false)
   const [aogLocation, setAogLocation] = useState('')
+  const [experienceAmos, setExperienceAmos] = useState('')
+  const [experienceTrax, setExperienceTrax] = useState('')
 
   const buildDefaultPresentationTemplate = (name?: string) =>
     language === 'es'
@@ -116,6 +118,8 @@ export default function EditProfilePage() {
         setYearsExperience(techData.years_experience || '')
         setAogAvailable(techData.aog_available || false)
         setAogLocation(techData.aog_location || '')
+        setExperienceAmos(techData.experience_amos || '')
+        setExperienceTrax(techData.experience_trax || '')
       }
     }
 
@@ -168,6 +172,8 @@ export default function EditProfilePage() {
             years_experience: yearsExperience || null,
             aog_available: aogAvailable,
             aog_location: aogAvailable ? (aogLocation || null) : null,
+            experience_amos: experienceAmos.trim() || null,
+            experience_trax: experienceTrax.trim() || null,
           })
           .eq('user_id', user.id)
 
@@ -231,6 +237,13 @@ export default function EditProfilePage() {
     aogAvailable: language === 'es' ? 'Estoy disponible para situaciones AOG' : 'I am available for AOG situations',
     aogLocation: language === 'es' ? 'Ciudad/Región para AOG' : 'City/Region for AOG',
     aogLocationHint: language === 'es' ? 'Se comparte ubicación aproximada para emergencias AOG' : 'Approximate location shared for AOG emergencies',
+    mroSystems: language === 'es' ? 'Experiencia con sistemas MRO' : 'MRO systems experience',
+    mroSystemsHint:
+      language === 'es'
+        ? 'Opcional. Aparece en tu certificado AMX junto a los indicadores operativos.'
+        : 'Optional. Shown on your AMX certificate next to operational flags.',
+    experienceAmos: language === 'es' ? 'Experiencia con AMOS' : 'Experience with AMOS',
+    experienceTrax: language === 'es' ? 'Experiencia con TRAX' : 'Experience with TRAX',
   }
 
   return (
@@ -478,6 +491,31 @@ export default function EditProfilePage() {
                     />
                     <span className="text-sm text-white">{labels.anonymous}</span>
                   </label>
+                </div>
+              </div>
+
+              <div className="card p-6">
+                <h2 className="text-lg font-semibold text-white mb-2">{labels.mroSystems}</h2>
+                <p className="text-sm text-steel-400 mb-4">{labels.mroSystemsHint}</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="label">{labels.experienceAmos}</label>
+                    <textarea
+                      value={experienceAmos}
+                      onChange={(e) => setExperienceAmos(e.target.value)}
+                      className="input min-h-[100px]"
+                      placeholder={language === 'es' ? 'Años, módulos, operador…' : 'Years, modules, operator…'}
+                    />
+                  </div>
+                  <div>
+                    <label className="label">{labels.experienceTrax}</label>
+                    <textarea
+                      value={experienceTrax}
+                      onChange={(e) => setExperienceTrax(e.target.value)}
+                      className="input min-h-[100px]"
+                      placeholder={language === 'es' ? 'Años, módulos, operador…' : 'Years, modules, operator…'}
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -15,6 +15,9 @@ interface TechnicianData {
   rightToWorkUk?: boolean
   drivingLicense?: boolean
   isAvailable: boolean
+  /** Texto libre; aparece en certificado AMX tras Operational flags */
+  experienceAmos?: string | null
+  experienceTrax?: string | null
 }
 
 interface DocumentData {
@@ -376,6 +379,51 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     return currentY - pillHeight - 10
   }
 
+  const startGenericContinuationPage = (heading: string): number => {
+    page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+    const pw = page.getSize().width
+    const ph = page.getSize().height
+    page.drawRectangle({
+      x: 0, y: 0, width: pw, height: ph,
+      color: COLORS.white,
+    })
+    page.drawRectangle({
+      x: 0, y: 0, width: 3.5, height: ph,
+      color: COLORS.gold500,
+    })
+    drawFooterBackgroundBand(page)
+    page.drawText(heading, {
+      x: MARGIN,
+      y: ph - 34,
+      size: 9,
+      font: helveticaBold,
+      color: COLORS.navy950,
+    })
+    return ph - 54
+  }
+
+  const wrapPdfLines = (raw: string, font: PDFFont, size: number, maxW: number): string[] => {
+    const out: string[] = []
+    for (const para of raw.split('\n')) {
+      const words = para.trim() ? para.trim().split(/\s+/) : []
+      if (words.length === 0) {
+        continue
+      }
+      let line = ''
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word
+        if (font.widthOfTextAtSize(test, size) > maxW && line) {
+          out.push(line)
+          line = word
+        } else {
+          line = test
+        }
+      }
+      if (line) out.push(line)
+    }
+    return out
+  }
+
   // LICENCES
   if (data.technician.licenseCategory && data.technician.licenseCategory.length > 0) {
     y = drawSectionLabel('LICENCES', y)
@@ -429,6 +477,68 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   if (flags.length > 0) {
     y = drawSectionLabel('OPERATIONAL FLAGS', y)
     y = drawPills(flags, y, COLORS.warningBg, rgb(0.69, 0.49, 0.17), COLORS.warning500)
+  }
+
+  const amos = (data.technician.experienceAmos ?? '').trim()
+  const trax = (data.technician.experienceTrax ?? '').trim()
+  const mroMaxW = width - 2 * MARGIN
+  const mroBodySize = 9
+  const mroLineH = 11
+  if (amos || trax) {
+    const linesAmos = amos ? wrapPdfLines(amos, helvetica, mroBodySize, mroMaxW) : []
+    const linesTrax = trax ? wrapPdfLines(trax, helvetica, mroBodySize, mroMaxW) : []
+    const est =
+      8 +
+      13 +
+      (amos ? 12 + linesAmos.length * mroLineH + 6 : 0) +
+      (trax ? 12 + linesTrax.length * mroLineH : 0)
+    if (y - est < contentBottomY + 24) {
+      y = startGenericContinuationPage('MRO systems experience (continued)')
+    } else {
+      y -= 8
+    }
+    y = drawSectionLabel('MRO SYSTEMS EXPERIENCE', y)
+    if (amos) {
+      page.drawText('Experience with AMOS', {
+        x: MARGIN,
+        y,
+        size: 8,
+        font: helveticaBold,
+        color: COLORS.muted,
+      })
+      y -= 12
+      for (const ln of linesAmos) {
+        page.drawText(ln, {
+          x: MARGIN,
+          y,
+          size: mroBodySize,
+          font: helvetica,
+          color: COLORS.body,
+        })
+        y -= mroLineH
+      }
+      y -= 6
+    }
+    if (trax) {
+      page.drawText('Experience with TRAX', {
+        x: MARGIN,
+        y,
+        size: 8,
+        font: helveticaBold,
+        color: COLORS.muted,
+      })
+      y -= 12
+      for (const ln of linesTrax) {
+        page.drawText(ln, {
+          x: MARGIN,
+          y,
+          size: mroBodySize,
+          font: helvetica,
+          color: COLORS.body,
+        })
+        y -= mroLineH
+      }
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

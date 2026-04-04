@@ -69,7 +69,7 @@ export async function GET(
     // Get technician data to regenerate PDF
     const { data: technician } = await serviceClient
       .from('technicians')
-      .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license')
+      .select('user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license, experience_amos, experience_trax')
       .eq('user_id', certificate.technician_id)
       .single()
 
@@ -112,6 +112,8 @@ export async function GET(
         rightToWorkUk: technician.right_to_work_uk || false,
         drivingLicense: technician.driving_license || false,
         isAvailable: technician.is_available || false,
+        experienceAmos: technician.experience_amos,
+        experienceTrax: technician.experience_trax,
       },
       documents: docRows.map(d => ({
         docType: d.doc_type,
