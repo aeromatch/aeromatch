@@ -108,6 +108,7 @@ UPDATE public.documents SET doc_type = 'type_a318_a319_a320_a321_custom' WHERE d
 );
 
 -- Duplicados tras fusionar: mantener la fila con id menor
+-- (sin filtrar por is_deleted: puede no existir en todas las BDs)
 DELETE FROM public.documents d
 WHERE d.id IN (
   SELECT d2.id FROM public.documents d2
@@ -115,6 +116,4 @@ WHERE d.id IN (
     ON d2.technician_id = d3.technician_id
     AND d2.doc_type = d3.doc_type
     AND d2.id > d3.id
-  WHERE COALESCE(d2.is_deleted, false) = false
-    AND COALESCE(d3.is_deleted, false) = false
 );
