@@ -5,10 +5,38 @@ import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: 'aeroMatch',
+      url: 'https://aeromatch.eu',
+      description:
+        'Plataforma europea de contratación para técnicos de mantenimiento aeronáutico con licencia EASA',
+    },
+    {
+      '@type': 'JobBoard',
+      name: 'aeroMatch',
+      url: 'https://aeromatch.eu',
+      sameAs: ['https://www.linkedin.com/company/aeromatch'],
+    },
+  ],
+}
+
 export const metadata: Metadata = {
-  title: 'AeroMatch - Certified Technical Talent, Available When You Need It',
-  description: 'AeroMatch connects verified aircraft maintenance technicians with MROs, airlines, and aviation companies. Availability-first matching for EASA, FAA, and UK CAA licensed professionals.',
-  keywords: 'aviation, aircraft maintenance, EASA, FAA, B1, B2, A&P, MRO, technician, hiring, staffing',
+  metadataBase: new URL('https://aeromatch.eu'),
+  title: {
+    default: 'aeroMatch',
+    template: '%s | aeroMatch',
+  },
+  description:
+    'Plataforma europea para técnicos de mantenimiento aeronáutico EASA B1/B2. Conecta con MROs y operadoras sin intermediarios.',
+  openGraph: {
+    siteName: 'aeroMatch',
+    locale: 'es_ES',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
@@ -19,6 +47,10 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <LanguageProvider>
           {children}
         </LanguageProvider>

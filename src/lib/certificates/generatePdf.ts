@@ -9,8 +9,6 @@ interface TechnicianData {
   yearsExperience: number | null
   specialties?: string[]
   languages?: string[]
-  /** short-term | long-term | both */
-  contractPreference?: string | null
   ownTools?: boolean
   rightToWorkUk?: boolean
   drivingLicense?: boolean
@@ -29,7 +27,7 @@ interface CertificateData {
   documents: DocumentData[]
   generatedAt: Date
   certificateStatus?: 'pending' | 'checked' | 'rejected'
-  /** Huella SHA-256 (hex completo) sobre los hashes de documento; en PDF solo se trunca. */
+  /** Huella SHA-256 compuesta (hex); solo se muestra truncada en el pie. */
   documentIntegrity?: {
     fullFingerprintHex: string
     verifiedAt: Date
@@ -43,7 +41,6 @@ const COLORS = {
   navy900: rgb(0.102, 0.149, 0.259),     // #1A2642
   gold500: rgb(0.788, 0.635, 0.302),     // #C9A24D
   gold300: rgb(0.878, 0.773, 0.502),     // #E0C580
-  steel400: rgb(0.580, 0.647, 0.722),    // ~steel-400 (legibilidad pie de integridad)
   steel600: rgb(0.353, 0.431, 0.541),    // #5A6E8A
   steel200: rgb(0.761, 0.808, 0.851),    // #C2CED9
   steel100: rgb(0.878, 0.902, 0.925),    // #E0E6EC
@@ -348,25 +345,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     y = drawPills(flags, y, COLORS.warningBg, rgb(0.69, 0.49, 0.17), COLORS.warning500)
   }
 
-  // CONTRACT PREFERENCE
-  const pref = data.technician.contractPreference
-  if (pref) {
-    const contractLabels: Record<string, string> = {
-      'short-term': 'Short-term',
-      'long-term': 'Long-term',
-      both: 'Both (Short & Long term)',
-    }
-    y = drawSectionLabel('CONTRACT PREFERENCE', y)
-    page.drawText(contractLabels[pref] || pref, {
-      x: MARGIN,
-      y,
-      size: 10,
-      font: helvetica,
-      color: COLORS.body,
-    })
-    y -= 20
-  }
-
   // ═══════════════════════════════════════════════════════════════════════════
   // DOCUMENTS OVERVIEW
   // ═══════════════════════════════════════════════════════════════════════════
@@ -551,58 +529,20 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // INTEGRIDAD DOCUMENTAL (AMX verificado)
+  // FOOTER (hash solo aquí: sin tocar el layout del cuerpo)
   // ═══════════════════════════════════════════════════════════════════════════
-  const footerHeight = 44
-  if (data.documentIntegrity && data.certificateStatus === 'checked') {
-    const full = data.documentIntegrity.fullFingerprintHex
-    const displayHash =
-      full.length > 24 ? `${full.slice(0, 16)}...${full.slice(-8)}` : full
-    const verifiedStr = data.documentIntegrity.verifiedAt.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-    const minY = footerHeight + 46
-    if (y < minY) {
-      y = minY
-    }
-    y -= 6
-    page.drawLine({
-      start: { x: MARGIN, y },
-      end: { x: width - MARGIN, y },
-      thickness: 0.4,
-      color: COLORS.border,
-    })
-    y -= 14
-    page.drawText('Integridad documental verificada · SHA-256', {
-      x: MARGIN,
-      y,
-      size: 8,
-      font: helvetica,
-      color: COLORS.steel600,
-    })
-    y -= 11
-    page.drawText(displayHash, {
-      x: MARGIN,
-      y,
-      size: 9,
-      font: helveticaBold,
-      color: COLORS.navy900,
-    })
-    y -= 12
-    page.drawText(`Verificado: ${verifiedStr}`, {
-      x: MARGIN,
-      y,
-      size: 8,
-      font: helvetica,
-      color: COLORS.steel600,
-    })
-  }
+  const showIntegrity =
+    data.documentIntegrity &&
+    data.certificateStatus === 'checked' &&
+    data.documentIntegrity.fullFingerprintHex.length > 0
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // FOOTER
-  // ═══════════════════════════════════════════════════════════════════════════
+  const full = showIntegrity ? data.documentIntegrity!.fullFingerprintHex : ''
+  const hashFoot =
+    full.length > 24 ? `${full.slice(0, 16)}...${full.slice(-8)}` : full
+
+  /** Altura pie: más si hay línea de integridad */
+  const footerHeight = showIntegrity ? 54 : 44
+
   page.drawRectangle({
     x: 0, y: 0, width, height: footerHeight,
     color: COLORS.lightBg,
@@ -618,20 +558,34 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   const disclaimer1 = 'Documents reviewed based on information provided by the technician.'
   const disclaimer2 = 'AeroMatch does not replace operator or authority validation.'
   
+  const disclaimY1 = showIntegrity ? 40 : 30
+  const disclaimY2 = showIntegrity ? 30 : 20
+
   page.drawText(disclaimer1, {
     x: (width - helvetica.widthOfTextAtSize(disclaimer1, 6.8)) / 2,
-    y: 30,
+    y: disclaimY1,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,
   })
   page.drawText(disclaimer2, {
     x: (width - helvetica.widthOfTextAtSize(disclaimer2, 6.8)) / 2,
-    y: 20,
+    y: disclaimY2,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,
   })
+
+  if (showIntegrity) {
+    const integrityLine = `Document integrity (SHA-256): ${hashFoot}`
+    page.drawText(integrityLine, {
+      x: (width - helvetica.widthOfTextAtSize(integrityLine, 6.5)) / 2,
+      y: 20,
+      size: 6.5,
+      font: helvetica,
+      color: COLORS.steel600,
+    })
+  }
 
   // Reference info at bottom
   page.drawText(`Reference ID: ${data.referenceId}     Date generated: ${dateStr}`, {

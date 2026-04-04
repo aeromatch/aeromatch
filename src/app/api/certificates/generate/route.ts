@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const { data: technician, error: techError } = await serviceClient
       .from('technicians')
       .select(
-        'user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license, contract_type_preference'
+        'user_id, license_category, aircraft_types, years_experience, is_available, specialties, languages, own_tools, right_to_work_uk, driving_license'
       )
       .eq('user_id', technicianId)
       .single()
@@ -96,7 +96,6 @@ export async function POST(request: Request) {
         yearsExperience: technician.years_experience,
         specialties: technician.specialties || [],
         languages: technician.languages || [],
-        contractPreference: technician.contract_type_preference,
         ownTools: technician.own_tools || false,
         rightToWorkUk: technician.right_to_work_uk || false,
         drivingLicense: technician.driving_license || false,
