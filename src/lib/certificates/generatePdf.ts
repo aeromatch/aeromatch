@@ -108,15 +108,40 @@ async function loadImage(pdfDoc: PDFDocument, imagePath: string): Promise<any> {
 
 export async function generateCertificatePdf(data: CertificateData): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create()
-  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+  let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
   
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   
   const { width, height } = page.getSize()
+
+  /** Pie con QR solo si certificado verificado (tiene UUID); huella opcional si aún no hay hashes en BD. */
+  const hasIntegrityFingerprint = !!(
+    data.certificateStatus === 'checked' &&
+    data.documentIntegrity?.fullFingerprintHex &&
+    data.documentIntegrity.fullFingerprintHex.length > 0
+  )
+  const showFooterVerification = data.certificateStatus === 'checked' && !!data.certificateId
+  const footerHeight = showFooterVerification ? 118 : 44
+  /** Límite inferior del cuerpo: el pie reserva zona del QR; no dibujar texto encima después. */
+  const contentBottomY = footerHeight + 22
   
   // Load images
   const logoImage = await loadImage(pdfDoc, 'logo-certificate.png')
+
+  const drawFooterBackgroundBand = (p: typeof page) => {
+    const pw = p.getSize().width
+    p.drawRectangle({
+      x: 0, y: 0, width: pw, height: footerHeight,
+      color: COLORS.lightBg,
+    })
+    p.drawLine({
+      start: { x: 0, y: footerHeight },
+      end: { x: pw, y: footerHeight },
+      thickness: 0.5,
+      color: COLORS.border,
+    })
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BACKGROUND
@@ -131,6 +156,9 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     x: 0, y: 0, width: 3.5, height,
     color: COLORS.gold500,
   })
+
+  // Fondo del pie ANTES del contenido: si va después, el rectángulo opaco tapa nombre/secciones/documentos.
+  drawFooterBackgroundBand(page)
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NAVY HEADER
@@ -351,7 +379,39 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   // ═══════════════════════════════════════════════════════════════════════════
   // DOCUMENTS OVERVIEW
   // ═══════════════════════════════════════════════════════════════════════════
+  const colStatus = width - MARGIN - 85
+  const rowAdvance = 18
+  let lastPage = page
+
+  const startDocContinuationPage = (): number => {
+    page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+    lastPage = page
+    const pw = page.getSize().width
+    const ph = page.getSize().height
+    page.drawRectangle({
+      x: 0, y: 0, width: pw, height: ph,
+      color: COLORS.white,
+    })
+    page.drawRectangle({
+      x: 0, y: 0, width: 3.5, height: ph,
+      color: COLORS.gold500,
+    })
+    drawFooterBackgroundBand(page)
+    page.drawText('Documents overview (continued)', {
+      x: MARGIN,
+      y: ph - 36,
+      size: 9,
+      font: helveticaBold,
+      color: COLORS.navy950,
+    })
+    return ph - 56
+  }
+
   y -= 10
+  if (y < contentBottomY + 95) {
+    y = startDocContinuationPage()
+  }
+
   page.drawLine({
     start: { x: MARGIN, y },
     end: { x: width - MARGIN, y },
@@ -370,7 +430,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   y -= 18
 
   // Table header
-  const colStatus = width - MARGIN - 85
   page.drawText('Document', {
     x: MARGIN,
     y,
@@ -452,6 +511,9 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   for (const docName of docOrder) {
     const doc = docGroups.get(docName)
     if (doc && !drawnDocs.has(docName)) {
+      if (y < contentBottomY + rowAdvance) {
+        y = startDocContinuationPage()
+      }
       drawnDocs.add(docName)
       const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
 
@@ -493,6 +555,9 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   // Then draw any remaining docs
   for (const [docName, doc] of docGroups) {
     if (!drawnDocs.has(docName)) {
+      if (y < contentBottomY + rowAdvance) {
+        y = startDocContinuationPage()
+      }
       drawnDocs.add(docName)
       const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
 
@@ -532,76 +597,77 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // FOOTER (integridad + QR solo si certificado checked y hay huella)
+  // FOOTER (QR + integridad encima del fondo del pie ya dibujado; última página)
   // ═══════════════════════════════════════════════════════════════════════════
-  const showIntegrity =
-    data.certificateStatus === 'checked' &&
-    !!data.certificateId &&
-    !!data.documentIntegrity &&
-    data.documentIntegrity.fullFingerprintHex.length > 0
+  const footW = lastPage.getSize().width
 
-  const footerHeight = showIntegrity ? 118 : 44
-
-  page.drawRectangle({
-    x: 0, y: 0, width, height: footerHeight,
-    color: COLORS.lightBg,
-  })
-  page.drawLine({
-    start: { x: 0, y: footerHeight },
-    end: { x: width, y: footerHeight },
-    thickness: 0.5,
-    color: COLORS.border,
-  })
-
-  if (showIntegrity && data.certificateId && data.documentIntegrity) {
+  if (showFooterVerification && data.certificateId) {
     const verifyUrl = `https://aeromatch.eu/certificates/${data.certificateId}/verify`
     const qrBuffer = await QRCode.toBuffer(verifyUrl, { type: 'png', width: 200, margin: 1 })
     const qrImage = await pdfDoc.embedPng(qrBuffer)
     const qrSize = 52
     const qrY = 52
-    page.drawImage(qrImage, {
+    lastPage.drawImage(qrImage, {
       x: MARGIN,
       y: qrY,
       width: qrSize,
       height: qrSize,
     })
 
-    const full = data.documentIntegrity.fullFingerprintHex
-    const hashDisplay =
-      full.length > 24 ? `${full.slice(0, 16)}...${full.slice(-8)}` : full
-    const dateVerified = data.documentIntegrity.verifiedAt.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-
     const textX = MARGIN + qrSize + 10
     let lineY = 100
-    page.drawText('INTEGRIDAD DOCUMENTAL', {
-      x: textX,
-      y: lineY,
-      size: 7.5,
-      font: helveticaBold,
-      color: COLORS.navy950,
-    })
-    lineY -= 11
-    page.drawText(hashDisplay, {
-      x: textX,
-      y: lineY,
-      size: 7,
-      font: helvetica,
-      color: COLORS.body,
-    })
-    lineY -= 10
-    page.drawText(`Verified: ${dateVerified}`, {
-      x: textX,
-      y: lineY,
-      size: 7,
-      font: helvetica,
-      color: COLORS.steel600,
-    })
-    lineY -= 10
-    page.drawText('aeromatch.eu/verify', {
+    if (hasIntegrityFingerprint && data.documentIntegrity) {
+      const full = data.documentIntegrity.fullFingerprintHex
+      const hashDisplay =
+        full.length > 24 ? `${full.slice(0, 16)}...${full.slice(-8)}` : full
+      const dateVerified = data.documentIntegrity.verifiedAt.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+      lastPage.drawText('INTEGRIDAD DOCUMENTAL', {
+        x: textX,
+        y: lineY,
+        size: 7.5,
+        font: helveticaBold,
+        color: COLORS.navy950,
+      })
+      lineY -= 11
+      lastPage.drawText(hashDisplay, {
+        x: textX,
+        y: lineY,
+        size: 7,
+        font: helvetica,
+        color: COLORS.body,
+      })
+      lineY -= 10
+      lastPage.drawText(`Verified: ${dateVerified}`, {
+        x: textX,
+        y: lineY,
+        size: 7,
+        font: helvetica,
+        color: COLORS.steel600,
+      })
+      lineY -= 10
+    } else {
+      lastPage.drawText('Verificación en línea', {
+        x: textX,
+        y: lineY,
+        size: 7.5,
+        font: helveticaBold,
+        color: COLORS.navy950,
+      })
+      lineY -= 11
+      lastPage.drawText('Escanea el código o visita el enlace de verificación.', {
+        x: textX,
+        y: lineY,
+        size: 7,
+        font: helvetica,
+        color: COLORS.body,
+      })
+      lineY -= 10
+    }
+    lastPage.drawText('aeromatch.eu/verify', {
       x: textX,
       y: lineY,
       size: 6.5,
@@ -614,18 +680,18 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   const disclaimer1 = 'Documents reviewed based on information provided by the technician.'
   const disclaimer2 = 'AeroMatch does not replace operator or authority validation.'
 
-  const d1y = showIntegrity ? 34 : 30
-  const d2y = showIntegrity ? 24 : 20
+  const d1y = showFooterVerification ? 34 : 30
+  const d2y = showFooterVerification ? 24 : 20
 
-  page.drawText(disclaimer1, {
-    x: (width - helvetica.widthOfTextAtSize(disclaimer1, 6.8)) / 2,
+  lastPage.drawText(disclaimer1, {
+    x: (footW - helvetica.widthOfTextAtSize(disclaimer1, 6.8)) / 2,
     y: d1y,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,
   })
-  page.drawText(disclaimer2, {
-    x: (width - helvetica.widthOfTextAtSize(disclaimer2, 6.8)) / 2,
+  lastPage.drawText(disclaimer2, {
+    x: (footW - helvetica.widthOfTextAtSize(disclaimer2, 6.8)) / 2,
     y: d2y,
     size: 6.8,
     font: helvetica,
@@ -633,15 +699,15 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   })
 
   // Reference info at bottom
-  page.drawText(`Reference ID: ${data.referenceId}     Date generated: ${dateStr}`, {
+  lastPage.drawText(`Reference ID: ${data.referenceId}     Date generated: ${dateStr}`, {
     x: MARGIN,
     y: 10,
     size: 7,
     font: helvetica,
     color: COLORS.steel600,
   })
-  page.drawText('aeromatch.eu', {
-    x: width - MARGIN - helveticaBold.widthOfTextAtSize('aeromatch.eu', 7),
+  lastPage.drawText('aeromatch.eu', {
+    x: footW - MARGIN - helveticaBold.widthOfTextAtSize('aeromatch.eu', 7),
     y: 10,
     size: 7,
     font: helveticaBold,

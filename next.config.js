@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Hay otro package-lock en el repo padre; fijar raíz evita que Turbopack resuelva mal el proyecto.
+  turbopack: {
+    root: __dirname,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
