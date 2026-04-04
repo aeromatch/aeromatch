@@ -58,8 +58,8 @@ export async function GET(
 
     // Build verification checklist
     const docTypes = documents?.map(d => d.doc_type) || []
-    const verifiedDocs = documents?.filter(d => d.status === 'verified') || []
-    const uploadedDocs = documents?.filter(d => d.status === 'uploaded' || d.status === 'pending_verification') || []
+    const verifiedDocs = documents?.filter(d => d.status === 'checked') || []
+    const uploadedDocs = documents?.filter(d => d.status === 'pending') || []
 
     // License documents
     const hasLicense = docTypes.some(dt => ['easa_license', 'uk_license', 'faa_ap'].includes(dt))
@@ -76,9 +76,9 @@ export async function GET(
       
       aircraftDocs.push({
         aircraft,
-        theory: theoryDoc?.status === 'verified' ? 'verified' : 
+        theory: theoryDoc?.status === 'checked' ? 'verified' : 
                 theoryDoc?.status ? 'pending' : 'missing',
-        practical: practicalDoc?.status === 'verified' ? 'verified' :
+        practical: practicalDoc?.status === 'checked' ? 'verified' :
                    practicalDoc?.status ? 'pending' : 'missing'
       })
     }

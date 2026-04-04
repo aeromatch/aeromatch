@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+import { buildAmxCertificateDocumentRows } from '@/lib/certificates/expectedAmxDocuments'
 import {
   fetchDocumentsRowsForAmxPdf,
   hashDocumentFilesBeforeVerification,
@@ -225,6 +226,17 @@ export async function POST(request: Request) {
             .single()
 
           const docRowsForPdf = await fetchDocumentsRowsForAmxPdf(serviceClient, technicianId)
+          const amxDocumentRows = buildAmxCertificateDocumentRows(
+            {
+              license_category: technician?.license_category,
+              aircraft_types: technician?.aircraft_types,
+            },
+            docRowsForPdf.map((d) => ({
+              doc_type: d.doc_type,
+              status: d.status,
+              verified_at: d.verified_at,
+            }))
+          )
 
           if (technician) {
             // Generate reference ID
@@ -251,6 +263,7 @@ export async function POST(request: Request) {
                 status: d.status,
                 expiresOn: d.expires_on,
               })),
+              amxDocumentRows,
               generatedAt: new Date(),
               certificateStatus: 'pending',
             })

@@ -1,6 +1,7 @@
 import { createHash } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+import { buildAmxCertificateDocumentRows } from '@/lib/certificates/expectedAmxDocuments'
 
 /**
  * Descarga documentos pendientes desde Storage, SHA-256 del fichero → `file_hash`.
@@ -14,7 +15,7 @@ export async function hashDocumentFilesBeforeVerification(
     .from('documents')
     .select('id, storage_path')
     .eq('technician_id', technicianId)
-    .in('status', ['uploaded', 'pending_verification'])
+    .eq('status', 'pending')
     .not('storage_path', 'is', null)
 
   if (error) {
@@ -96,7 +97,7 @@ export async function fetchDocumentsRowsForAmxPdf(
 }
 
 export function buildDocumentIntegrityPayload(
-  documents: { file_hash: string | null; verified_at: string | null }[],
+  documents: { file_hash: string | null; verified_at: string | null; status: string }[],
   certificateStatus: 'pending' | 'checked' | 'rejected'
 ):
   | {
@@ -108,6 +109,7 @@ export function buildDocumentIntegrityPayload(
     return undefined
   }
   const hashes = documents
+    .filter((d) => d.status === 'checked')
     .map((d) => d.file_hash)
     .filter((h): h is string => typeof h === 'string' && h.length > 0)
     .sort()
@@ -124,8 +126,7 @@ export function buildDocumentIntegrityPayload(
 }
 
 /**
- * Marca como verificados en BD los documentos que el técnico subió y aún no estaban revisados.
- * El PDF usa status === 'verified' para pintar la pill "Checked".
+ * Marca como checked solo las filas que estaban en pending (no toca ausencias lógicas not_uploaded).
  */
 export async function promoteTechnicianDocumentsToVerified(
   serviceClient: SupabaseClient,
@@ -135,12 +136,12 @@ export async function promoteTechnicianDocumentsToVerified(
   const { error } = await serviceClient
     .from('documents')
     .update({
-      status: 'verified',
+      status: 'checked',
       verified_at: new Date().toISOString(),
       verified_by: verifiedByUserId,
     })
     .eq('technician_id', technicianId)
-    .in('status', ['uploaded', 'pending_verification'])
+    .eq('status', 'pending')
 
   if (error) {
     return { error: new Error(error.message) }
@@ -206,6 +207,17 @@ export async function regenerateAmxCertificateStoragePdf(
 
   const docRows = await fetchDocumentsRowsForAmxPdf(serviceClient, technicianId)
   const documentIntegrity = buildDocumentIntegrityPayload(docRows, certificateStatus)
+  const amxDocumentRows = buildAmxCertificateDocumentRows(
+    {
+      license_category: technician.license_category,
+      aircraft_types: technician.aircraft_types,
+    },
+    docRows.map((d) => ({
+      doc_type: d.doc_type,
+      status: d.status,
+      verified_at: d.verified_at,
+    }))
+  )
 
   const pdfBytes = await generateCertificatePdf({
     referenceId: cert.reference_id,
@@ -227,6 +239,7 @@ export async function regenerateAmxCertificateStoragePdf(
       status: d.status,
       expiresOn: d.expires_on,
     })),
+    amxDocumentRows,
     generatedAt: new Date(cert.generated_at),
     certificateStatus,
     documentIntegrity,

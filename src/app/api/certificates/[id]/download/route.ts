@@ -6,6 +6,7 @@ import {
   fetchDocumentsRowsForAmxPdf,
 } from '@/lib/certificates/finalizeAmxVerification'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+import { buildAmxCertificateDocumentRows } from '@/lib/certificates/expectedAmxDocuments'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
 
@@ -75,6 +76,17 @@ export async function GET(
     const certStatus = certificate.status as 'pending' | 'checked' | 'rejected'
     const docRows = await fetchDocumentsRowsForAmxPdf(serviceClient, certificate.technician_id)
     const documentIntegrity = buildDocumentIntegrityPayload(docRows, certStatus)
+    const amxDocumentRows = buildAmxCertificateDocumentRows(
+      {
+        license_category: technician.license_category,
+        aircraft_types: technician.aircraft_types,
+      },
+      docRows.map((d) => ({
+        doc_type: d.doc_type,
+        status: d.status,
+        verified_at: d.verified_at,
+      }))
+    )
 
     const pdfBytes = await generateCertificatePdf({
       referenceId: certificate.reference_id,
@@ -96,6 +108,7 @@ export async function GET(
         status: d.status,
         expiresOn: d.expires_on,
       })),
+      amxDocumentRows,
       generatedAt: new Date(certificate.generated_at),
       certificateStatus: certStatus,
       documentIntegrity,

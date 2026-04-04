@@ -19,12 +19,12 @@ const SAMPLE_TECHNICIAN = {
     { start: '2025-04-01', end: '2025-05-31', status: 'confirmed' },
   ],
   documents: [
-    { type: 'EASA License', status: 'verified' },
-    { type: 'A320 Theory', status: 'verified' },
-    { type: 'A320 Practical', status: 'verified' },
-    { type: 'Human Factors', status: 'verified' },
-    { type: 'EWIS', status: 'verified' },
-    { type: 'B737 Theory', status: 'in_review' },
+    { type: 'EASA License', status: 'checked' },
+    { type: 'A320 Theory', status: 'checked' },
+    { type: 'A320 Practical', status: 'checked' },
+    { type: 'Human Factors', status: 'checked' },
+    { type: 'EWIS', status: 'checked' },
+    { type: 'B737 Theory', status: 'pending' },
   ],
   requests: [
     { company: 'MRO Europe', dates: 'Feb 1-15', status: 'pending', location: 'Madrid, Spain' },
@@ -278,14 +278,14 @@ export default function PreviewPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {SAMPLE_TECHNICIAN.documents.map((doc, i) => (
                     <div key={i} className={`p-4 rounded-lg border-2 text-center ${
-                      doc.status === 'verified' 
+                      doc.status === 'checked' 
                         ? 'bg-gold-500/10 border-gold-500/30' 
                         : 'bg-warning-500/10 border-warning-500/30'
                     }`}>
                       <svg className={`w-8 h-8 mx-auto mb-2 ${
-                        doc.status === 'verified' ? 'text-gold-400' : 'text-warning-400'
+                        doc.status === 'checked' ? 'text-gold-400' : 'text-warning-400'
                       }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {doc.status === 'verified' ? (
+                        {doc.status === 'checked' ? (
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         ) : (
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -293,9 +293,9 @@ export default function PreviewPage() {
                       </svg>
                       <p className="text-sm text-white font-medium">{doc.type}</p>
                       <p className={`text-xs mt-1 ${
-                        doc.status === 'verified' ? 'text-gold-400' : 'text-warning-400'
+                        doc.status === 'checked' ? 'text-gold-400' : 'text-warning-400'
                       }`}>
-                        {doc.status === 'verified' ? labels.verified : labels.inReview}
+                        {doc.status === 'checked' ? labels.verified : labels.inReview}
                       </p>
                     </div>
                   ))}

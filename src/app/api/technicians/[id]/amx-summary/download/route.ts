@@ -90,11 +90,11 @@ export async function GET(
 
     const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']
     const hasLicense = documents?.some(d => basicLicenseTypes.includes(d.doc_type))
-    const verifiedLicense = documents?.some(d => basicLicenseTypes.includes(d.doc_type) && d.status === 'verified')
+    const verifiedLicense = documents?.some(d => basicLicenseTypes.includes(d.doc_type) && d.status === 'checked')
 
     const licenseStatus = verifiedLicense ? 'verified' : hasLicense ? 'pending' : 'missing'
-    const documentsVerified = documents?.filter(d => d.status === 'verified').length || 0
-    const documentsPending = documents?.filter(d => d.status === 'uploaded' || d.status === 'pending').length || 0
+    const documentsVerified = documents?.filter(d => d.status === 'checked').length || 0
+    const documentsPending = documents?.filter(d => d.status === 'pending').length || 0
 
     const pdfBytes = await generateCompanySummaryPdf({
       amxId,

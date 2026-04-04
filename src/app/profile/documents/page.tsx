@@ -11,7 +11,7 @@ import { UpgradeBanner } from '@/components/ui/UpgradeBanner'
 interface Document {
   id: string
   doc_type: string
-  status: 'uploaded' | 'pending_verification' | 'verified' | 'rejected' | 'expired'
+  status: 'pending' | 'checked' | 'not_uploaded'
   storage_path: string
   file_name?: string
   expires_on: string | null
@@ -195,7 +195,7 @@ export default function DocumentsPage() {
           .update({
             storage_path: path,
             file_name: file.name,
-            status: 'uploaded'
+            status: 'pending'
           })
           .eq('id', existing.id)
 
@@ -206,7 +206,7 @@ export default function DocumentsPage() {
           .insert({
             technician_id: user.id,
             doc_type: docType,
-            status: 'uploaded',
+            status: 'pending',
             storage_path: path,
             file_name: file.name
           })
@@ -216,6 +216,15 @@ export default function DocumentsPage() {
 
       await loadData()
       setSuccess(language === 'es' ? 'Documento subido correctamente' : 'Document uploaded successfully')
+      try {
+        await fetch('/api/documents/notify-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docType }),
+        })
+      } catch {
+        /* email opcional; no bloquea */
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -225,16 +234,12 @@ export default function DocumentsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'uploaded':
-        return <span className="chip-pending text-xs">{language === 'es' ? 'Subido' : 'Uploaded'}</span>
-      case 'pending_verification':
-        return <span className="chip-warning text-xs">{language === 'es' ? 'En revisión' : 'In Review'}</span>
-      case 'verified':
+      case 'pending':
+        return <span className="chip-warning text-xs">{language === 'es' ? 'Pendiente de verificación' : 'Pending review'}</span>
+      case 'checked':
         return <span className="chip-verified text-xs">{language === 'es' ? 'Verificado' : 'Verified'}</span>
-      case 'rejected':
-        return <span className="chip-error text-xs">{language === 'es' ? 'Rechazado' : 'Rejected'}</span>
-      case 'expired':
-        return <span className="chip-error text-xs">{language === 'es' ? 'Caducado' : 'Expired'}</span>
+      case 'not_uploaded':
+        return <span className="chip-pending text-xs">{language === 'es' ? 'No subido' : 'Not uploaded'}</span>
       default:
         return null
     }
@@ -272,8 +277,8 @@ export default function DocumentsPage() {
   }
 
   // Count verified docs for badge
-  const verifiedCount = documents.filter(d => d.status === 'verified').length
-  const pendingCount = documents.filter(d => d.status === 'uploaded' || d.status === 'pending_verification').length
+  const verifiedCount = documents.filter(d => d.status === 'checked').length
+  const pendingCount = documents.filter(d => d.status === 'pending').length
 
   return (
     <AppLayout userEmail={profile?.email} userRole={profile?.role}>
@@ -357,13 +362,13 @@ export default function DocumentsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        doc?.status === 'verified' 
+                        doc?.status === 'checked' 
                           ? 'bg-gold-500/15 border-2 border-gold-500/50' 
                           : doc 
                             ? 'bg-steel-700/30 border-2 border-steel-600/50' 
                             : 'bg-navy-800 border-2 border-steel-700/50'
                       }`}>
-                        {doc?.status === 'verified' ? (
+                        {doc?.status === 'checked' ? (
                           <svg className="w-6 h-6 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                           </svg>
@@ -430,7 +435,7 @@ export default function DocumentsPage() {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-white flex items-center gap-2">
                         <span className="chip-blue">{aircraft}</span>
-                        {theoryDoc?.status === 'verified' && practicalDoc?.status === 'verified' && (
+                        {theoryDoc?.status === 'checked' && practicalDoc?.status === 'checked' && (
                           <span className="chip-verified text-xs">
                             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -456,7 +461,7 @@ export default function DocumentsPage() {
                           {language === 'es' ? 'Certificado teórico del tipo' : 'Type theoretical certificate'}
                         </p>
                         <label className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
-                          theoryDoc?.status === 'verified' ? 'border-gold-500/30' : 'border-steel-600'
+                          theoryDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
                         } py-2`}>
                           <input
                             type="file"
@@ -490,7 +495,7 @@ export default function DocumentsPage() {
                           {language === 'es' ? 'Certificado práctico del tipo' : 'Type practical certificate'}
                         </p>
                         <label className={`btn-ghost text-xs cursor-pointer w-full justify-center border-2 border-dashed ${
-                          practicalDoc?.status === 'verified' ? 'border-gold-500/30' : 'border-steel-600'
+                          practicalDoc?.status === 'checked' ? 'border-gold-500/30' : 'border-steel-600'
                         } py-2`}>
                           <input
                             type="file"
@@ -597,13 +602,13 @@ export default function DocumentsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        doc?.status === 'verified' 
+                        doc?.status === 'checked' 
                           ? 'bg-gold-500/15 border-2 border-gold-500/50' 
                           : doc 
                             ? 'bg-steel-700/30 border border-steel-600/50' 
                             : 'bg-navy-800 border border-steel-700/50'
                       }`}>
-                        {doc?.status === 'verified' ? (
+                        {doc?.status === 'checked' ? (
                           <svg className="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -661,7 +666,7 @@ export default function DocumentsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${
-                          doc?.status === 'verified'
+                          doc?.status === 'checked'
                             ? 'bg-gold-500/15 border-2 border-gold-500/50'
                             : doc
                               ? 'bg-steel-700/30 border-2 border-steel-600/50'
@@ -745,7 +750,7 @@ export default function DocumentsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${
-                        doc?.status === 'verified' 
+                        doc?.status === 'checked' 
                           ? 'bg-gold-500/15 border-2 border-gold-500/50' 
                           : doc 
                             ? 'bg-steel-700/30 border-2 border-steel-600/50' 

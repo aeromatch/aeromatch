@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,8 +14,10 @@ type Row = {
   createdAt: string
 }
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const highlightId = searchParams.get('id')
   const supabase = useMemo(() => createClient(), [])
 
   const [loading, setLoading] = useState(true)
@@ -58,6 +60,17 @@ export default function AdminUsersPage() {
     }
     run()
   }, [authorized])
+
+  useEffect(() => {
+    if (!highlightId || !rows.length) return
+    const t = window.setTimeout(() => {
+      document.getElementById(`admin-user-${highlightId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }, 150)
+    return () => window.clearTimeout(t)
+  }, [highlightId, rows])
 
   const filtered = rows.filter((r) => {
     const q = query.trim().toLowerCase()
@@ -136,7 +149,11 @@ export default function AdminUsersPage() {
             </thead>
             <tbody className="divide-y divide-steel-700/20">
               {filtered.map((r) => (
-                <tr key={r.id} className="text-steel-200">
+                <tr
+                  key={r.id}
+                  id={`admin-user-${r.id}`}
+                  className={`text-steel-200 ${highlightId === r.id ? 'bg-gold-500/10 ring-1 ring-inset ring-gold-500/35' : ''}`}
+                >
                   <td className="px-4 py-3 text-white font-medium">{r.fullName || '—'}</td>
                   <td className="px-4 py-3 text-steel-300">{r.email || '—'}</td>
                   <td className="px-4 py-3">
@@ -169,6 +186,22 @@ export default function AdminUsersPage() {
         </div>
       </div>
     </AppLayout>
+  )
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppLayout userEmail={undefined} userRole={undefined as any}>
+          <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+            <div className="card p-8 text-center text-steel-400">Loading…</div>
+          </div>
+        </AppLayout>
+      }
+    >
+      <AdminUsersContent />
+    </Suspense>
   )
 }
 

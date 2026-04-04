@@ -2,6 +2,7 @@ import { PDFDocument, PDFImage, PDFPage, PDFFont, rgb, StandardFonts } from 'pdf
 import fs from 'fs'
 import path from 'path'
 import QRCode from 'qrcode'
+import type { AmxCertificateDocumentRow } from '@/lib/certificates/expectedAmxDocuments'
 
 interface TechnicianData {
   fullName: string
@@ -28,6 +29,8 @@ interface CertificateData {
   certificateId?: string
   technician: TechnicianData
   documents: DocumentData[]
+  /** Tabla AMX: EASA, logbook, TR por avión (tres niveles). Si viene, sustituye la vista legacy de `documents`. */
+  amxDocumentRows?: AmxCertificateDocumentRow[]
   generatedAt: Date
   certificateStatus?: 'pending' | 'checked' | 'rejected'
   /** Huella compuesta de `file_hash` de documentos (certificado checked). */
@@ -58,6 +61,13 @@ const COLORS = {
   lightBg: rgb(0.957, 0.965, 0.976),     // #F4F6F9
   border: rgb(0.761, 0.808, 0.851),      // #C2CED9
 }
+
+/** Estados documento en certificado AMX (pdf-lib) */
+const AMX_TIER_RGB = {
+  checked: rgb(0.2, 0.65, 0.4),
+  pending: rgb(0.83, 0.63, 0.15),
+  not_uploaded: rgb(0.8, 0.45, 0.1),
+} as const
 
 const PAGE_WIDTH = 595.28  // A4 width in points
 const PAGE_HEIGHT = 841.89 // A4 height in points
@@ -421,33 +431,22 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   // ═══════════════════════════════════════════════════════════════════════════
   // DOCUMENTS OVERVIEW
   // ═══════════════════════════════════════════════════════════════════════════
-  const colStatus = width - MARGIN - 82
+  const colStatusLegacy = width - MARGIN - 82
   const rowAdvance = 16
+  const rowAdvanceAmx = 18
+  const colStatusXAmx = 248
+  const amxRows = data.amxDocumentRows
 
-  const docOrder = [
-    'EASA Part-66 License',
-    'UK CAA License',
-    'FAA A&P License',
-    'Type ratings certificates',
-    'Medical certificate',
-    'Passport / ID',
-    'Technical Logbook',
-    'CV / Resume',
-  ]
+  const tierSymbol = (row: AmxCertificateDocumentRow) =>
+    row.icon === 'check' ? '✓' : row.icon === 'hourglass' ? '⏳' : '⚠'
 
-  const docGroups = new Map<string, { name: string; status: string }>()
-  for (const doc of data.documents) {
-    const label = getDocTypeLabel(doc.docType)
-    const existing = docGroups.get(label)
-    if (!existing || (existing.status === 'verified' && doc.status !== 'verified')) {
-      docGroups.set(label, { name: label, status: doc.status })
-    }
-  }
-  /** Altura aproximada del bloque: título + cabecera tabla + filas */
-  const docBlockMinHeight = 32 + 18 + Math.max(docGroups.size, 1) * rowAdvance
+  const tierStatusLabel = (tier: AmxCertificateDocumentRow['tier']) =>
+    tier === 'checked' ? 'CHECKED' : tier === 'pending' ? 'PENDING' : 'NOT UPLOADED'
 
-  const drawDocTableHeaders = (p: typeof page, yHeader: number): number => {
+  const drawAmxTableHeaders = (p: typeof page, yHeader: number, pw: number): number => {
     let yy = yHeader
+    const detailLabel = 'Detail'
+    const detailW = helveticaBold.widthOfTextAtSize(detailLabel, 7.5)
     p.drawText('Document', {
       x: MARGIN,
       y: yy,
@@ -456,7 +455,14 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
       color: COLORS.muted,
     })
     p.drawText('Status', {
-      x: colStatus,
+      x: colStatusXAmx,
+      y: yy,
+      size: 7.5,
+      font: helveticaBold,
+      color: COLORS.muted,
+    })
+    p.drawText(detailLabel, {
+      x: pw - MARGIN - detailW,
       y: yy,
       size: 7.5,
       font: helveticaBold,
@@ -465,14 +471,14 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     yy -= 7
     p.drawLine({
       start: { x: MARGIN, y: yy },
-      end: { x: width - MARGIN, y: yy },
+      end: { x: pw - MARGIN, y: yy },
       thickness: 0.5,
       color: COLORS.border,
     })
     return yy - 12
   }
 
-  const startDocContinuationPage = (withTableHeaders: boolean): number => {
+  const startAmxContinuationPage = (withTableHeaders: boolean): number => {
     page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
     const pw = page.getSize().width
     const ph = page.getSize().height
@@ -494,101 +500,284 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     })
     let yy = ph - 54
     if (withTableHeaders) {
-      yy = drawDocTableHeaders(page, yy)
+      yy = drawAmxTableHeaders(page, yy, pw)
     }
     return yy
   }
 
-  y -= 8
-  if (y < contentBottomY + docBlockMinHeight) {
-    y = startDocContinuationPage(false)
-  }
+  if (amxRows && amxRows.length > 0) {
+    const docBlockMinHeight = 32 + 22 + Math.max(amxRows.length, 1) * rowAdvanceAmx
 
-  page.drawLine({
-    start: { x: MARGIN, y },
-    end: { x: width - MARGIN, y },
-    thickness: 0.5,
-    color: COLORS.border,
-  })
-  y -= 14
-
-  page.drawText('Documents overview', {
-    x: MARGIN,
-    y,
-    size: 11,
-    font: helveticaBold,
-    color: COLORS.navy950,
-  })
-  y -= 16
-
-  // Table header
-  page.drawText('Document', {
-    x: MARGIN,
-    y,
-    size: 7.5,
-    font: helveticaBold,
-    color: COLORS.muted,
-  })
-  page.drawText('Status', {
-    x: colStatus,
-    y,
-    size: 7.5,
-    font: helveticaBold,
-    color: COLORS.muted,
-  })
-  y -= 7
-
-  page.drawLine({
-    start: { x: MARGIN, y },
-    end: { x: width - MARGIN, y },
-    thickness: 0.5,
-    color: COLORS.border,
-  })
-  y -= 12
-
-  // Draw documents in preferred order
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return { label: 'Checked', color: COLORS.success500, bg: COLORS.successBg }
-      case 'uploaded':
-        return { label: 'Uploaded', color: COLORS.warning500, bg: COLORS.warningBg }
-      case 'pending_verification':
-        return { label: 'Pending review', color: COLORS.warning500, bg: COLORS.warningBg }
-      case 'pending':
-        return { label: 'Pending', color: COLORS.warning500, bg: COLORS.warningBg }
-      case 'expired':
-        return { label: 'Expired', color: COLORS.error500, bg: COLORS.errorBg }
-      case 'rejected':
-        return { label: 'Rejected', color: COLORS.error500, bg: COLORS.errorBg }
-      default:
-        return { label: 'Missing', color: COLORS.error500, bg: COLORS.errorBg }
+    y -= 8
+    if (y < contentBottomY + docBlockMinHeight) {
+      y = startAmxContinuationPage(false)
     }
-  }
 
-  // Con certificado AMX verificado (checked), el PDF debe mostrar "Checked" en cada ítem
-  // (no depender de que cada fila en `documents` esté en verified).
-  const certificateAmxVerified = data.certificateStatus === 'checked'
-  const effectiveDocStatusForPdf = (raw: string | undefined): string => {
-    const s = raw ?? ''
-    if (certificateAmxVerified) {
-      if (s === 'rejected' || s === 'expired') return s
-      return 'verified'
+    page.drawLine({
+      start: { x: MARGIN, y },
+      end: { x: width - MARGIN, y },
+      thickness: 0.5,
+      color: COLORS.border,
+    })
+    y -= 14
+
+    page.drawText('Documents overview', {
+      x: MARGIN,
+      y,
+      size: 11,
+      font: helveticaBold,
+      color: COLORS.navy950,
+    })
+    y -= 16
+
+    y = drawAmxTableHeaders(page, y, width)
+
+    for (const row of amxRows) {
+      if (y < contentBottomY + rowAdvanceAmx) {
+        y = startAmxContinuationPage(true)
+      }
+      const tierColor = AMX_TIER_RGB[row.tier]
+      const sym = tierSymbol(row)
+      const stLabel = tierStatusLabel(row.tier)
+      page.drawText(sym, {
+        x: MARGIN,
+        y,
+        size: 9,
+        font: helvetica,
+        color: tierColor,
+      })
+      page.drawText(row.label, {
+        x: MARGIN + 12,
+        y,
+        size: 9,
+        font: helvetica,
+        color: COLORS.body,
+      })
+      page.drawText(stLabel, {
+        x: colStatusXAmx,
+        y,
+        size: 8,
+        font: helveticaBold,
+        color: tierColor,
+      })
+      const detailW = helvetica.widthOfTextAtSize(row.detail, 8)
+      page.drawText(row.detail, {
+        x: width - MARGIN - detailW,
+        y,
+        size: 8,
+        font: helvetica,
+        color: COLORS.steel600,
+      })
+      y -= 4
+      page.drawLine({
+        start: { x: MARGIN, y },
+        end: { x: width - MARGIN, y },
+        thickness: 0.3,
+        color: rgb(0.91, 0.925, 0.94),
+      })
+      y -= rowAdvanceAmx - 4
     }
-    return s
-  }
+  } else {
+    const docOrder = [
+      'EASA Part-66 License',
+      'UK CAA License',
+      'FAA A&P License',
+      'Type ratings certificates',
+      'Medical certificate',
+      'Passport / ID',
+      'Technical Logbook',
+      'CV / Resume',
+    ]
 
-  const drawnDocs = new Set<string>()
-  
-  // First draw in preferred order
-  for (const docName of docOrder) {
-    const doc = docGroups.get(docName)
-    if (doc && !drawnDocs.has(docName)) {
+    const docGroups = new Map<string, { name: string; status: string }>()
+    for (const doc of data.documents) {
+      const label = getDocTypeLabel(doc.docType)
+      const existing = docGroups.get(label)
+      if (!existing || (existing.status === 'checked' && doc.status !== 'checked')) {
+        docGroups.set(label, { name: label, status: doc.status })
+      }
+    }
+    const docBlockMinHeight = 32 + 18 + Math.max(docGroups.size, 1) * rowAdvance
+
+    const drawDocTableHeaders = (p: typeof page, yHeader: number): number => {
+      let yy = yHeader
+      p.drawText('Document', {
+        x: MARGIN,
+        y: yy,
+        size: 7.5,
+        font: helveticaBold,
+        color: COLORS.muted,
+      })
+      p.drawText('Status', {
+        x: colStatusLegacy,
+        y: yy,
+        size: 7.5,
+        font: helveticaBold,
+        color: COLORS.muted,
+      })
+      yy -= 7
+      p.drawLine({
+        start: { x: MARGIN, y: yy },
+        end: { x: width - MARGIN, y: yy },
+        thickness: 0.5,
+        color: COLORS.border,
+      })
+      return yy - 12
+    }
+
+    const startDocContinuationPage = (withTableHeaders: boolean): number => {
+      page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+      const pw = page.getSize().width
+      const ph = page.getSize().height
+      page.drawRectangle({
+        x: 0, y: 0, width: pw, height: ph,
+        color: COLORS.white,
+      })
+      page.drawRectangle({
+        x: 0, y: 0, width: 3.5, height: ph,
+        color: COLORS.gold500,
+      })
+      drawFooterBackgroundBand(page)
+      page.drawText('Documents overview (continued)', {
+        x: MARGIN,
+        y: ph - 34,
+        size: 9,
+        font: helveticaBold,
+        color: COLORS.navy950,
+      })
+      let yy = ph - 54
+      if (withTableHeaders) {
+        yy = drawDocTableHeaders(page, yy)
+      }
+      return yy
+    }
+
+    y -= 8
+    if (y < contentBottomY + docBlockMinHeight) {
+      y = startDocContinuationPage(false)
+    }
+
+    page.drawLine({
+      start: { x: MARGIN, y },
+      end: { x: width - MARGIN, y },
+      thickness: 0.5,
+      color: COLORS.border,
+    })
+    y -= 14
+
+    page.drawText('Documents overview', {
+      x: MARGIN,
+      y,
+      size: 11,
+      font: helveticaBold,
+      color: COLORS.navy950,
+    })
+    y -= 16
+
+    page.drawText('Document', {
+      x: MARGIN,
+      y,
+      size: 7.5,
+      font: helveticaBold,
+      color: COLORS.muted,
+    })
+    page.drawText('Status', {
+      x: colStatusLegacy,
+      y,
+      size: 7.5,
+      font: helveticaBold,
+      color: COLORS.muted,
+    })
+    y -= 7
+
+    page.drawLine({
+      start: { x: MARGIN, y },
+      end: { x: width - MARGIN, y },
+      thickness: 0.5,
+      color: COLORS.border,
+    })
+    y -= 12
+
+    const getStatusConfig = (status: string) => {
+      switch (status) {
+        case 'verified':
+        case 'checked':
+          return { label: 'Checked', color: COLORS.success500, bg: COLORS.successBg }
+        case 'uploaded':
+        case 'pending_verification':
+          return { label: 'Uploaded', color: COLORS.warning500, bg: COLORS.warningBg }
+        case 'pending':
+          return { label: 'Pending', color: COLORS.warning500, bg: COLORS.warningBg }
+        case 'expired':
+          return { label: 'Expired', color: COLORS.error500, bg: COLORS.errorBg }
+        case 'rejected':
+          return { label: 'Rejected', color: COLORS.error500, bg: COLORS.errorBg }
+        default:
+          return { label: 'Missing', color: COLORS.error500, bg: COLORS.errorBg }
+      }
+    }
+
+    const drawnDocs = new Set<string>()
+
+    for (const docName of docOrder) {
+      const doc = docGroups.get(docName)
+      if (doc && !drawnDocs.has(docName)) {
+        if (y < contentBottomY + rowAdvance) {
+          y = startDocContinuationPage(true)
+        }
+        drawnDocs.add(docName)
+        const config = getStatusConfig(doc.status)
+
+        page.drawText(doc.name, {
+          x: MARGIN,
+          y,
+          size: 9,
+          font: helvetica,
+          color: COLORS.body,
+        })
+
+        const statusFontSize = 8
+        const statusH = 14
+        const statusRectBottom = y - 3
+        const statusWidth = helveticaBold.widthOfTextAtSize(config.label, statusFontSize) + 14
+        page.drawRectangle({
+          x: colStatusLegacy - 2,
+          y: statusRectBottom,
+          width: statusWidth,
+          height: statusH,
+          color: config.bg,
+          borderColor: COLORS.border,
+          borderWidth: 0.35,
+        })
+        page.drawText(config.label, {
+          x: colStatusLegacy + 6,
+          y: baselineInRect(statusRectBottom, statusH, statusFontSize),
+          size: statusFontSize,
+          font: helveticaBold,
+          color: config.color,
+        })
+
+        y -= 4
+        page.drawLine({
+          start: { x: MARGIN, y },
+          end: { x: width - MARGIN, y },
+          thickness: 0.3,
+          color: rgb(0.91, 0.925, 0.94),
+        })
+        y -= 12
+      }
+    }
+
+    const remainingNames = Array.from(docGroups.keys())
+      .filter((n) => !drawnDocs.has(n))
+      .sort((a, b) => a.localeCompare(b, 'en'))
+    for (const docName of remainingNames) {
+      const doc = docGroups.get(docName)!
       if (y < contentBottomY + rowAdvance) {
         y = startDocContinuationPage(true)
       }
       drawnDocs.add(docName)
-      const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
+      const config = getStatusConfig(doc.status)
 
       page.drawText(doc.name, {
         x: MARGIN,
@@ -603,7 +792,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
       const statusRectBottom = y - 3
       const statusWidth = helveticaBold.widthOfTextAtSize(config.label, statusFontSize) + 14
       page.drawRectangle({
-        x: colStatus - 2,
+        x: colStatusLegacy - 2,
         y: statusRectBottom,
         width: statusWidth,
         height: statusH,
@@ -612,7 +801,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
         borderWidth: 0.35,
       })
       page.drawText(config.label, {
-        x: colStatus + 6,
+        x: colStatusLegacy + 6,
         y: baselineInRect(statusRectBottom, statusH, statusFontSize),
         size: statusFontSize,
         font: helveticaBold,
@@ -628,57 +817,6 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
       })
       y -= 12
     }
-  }
-
-  // Then draw any remaining docs (orden estable por etiqueta)
-  const remainingNames = Array.from(docGroups.keys())
-    .filter((n) => !drawnDocs.has(n))
-    .sort((a, b) => a.localeCompare(b, 'en'))
-  for (const docName of remainingNames) {
-    const doc = docGroups.get(docName)!
-    if (y < contentBottomY + rowAdvance) {
-      y = startDocContinuationPage(true)
-    }
-    drawnDocs.add(docName)
-    const config = getStatusConfig(effectiveDocStatusForPdf(doc.status))
-
-    page.drawText(doc.name, {
-      x: MARGIN,
-      y,
-      size: 9,
-      font: helvetica,
-      color: COLORS.body,
-    })
-
-    const statusFontSize = 8
-    const statusH = 14
-    const statusRectBottom = y - 3
-    const statusWidth = helveticaBold.widthOfTextAtSize(config.label, statusFontSize) + 14
-    page.drawRectangle({
-      x: colStatus - 2,
-      y: statusRectBottom,
-      width: statusWidth,
-      height: statusH,
-      color: config.bg,
-      borderColor: COLORS.border,
-      borderWidth: 0.35,
-    })
-    page.drawText(config.label, {
-      x: colStatus + 6,
-      y: baselineInRect(statusRectBottom, statusH, statusFontSize),
-      size: statusFontSize,
-      font: helveticaBold,
-      color: config.color,
-    })
-
-    y -= 4
-    page.drawLine({
-      start: { x: MARGIN, y },
-      end: { x: width - MARGIN, y },
-      thickness: 0.3,
-      color: rgb(0.91, 0.925, 0.94),
-    })
-    y -= 12
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -825,4 +963,4 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   return await pdfDoc.save()
 }
 
-export type { CertificateData, TechnicianData, DocumentData }
+export type { CertificateData, TechnicianData, DocumentData, AmxCertificateDocumentRow }

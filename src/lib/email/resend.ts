@@ -262,6 +262,38 @@ export async function sendAmxVerificationReadyEmail(data: AmxVerificationReadyEm
   })
 }
 
+const ADMIN_DOC_ALERT = 'raul@aeromatch.eu'
+
+export async function sendDocumentPendingVerificationEmail(opts: {
+  technicianId: string
+  technicianLabel: string
+  documentTypeLabel: string
+  amxReferenceOrId: string
+}): Promise<void> {
+  if (!resend) {
+    console.warn('sendDocumentPendingVerificationEmail: RESEND_API_KEY not set')
+    return
+  }
+  const from = process.env.RESEND_FROM_EMAIL || 'aeroMatch <onboarding@resend.dev>'
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://aeromatch.eu'
+  const adminLink = `${base.replace(/\/$/, '')}/admin/users?id=${encodeURIComponent(opts.technicianId)}`
+  const subject = `⏳ Documento pendiente de verificación — ${opts.amxReferenceOrId}`
+  const html = `
+<!DOCTYPE html>
+<html><body style="font-family:system-ui,sans-serif;background:#0B132B;color:#E6EDF7;padding:24px;">
+  <p>Un técnico ha subido un documento que requiere revisión.</p>
+  <p><strong>Técnico:</strong> ${escapeHtml(opts.technicianLabel)}</p>
+  <p><strong>Documento:</strong> ${escapeHtml(opts.documentTypeLabel)}</p>
+  <p><a href="${adminLink}" style="color:#C9A24D;">Abrir en admin (usuarios)</a></p>
+</body></html>`
+  await resend.emails.send({
+    from,
+    to: ADMIN_DOC_ALERT,
+    subject,
+    html,
+  })
+}
+
 export async function sendJobRequestNotification(data: JobRequestEmailData) {
   const {
     technicianEmail,

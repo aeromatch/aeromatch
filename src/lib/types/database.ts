@@ -56,7 +56,7 @@ export interface Document {
   id: string
   technician_id: string
   doc_type: string
-  status: 'uploaded' | 'verified' | 'rejected' | 'expired'
+  status: 'pending' | 'checked' | 'not_uploaded'
   storage_path: string
   expires_on: string | null
   created_at: string

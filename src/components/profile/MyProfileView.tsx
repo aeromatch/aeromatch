@@ -48,7 +48,7 @@ export function MyProfileView({ profile, technician, documents, availabilitySlot
     return (language === 'es' ? es : en)[k]
   }
 
-  const uploadedDocs = documents.filter(d => d.status === 'uploaded' || d.status === 'verified')
+  const uploadedDocs = documents.filter(d => d.status === 'pending' || d.status === 'checked')
   
   // Check if has at least one basic license (minimum requirement)
   const basicLicenseTypes = ['easa_license', 'uk_license', 'faa_ap']

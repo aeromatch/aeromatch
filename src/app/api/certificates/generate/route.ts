@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 import { fetchDocumentsRowsForAmxPdf } from '@/lib/certificates/finalizeAmxVerification'
+import { buildAmxCertificateDocumentRows } from '@/lib/certificates/expectedAmxDocuments'
 import { Resend } from 'resend'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
@@ -70,6 +71,17 @@ export async function POST(request: Request) {
       .single()
 
     const docRowsForPdf = await fetchDocumentsRowsForAmxPdf(serviceClient, technicianId)
+    const amxDocumentRows = buildAmxCertificateDocumentRows(
+      {
+        license_category: technician.license_category,
+        aircraft_types: technician.aircraft_types,
+      },
+      docRowsForPdf.map((d) => ({
+        doc_type: d.doc_type,
+        status: d.status,
+        verified_at: d.verified_at,
+      }))
+    )
 
     // Generate reference ID using database function
     const { data: refData, error: refError } = await serviceClient
@@ -102,6 +114,7 @@ export async function POST(request: Request) {
         status: d.status,
         expiresOn: d.expires_on,
       })),
+      amxDocumentRows,
       generatedAt: new Date(),
     })
 
