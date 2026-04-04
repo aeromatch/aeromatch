@@ -139,7 +139,7 @@ function tierForHfEwisFtsGroup(docsByType: Map<string, DocRow>): {
   return { tier: 'pending', detail: 'Awaiting review' }
 }
 
-/** Certificados opcionales: siempre una fila en AMX; sin subida → not_uploaded */
+/** Certificados opcionales: solo fila en AMX si el técnico ha subido archivo (pending hasta verificar, luego checked). */
 const OPTIONAL_AMX_CERTS: { docType: string; label: string }[] = [
   { docType: 'cert_rvsm', label: 'RVSM' },
   { docType: 'cert_etops', label: 'ETOPS' },
@@ -218,15 +218,16 @@ export function buildAmxCertificateDocumentRows(
     })
   })
 
-  OPTIONAL_AMX_CERTS.forEach((opt, j) => {
+  OPTIONAL_AMX_CERTS.forEach((opt) => {
     const row = byType.get(opt.docType)
-    const tier = row ? rowTier(row) : 'not_uploaded'
+    if (!row) return
+    const tier = rowTier(row)
     out.push({
-      sortKey: `4_opt_${j}_${opt.docType}`,
+      sortKey: `4_opt_${opt.docType}`,
       icon: tier === 'checked' ? 'check' : tier === 'pending' ? 'hourglass' : 'warning',
       label: opt.label,
       tier,
-      detail: detailForTier(tier, row?.verified_at),
+      detail: detailForTier(tier, row.verified_at),
     })
   })
 
