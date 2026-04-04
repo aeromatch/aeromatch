@@ -87,6 +87,8 @@ export default function AdminPage() {
   const [selectedTech, setSelectedTech] = useState<VerificationTechnician | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [verifyNotes, setVerifyNotes] = useState('')
+  /** Si true, al pulsar Verificar no se envía el correo "certificado listo" (p. ej. ya lo recibieron). */
+  const [skipVerificationEmail, setSkipVerificationEmail] = useState(false)
   const [viewingDoc, setViewingDoc] = useState<{ url: string; type: string } | null>(null)
   const [loadingDoc, setLoadingDoc] = useState<string | null>(null)
   
@@ -187,6 +189,7 @@ export default function AdminPage() {
           technicianId: selectedTech.id,
           status,
           notes: verifyNotes || null,
+          ...(status === 'verified' ? { skipVerificationEmail } : {}),
         }),
       })
 
@@ -200,6 +203,7 @@ export default function AdminPage() {
         // Keep modal open to show updated certificate
         // Update the selected tech status locally
         setSelectedTech(prev => prev ? { ...prev, verificationStatus: status } : null)
+        setSkipVerificationEmail(false)
       }
     } catch (err) {
       console.error('Error updating verification:', err)
@@ -798,6 +802,22 @@ export default function AdminPage() {
                     </button>
                   </div>
                 )}
+              </div>
+
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-steel-700/80 bg-navy-800/40 px-4 py-3">
+                <input
+                  id="skip-verification-email"
+                  type="checkbox"
+                  checked={skipVerificationEmail}
+                  onChange={(e) => setSkipVerificationEmail(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-steel-600 bg-navy-800 text-gold-500 focus:ring-gold-500"
+                />
+                <label htmlFor="skip-verification-email" className="text-sm text-steel-300 cursor-pointer">
+                  <span className="font-medium text-steel-200">No enviar correo de “certificado listo”</span>
+                  <span className="block text-steel-500 mt-0.5">
+                    Marca esto si el técnico ya recibió el aviso y solo quieres actualizar documentos / PDF / estado sin reenviar email.
+                  </span>
+                </label>
               </div>
 
               {/* Notes */}

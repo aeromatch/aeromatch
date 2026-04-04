@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { technicianId, status, notes } = body
+    const { technicianId, status, notes, skipVerificationEmail } = body
 
     if (!technicianId || !status) {
       return NextResponse.json({ error: 'technicianId and status required' }, { status: 400 })
@@ -380,8 +380,15 @@ export async function POST(request: Request) {
             console.error('regenerateAmxCertificateStoragePdf:', regenErr)
           }
 
-          // Email al técnico: solo si el certificado pasó a checked en esta petición y el PDF se regeneró bien
-          if (certificateChecked && !regenErr && cert.reference_id && process.env.RESEND_API_KEY) {
+          // Email al técnico: solo si el certificado pasó a checked en esta petición, PDF OK, y no se pide silenciar
+          const skipEmail = skipVerificationEmail === true
+          if (
+            certificateChecked &&
+            !regenErr &&
+            cert.reference_id &&
+            process.env.RESEND_API_KEY &&
+            !skipEmail
+          ) {
             try {
               const { data: techProfile } = await serviceClient
                 .from('profiles')
