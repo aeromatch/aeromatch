@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import fs from 'fs'
 import path from 'path'
+import QRCode from 'qrcode'
 
 interface TechnicianData {
   fullName: string
@@ -23,10 +24,17 @@ interface DocumentData {
 
 interface CertificateData {
   referenceId: string
+  /** UUID de `amx_certificates` (QR de verificación). */
+  certificateId?: string
   technician: TechnicianData
   documents: DocumentData[]
   generatedAt: Date
   certificateStatus?: 'pending' | 'checked' | 'rejected'
+  /** Huella compuesta de `file_hash` de documentos (certificado checked). */
+  documentIntegrity?: {
+    fullFingerprintHex: string
+    verifiedAt: Date
+  }
 }
 
 // Brand colors (AeroMatch Design System)
@@ -524,9 +532,16 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // FOOTER
+  // FOOTER (integridad + QR solo si certificado checked y hay huella)
   // ═══════════════════════════════════════════════════════════════════════════
-  const footerHeight = 44
+  const showIntegrity =
+    data.certificateStatus === 'checked' &&
+    !!data.certificateId &&
+    !!data.documentIntegrity &&
+    data.documentIntegrity.fullFingerprintHex.length > 0
+
+  const footerHeight = showIntegrity ? 118 : 44
+
   page.drawRectangle({
     x: 0, y: 0, width, height: footerHeight,
     color: COLORS.lightBg,
@@ -538,20 +553,80 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Uin
     color: COLORS.border,
   })
 
+  if (showIntegrity && data.certificateId && data.documentIntegrity) {
+    const verifyUrl = `https://aeromatch.eu/certificates/${data.certificateId}/verify`
+    const qrBuffer = await QRCode.toBuffer(verifyUrl, { type: 'png', width: 200, margin: 1 })
+    const qrImage = await pdfDoc.embedPng(qrBuffer)
+    const qrSize = 52
+    const qrY = 52
+    page.drawImage(qrImage, {
+      x: MARGIN,
+      y: qrY,
+      width: qrSize,
+      height: qrSize,
+    })
+
+    const full = data.documentIntegrity.fullFingerprintHex
+    const hashDisplay =
+      full.length > 24 ? `${full.slice(0, 16)}...${full.slice(-8)}` : full
+    const dateVerified = data.documentIntegrity.verifiedAt.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+
+    const textX = MARGIN + qrSize + 10
+    let lineY = 100
+    page.drawText('INTEGRIDAD DOCUMENTAL', {
+      x: textX,
+      y: lineY,
+      size: 7.5,
+      font: helveticaBold,
+      color: COLORS.navy950,
+    })
+    lineY -= 11
+    page.drawText(hashDisplay, {
+      x: textX,
+      y: lineY,
+      size: 7,
+      font: helvetica,
+      color: COLORS.body,
+    })
+    lineY -= 10
+    page.drawText(`Verified: ${dateVerified}`, {
+      x: textX,
+      y: lineY,
+      size: 7,
+      font: helvetica,
+      color: COLORS.steel600,
+    })
+    lineY -= 10
+    page.drawText('aeromatch.eu/verify', {
+      x: textX,
+      y: lineY,
+      size: 6.5,
+      font: helvetica,
+      color: COLORS.steel600,
+    })
+  }
+
   // Disclaimer text centered
   const disclaimer1 = 'Documents reviewed based on information provided by the technician.'
   const disclaimer2 = 'AeroMatch does not replace operator or authority validation.'
-  
+
+  const d1y = showIntegrity ? 34 : 30
+  const d2y = showIntegrity ? 24 : 20
+
   page.drawText(disclaimer1, {
     x: (width - helvetica.widthOfTextAtSize(disclaimer1, 6.8)) / 2,
-    y: 30,
+    y: d1y,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,
   })
   page.drawText(disclaimer2, {
     x: (width - helvetica.widthOfTextAtSize(disclaimer2, 6.8)) / 2,
-    y: 20,
+    y: d2y,
     size: 6.8,
     font: helvetica,
     color: COLORS.muted,

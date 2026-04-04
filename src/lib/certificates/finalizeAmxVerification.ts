@@ -1,5 +1,79 @@
+import { createHash } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
+
+/**
+ * Descarga documentos pendientes desde Storage, SHA-256 del fichero → `file_hash`.
+ * Fallos: solo log, no bloquea la verificación.
+ */
+export async function hashDocumentFilesBeforeVerification(
+  serviceClient: SupabaseClient,
+  technicianId: string
+): Promise<void> {
+  const { data: docs, error } = await serviceClient
+    .from('documents')
+    .select('id, storage_path')
+    .eq('technician_id', technicianId)
+    .in('status', ['uploaded', 'pending_verification'])
+    .not('storage_path', 'is', null)
+
+  if (error) {
+    console.error('hashDocumentFilesBeforeVerification: query failed', error)
+    return
+  }
+
+  for (const doc of docs || []) {
+    const storagePath = doc.storage_path as string
+    try {
+      const { data: blob, error: dlErr } = await serviceClient.storage
+        .from('documents')
+        .download(storagePath)
+      if (dlErr || !blob) {
+        console.error('hash doc download failed:', doc.id, dlErr)
+        continue
+      }
+      const buf = Buffer.from(await blob.arrayBuffer())
+      const hash = createHash('sha256').update(buf).digest('hex')
+      const { error: upErr } = await serviceClient
+        .from('documents')
+        .update({ file_hash: hash })
+        .eq('id', doc.id)
+      if (upErr) {
+        console.error('hash doc update failed:', doc.id, upErr)
+      }
+    } catch (e) {
+      console.error('hash document file failed:', doc.id, e)
+    }
+  }
+}
+
+export function buildDocumentIntegrityPayload(
+  documents: { file_hash: string | null; verified_at: string | null }[],
+  certificateStatus: 'pending' | 'checked' | 'rejected'
+):
+  | {
+      fullFingerprintHex: string
+      verifiedAt: Date
+    }
+  | undefined {
+  if (certificateStatus !== 'checked') {
+    return undefined
+  }
+  const hashes = documents
+    .map((d) => d.file_hash)
+    .filter((h): h is string => typeof h === 'string' && h.length > 0)
+    .sort()
+  if (hashes.length === 0) {
+    return undefined
+  }
+  const fullFingerprintHex = createHash('sha256').update(hashes.join('|')).digest('hex')
+  const verifiedTimes = documents
+    .filter((d) => d.verified_at)
+    .map((d) => new Date(d.verified_at!).getTime())
+  const verifiedAt =
+    verifiedTimes.length > 0 ? new Date(Math.max(...verifiedTimes)) : new Date()
+  return { fullFingerprintHex, verifiedAt }
+}
 
 /**
  * Marca como verificados en BD los documentos que el técnico subió y aún no estaban revisados.
@@ -27,6 +101,7 @@ export async function promoteTechnicianDocumentsToVerified(
 }
 
 type CertPdfRow = {
+  id: string
   reference_id: string
   pdf_storage_path: string | null
   generated_at: string
@@ -47,7 +122,7 @@ export async function regenerateAmxCertificateStoragePdf(
   if (!cert) {
     const { data: fetched, error: certErr } = await serviceClient
       .from('amx_certificates')
-      .select('reference_id, pdf_storage_path, generated_at')
+      .select('id, reference_id, pdf_storage_path, generated_at')
       .eq('technician_id', technicianId)
       .order('generated_at', { ascending: false })
       .limit(1)
@@ -56,7 +131,7 @@ export async function regenerateAmxCertificateStoragePdf(
     if (certErr) {
       return { error: new Error(certErr.message) }
     }
-    cert = fetched
+    cert = fetched as CertPdfRow | null
   }
 
   if (!cert?.pdf_storage_path) {
@@ -83,11 +158,15 @@ export async function regenerateAmxCertificateStoragePdf(
 
   const { data: documents } = await serviceClient
     .from('documents')
-    .select('doc_type, status, expires_on')
+    .select('doc_type, status, expires_on, file_hash, verified_at')
     .eq('technician_id', technicianId)
+
+  const docRows = documents || []
+  const documentIntegrity = buildDocumentIntegrityPayload(docRows, certificateStatus)
 
   const pdfBytes = await generateCertificatePdf({
     referenceId: cert.reference_id,
+    certificateId: cert.id,
     technician: {
       fullName: profile?.full_name || 'Unknown Technician',
       licenseCategory: technician.license_category || [],
@@ -100,13 +179,14 @@ export async function regenerateAmxCertificateStoragePdf(
       drivingLicense: technician.driving_license || false,
       isAvailable: technician.is_available || false,
     },
-    documents: (documents || []).map((d) => ({
+    documents: docRows.map((d) => ({
       docType: d.doc_type,
       status: d.status,
       expiresOn: d.expires_on,
     })),
     generatedAt: new Date(cert.generated_at),
     certificateStatus,
+    documentIntegrity,
   })
 
   const { error: uploadError } = await serviceClient.storage

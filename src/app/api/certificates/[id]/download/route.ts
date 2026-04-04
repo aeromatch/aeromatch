@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { buildDocumentIntegrityPayload } from '@/lib/certificates/finalizeAmxVerification'
 import { generateCertificatePdf } from '@/lib/certificates/generatePdf'
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
@@ -66,7 +67,7 @@ export async function GET(
 
     const { data: documents } = await serviceClient
       .from('documents')
-      .select('doc_type, status, expires_on')
+      .select('doc_type, status, expires_on, file_hash, verified_at')
       .eq('technician_id', certificate.technician_id)
 
     if (!technician) {
@@ -74,9 +75,12 @@ export async function GET(
     }
 
     const certStatus = certificate.status as 'pending' | 'checked' | 'rejected'
+    const docRows = documents || []
+    const documentIntegrity = buildDocumentIntegrityPayload(docRows, certStatus)
 
     const pdfBytes = await generateCertificatePdf({
       referenceId: certificate.reference_id,
+      certificateId: certificate.id,
       technician: {
         fullName: profile?.full_name || 'Unknown Technician',
         licenseCategory: technician.license_category || [],
@@ -89,13 +93,14 @@ export async function GET(
         drivingLicense: technician.driving_license || false,
         isAvailable: technician.is_available || false,
       },
-      documents: (documents || []).map(d => ({
+      documents: docRows.map(d => ({
         docType: d.doc_type,
         status: d.status,
         expiresOn: d.expires_on,
       })),
       generatedAt: new Date(certificate.generated_at),
       certificateStatus: certStatus,
+      documentIntegrity,
     })
 
     // Return PDF directly as binary
