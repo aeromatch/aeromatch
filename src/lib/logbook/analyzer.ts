@@ -79,6 +79,9 @@ NOT_A_LOGBOOK:
 
 const MAX_TEXT_CHARS_SINGLE = 120_000
 
+/** Modelo fijo logBook360 (modo texto y visión). Sin variables de entorno. */
+const LOGBOOK360_MODEL = 'claude-opus-4-5'
+
 export type LogbookAnalysisResult = {
   source_system: string
   source_system_label?: string
@@ -173,18 +176,6 @@ function parseClaudeJson(clean: string): LogbookAnalysisResult {
   return normalizeEntries(parsed)
 }
 
-function getTextModel(): string {
-  return (
-    process.env.ANTHROPIC_MODEL ||
-    process.env.ANTHROPIC_LOGBOOK_MODEL ||
-    'claude-sonnet-4-20250514'
-  )
-}
-
-function getVisionModel(): string {
-  return process.env.ANTHROPIC_LOGBOOK_VISION_MODEL || process.env.ANTHROPIC_MODEL || 'claude-opus-4-5'
-}
-
 async function callClaudeText(
   textChunk: string,
   totalPages: number,
@@ -196,7 +187,6 @@ async function callClaudeText(
     throw new Error('ANTHROPIC_API_KEY is not configured')
   }
 
-  const model = getTextModel()
   const userBody =
     chunkTotal > 1
       ? `Fragmento ${chunkIndex} de ${chunkTotal} del texto extraído del PDF (~${totalPages} páginas). Extrae TODAS las entradas de mantenimiento visibles en este fragmento. Si no hay filas de logbook aquí, devuelve "entries": [].\n\n---\n${textChunk}\n---`
@@ -210,7 +200,7 @@ async function callClaudeText(
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model,
+      model: LOGBOOK360_MODEL,
       max_tokens: 16000,
       system: SYSTEM_PROMPT,
       messages: [
@@ -251,8 +241,6 @@ async function callClaudeVision(base64PDF: string, totalPages: number): Promise<
     throw new Error('ANTHROPIC_API_KEY is not configured')
   }
 
-  const model = getVisionModel()
-
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -261,7 +249,7 @@ async function callClaudeVision(base64PDF: string, totalPages: number): Promise<
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model,
+      model: LOGBOOK360_MODEL,
       max_tokens: 64000,
       system: SYSTEM_PROMPT,
       messages: [
