@@ -322,6 +322,7 @@ async function callClaudeText(
         // no se pudo recuperar
       }
     }
+    process.stdout.write('CATCH_CALLCLAUDETEXT: ' + clean.substring(0, 100) + '\n')
     throw new Error(`JSON parse failed. Snippet: ${clean.substring(0, 500)}`)
   }
 }
