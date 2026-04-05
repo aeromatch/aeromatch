@@ -1,19 +1,9 @@
 /**
- * Análisis de logbook vía Anthropic: texto extraído localmente con pdf-parse v1 (Node, sin pdfjs-dist DOM).
+ * Análisis de logbook vía Anthropic:
+ * - PDF con texto extraíble → Claude con texto (barato).
+ * - PDF escaneado (sin texto) → Claude con PDF base64 (visión nativa).
+ * pdf-parse solo se usa para decidir el modo, no como única extracción.
  */
-
-/** Extracción de texto con pdf-parse@1.x (evita pdfjs-dist / DOMMatrix en Vercel). */
-/** No importar desde `pdf-parse` (index.js ejecuta un debug que rompe el build Next — ENOENT test/data). */
-export async function extractTextFromPDF(buffer: Buffer): Promise<{ text: string; pages: number }> {
-  const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')) as unknown as (
-    b: Buffer
-  ) => Promise<{ text: string; numpages: number }>
-  const data = await pdfParse(buffer)
-  return {
-    text: data.text,
-    pages: data.numpages,
-  }
-}
 
 const SYSTEM_PROMPT = `Eres un sistema especializado en análisis de logbooks de mantenimiento aeronáutico EASA Part-66. Recibes un PDF exportado de un sistema MRO y debes extraer datos estructurados.
 
@@ -87,16 +77,7 @@ NOT_A_LOGBOOK:
   "entries": []
 }`
 
-const MAX_CHUNK_CHARS = 350_000
-
-function chunkText(fullText: string): string[] {
-  if (fullText.length <= MAX_CHUNK_CHARS) return [fullText]
-  const chunks: string[] = []
-  for (let i = 0; i < fullText.length; i += MAX_CHUNK_CHARS) {
-    chunks.push(fullText.slice(i, i + MAX_CHUNK_CHARS))
-  }
-  return chunks
-}
+const MAX_TEXT_CHARS_SINGLE = 120_000
 
 export type LogbookAnalysisResult = {
   source_system: string
@@ -145,31 +126,81 @@ function normalizeEntries(parsed: LogbookAnalysisResult): LogbookAnalysisResult 
   return parsed
 }
 
+async function parsePdfBuffer(buffer: Buffer): Promise<{ text: string; numpages: number }> {
+  const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')) as unknown as (
+    b: Buffer
+  ) => Promise<{ text: string; numpages: number }>
+  return pdfParse(buffer).catch(() => ({ text: '', numpages: 0 }))
+}
+
+function splitIntoChunks(text: string, maxChars: number): string[] {
+  const chunks: string[] = []
+  let remaining = text
+  while (remaining.length > 0) {
+    if (remaining.length <= maxChars) {
+      chunks.push(remaining)
+      break
+    }
+    let cutPoint = remaining.lastIndexOf('\n', maxChars)
+    if (cutPoint === -1 || cutPoint < maxChars * 0.5) cutPoint = maxChars
+    chunks.push(remaining.substring(0, cutPoint))
+    remaining = remaining.substring(cutPoint)
+  }
+  return chunks
+}
+
+function mergeChunkResults(parts: LogbookAnalysisResult[], totalPages: number): LogbookAnalysisResult {
+  if (parts.length === 0) {
+    throw new Error('mergeChunkResults: no parts')
+  }
+  const first = parts[0]
+  const allEntries = parts.flatMap((r) => (Array.isArray(r.entries) ? r.entries : []))
+  return normalizeEntries({
+    ...first,
+    pages_detected: totalPages,
+    summary: {
+      ...first.summary,
+      total_entries: allEntries.length,
+      date_from: allEntries[0]?.entry_date || first.summary?.date_from,
+      date_to: allEntries[allEntries.length - 1]?.entry_date || first.summary?.date_to,
+    },
+    entries: allEntries,
+  })
+}
+
 function parseClaudeJson(clean: string): LogbookAnalysisResult {
   const parsed = JSON.parse(clean) as LogbookAnalysisResult
   return normalizeEntries(parsed)
 }
 
-async function callClaudeForChunk(
+function getTextModel(): string {
+  return (
+    process.env.ANTHROPIC_MODEL ||
+    process.env.ANTHROPIC_LOGBOOK_MODEL ||
+    'claude-sonnet-4-20250514'
+  )
+}
+
+function getVisionModel(): string {
+  return process.env.ANTHROPIC_LOGBOOK_VISION_MODEL || process.env.ANTHROPIC_MODEL || 'claude-opus-4-5'
+}
+
+async function callClaudeText(
   textChunk: string,
-  numPages: number,
-  chunkIndex: number,
-  chunkTotal: number
+  totalPages: number,
+  chunkIndex = 1,
+  chunkTotal = 1
 ): Promise<LogbookAnalysisResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not configured')
   }
 
-  const model =
-    process.env.ANTHROPIC_MODEL ||
-    process.env.ANTHROPIC_LOGBOOK_MODEL ||
-    'claude-sonnet-4-20250514'
-
+  const model = getTextModel()
   const userBody =
     chunkTotal > 1
-      ? `Fragmento ${chunkIndex} de ${chunkTotal} del texto extraído del PDF (~${numPages} páginas). Extrae TODAS las entradas de mantenimiento visibles en este fragmento. Si no hay filas de logbook aquí, devuelve "entries": [].\n\n---\n${textChunk}\n---`
-      : `Texto extraído del PDF de logbook (${numPages} páginas). Analiza y devuelve el JSON según las instrucciones del sistema.\n\n---\n${textChunk}\n---`
+      ? `Fragmento ${chunkIndex} de ${chunkTotal} del texto extraído del PDF (~${totalPages} páginas). Extrae TODAS las entradas de mantenimiento visibles en este fragmento. Si no hay filas de logbook aquí, devuelve "entries": [].\n\n---\n${textChunk}\n---`
+      : `Texto extraído del PDF de logbook (${totalPages} páginas). Analiza y devuelve el JSON según las instrucciones del sistema.\n\n---\n${textChunk}\n---`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -214,42 +245,134 @@ async function callClaudeForChunk(
   }
 }
 
-function mergeChunkResults(
-  parts: LogbookAnalysisResult[],
-  numPages: number
-): LogbookAnalysisResult {
-  const base = parts[0]
-  const entries = parts.flatMap((p) => (Array.isArray(p.entries) ? p.entries : []))
-  return normalizeEntries({
-    ...base,
-    pages_detected: numPages,
-    entries,
-    summary: {
-      ...base.summary,
-      total_entries: entries.length,
+async function callClaudeVision(base64PDF: string, totalPages: number): Promise<LogbookAnalysisResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not configured')
+  }
+
+  const model = getVisionModel()
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
     },
+    body: JSON.stringify({
+      model,
+      max_tokens: 64000,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: {
+                type: 'base64',
+                media_type: 'application/pdf',
+                data: base64PDF,
+              },
+            },
+            {
+              type: 'text',
+              text: `Este PDF tiene ${totalPages} páginas y es un logbook escaneado o con poco texto extraíble. Analiza visualmente todas las páginas y extrae TODAS las entradas de mantenimiento que veas. Devuelve el JSON estructurado según las instrucciones.`,
+            },
+          ],
+        },
+      ],
+    }),
   })
+
+  if (!response.ok) {
+    const err = await response.text()
+    throw new Error(`Anthropic API vision error ${response.status}: ${err}`)
+  }
+
+  const data = (await response.json()) as {
+    content: Array<{ type: string; text?: string }>
+    usage?: unknown
+  }
+  if (data.usage) {
+    console.log('Claude vision usage:', data.usage)
+  }
+
+  const block = data.content?.[0]
+  const raw = block?.type === 'text' ? block.text || '' : ''
+  const clean = raw
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
+
+  try {
+    const parsed = JSON.parse(clean) as LogbookAnalysisResult
+    if (!parsed.entries || !Array.isArray(parsed.entries)) {
+      parsed.entries = []
+    }
+    parsed.entries = parsed.entries.map((e) => ({
+      ...e,
+      entry_date: e.entry_date != null ? String(e.entry_date) : '',
+      ata_chapter:
+        e.ata_chapter !== undefined && e.ata_chapter !== null ? String(e.ata_chapter) : null,
+      wo_number: e.wo_number !== undefined && e.wo_number !== null ? String(e.wo_number) : null,
+      duration_hours:
+        e.duration_hours !== undefined && e.duration_hours !== null
+          ? Number(e.duration_hours) || null
+          : null,
+    }))
+    console.log('Entradas extraídas por visión:', parsed.entries.length)
+    return normalizeEntries(parsed)
+  } catch {
+    throw new Error(`JSON parse failed: ${clean.substring(0, 500)}`)
+  }
 }
 
-/** Analiza texto ya extraído del PDF (pdf-parse en process). */
-export async function analyzeLogbookWithClaude(input: {
-  fullText: string
-  numPages: number
-}): Promise<LogbookAnalysisResult> {
-  const chunks = chunkText(input.fullText)
-  console.log('Texto total a analizar:', input.fullText.length, 'caracteres')
-  console.log('Número de chunks:', chunks?.length ?? 1)
+/**
+ * Analiza un PDF en base64: modo texto (pdf-parse + Claude texto) o visión (PDF binario a Claude).
+ */
+export async function analyzeLogbookWithClaude(base64PDF: string): Promise<LogbookAnalysisResult> {
+  const buffer = Buffer.from(base64PDF, 'base64')
+  const parsed = await parsePdfBuffer(buffer)
+  const strippedLen = parsed.text.replace(/\s/g, '').length
+  const hasText = strippedLen > 200
+  const totalPages = parsed.numpages || 0
 
-  if (chunks.length === 1) {
-    const parsed = await callClaudeForChunk(chunks[0], input.numPages, 1, 1)
-    parsed.pages_detected = input.numPages
-    return normalizeEntries(parsed)
+  console.log(
+    'PDF pages:',
+    totalPages,
+    '| extractable text chars (no ws):',
+    strippedLen,
+    '| mode:',
+    hasText ? 'TEXT' : 'VISION'
+  )
+
+  if (hasText) {
+    const fullText = parsed.text
+    if (fullText.length <= MAX_TEXT_CHARS_SINGLE) {
+      const out = await callClaudeText(fullText, totalPages, 1, 1)
+      out.pages_detected = totalPages
+      return normalizeEntries(out)
+    }
+    const chunks = splitIntoChunks(fullText, MAX_TEXT_CHARS_SINGLE)
+    const results: LogbookAnalysisResult[] = []
+    for (let i = 0; i < chunks.length; i++) {
+      const result = await callClaudeText(chunks[i], totalPages, i + 1, chunks.length)
+      results.push(result)
+    }
+    return mergeChunkResults(results, totalPages)
   }
 
-  const parts: LogbookAnalysisResult[] = []
-  for (let i = 0; i < chunks.length; i++) {
-    const part = await callClaudeForChunk(chunks[i], input.numPages, i + 1, chunks.length)
-    parts.push(part)
-  }
-  return mergeChunkResults(parts, input.numPages)
+  console.log('PDF escaneado o sin texto extraíble, usando visión de Claude')
+  const out = await callClaudeVision(base64PDF, totalPages)
+  out.pages_detected = totalPages || out.pages_detected
+  return normalizeEntries(out)
+}
+
+/** Solo para diagnóstico / otras rutas que necesiten texto local. */
+export async function extractTextFromPDF(buffer: Buffer): Promise<{ text: string; pages: number }> {
+  const data = await parsePdfBuffer(buffer)
+  return { text: data.text, pages: data.numpages }
 }

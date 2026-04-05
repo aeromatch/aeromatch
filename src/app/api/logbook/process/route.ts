@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { analyzeLogbookWithClaude, extractTextFromPDF } from '@/lib/logbook/analyzer'
+import { analyzeLogbookWithClaude } from '@/lib/logbook/analyzer'
 import { mergeEntries } from '@/lib/logbook/merger'
 import { recalculateAnalysis } from '@/lib/logbook/aggregator'
 import { NextResponse } from 'next/server'
@@ -58,30 +58,16 @@ export async function POST(req: Request) {
     console.log('PDF buffer size bytes:', buffer.length)
     console.log('PDF buffer size MB:', (buffer.length / 1024 / 1024).toFixed(2))
 
-    const { text: fullText, pages: numPages } = await extractTextFromPDF(buffer)
-
-    console.log('Páginas detectadas:', numPages)
-    console.log('Caracteres extraídos:', fullText.length)
-    console.log('Muestra texto (primeros 500 chars):', fullText.substring(0, 500))
-    console.log('Muestra texto (chars 5000-5500):', fullText.substring(5000, 5500))
-
-    if (fullText.length < 1000) {
-      throw new Error(
-        `PDF text extraction failed: only ${fullText.length} chars extracted from ${numPages} pages`
-      )
-    }
-
-    const result = await analyzeLogbookWithClaude({
-      fullText,
-      numPages,
-    })
+    const base64PDF = buffer.toString('base64')
+    const result = await analyzeLogbookWithClaude(base64PDF)
+    const numPages = result.pages_detected ?? null
 
     await supabase
       .from('logbook_jobs')
       .update({
         source_system: result.source_system,
         source_system_label: result.source_system_label,
-        source_pages: result.pages_detected ?? numPages ?? null,
+        source_pages: numPages,
         updated_at: new Date().toISOString(),
       })
       .eq('id', jobId)
