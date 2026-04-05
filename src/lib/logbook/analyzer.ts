@@ -180,16 +180,29 @@ const PAGES_PER_VISION_CHUNK = 15
 const VISION_MAX_TOKENS = 16000
 
 function salvageTruncatedJson(raw: string): Record<string, unknown> | null {
-  const lastBoundary = raw.lastIndexOf('},{')
-  if (lastBoundary === -1) return null
-  const truncated = raw.substring(0, lastBoundary + 1) + ']}'
+  const entriesStart = raw.indexOf('"entries"')
+  if (entriesStart === -1) return null
+
+  const arrayStart = raw.indexOf('[', entriesStart)
+  if (arrayStart === -1) return null
+
+  const lastComplete = raw.lastIndexOf('}')
+  if (lastComplete === -1 || lastComplete <= arrayStart) return null
+
+  const truncated = raw.substring(0, lastComplete + 1) + ']}'
+
   try {
     const parsed = JSON.parse(truncated) as Record<string, unknown>
     const count = Array.isArray(parsed.entries) ? parsed.entries.length : 0
-    console.log(`JSON truncado recuperado: ${count} entradas rescatadas`)
+    console.log('salvage: ' + count + ' entradas recuperadas')
     return parsed
   } catch {
-    return null
+    try {
+      const simpleClose = raw.substring(0, lastComplete + 1) + ']}'
+      return JSON.parse(simpleClose) as Record<string, unknown>
+    } catch {
+      return null
+    }
   }
 }
 
@@ -261,7 +274,7 @@ async function callClaudeText(
     },
     body: JSON.stringify({
       model: LOGBOOK360_MODEL,
-      max_tokens: 8000,
+      max_tokens: 16000,
       system: SYSTEM_PROMPT,
       messages: [
         {
