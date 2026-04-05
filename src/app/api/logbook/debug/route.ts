@@ -2,9 +2,10 @@
  * TEMPORAL — diagnóstico PDF. ELIMINAR cuando el problema esté resuelto.
  */
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { NextResponse } from 'next/server'
 
-/** Misma API que `pdf-parse` por defecto, sin cargar `index.js` (evita ENOENT en build Next). */
+/** Equivalente a `import pdfParse from 'pdf-parse'` sin cargar index.js (build Next). */
 import pdfParse from 'pdf-parse/lib/pdf-parse.js'
 
 export const runtime = 'nodejs'
@@ -18,21 +19,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: { storage_path?: string; bucket?: string }
-  try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
-
-  const storage_path = body.storage_path
-  const bucketName = typeof body.bucket === 'string' && body.bucket.length > 0 ? body.bucket : 'documents'
+  const { storage_path, bucket } = await req.json().catch(() => ({}))
+  const bucketName = typeof bucket === 'string' && bucket.length > 0 ? bucket : 'documents'
 
   if (!storage_path || typeof storage_path !== 'string') {
     return NextResponse.json({ error: 'storage_path required' }, { status: 400 })
   }
 
-  const { data: fileData, error } = await supabase.storage.from(bucketName).download(storage_path)
+  const serviceSupabase = createServiceClient()
+  const { data: fileData, error } = await serviceSupabase.storage.from(bucketName).download(storage_path)
 
   if (error || !fileData) {
     return NextResponse.json(
