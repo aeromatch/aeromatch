@@ -1,5 +1,5 @@
 /**
- * Análisis de logbook vía Anthropic:
+ * Análisis de logbook vía Anthropic  (deploy-force 2025-04-05T2)
  * - PDF con texto extraíble → Claude con texto (barato).
  * - PDF escaneado (sin texto) → Claude con PDF base64 (visión nativa).
  * pdf-parse solo se usa para decidir el modo, no como única extracción.
