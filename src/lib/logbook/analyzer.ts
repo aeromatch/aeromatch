@@ -77,7 +77,7 @@ NOT_A_LOGBOOK:
   "entries": []
 }`
 
-const MAX_TEXT_CHARS_SINGLE = 120_000
+const MAX_TEXT_CHARS_SINGLE = 30_000
 
 /** Modelo fijo logBook360 (modo texto y visión). Sin variables de entorno. */
 const LOGBOOK360_MODEL = 'claude-opus-4-5'
@@ -261,7 +261,7 @@ async function callClaudeText(
     },
     body: JSON.stringify({
       model: LOGBOOK360_MODEL,
-      max_tokens: 16000,
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -279,7 +279,10 @@ async function callClaudeText(
 
   const data = (await response.json()) as {
     content: Array<{ type: string; text?: string }>
+    usage?: { input_tokens?: number; output_tokens?: number }
+    stop_reason?: string
   }
+  process.stdout.write(`[callClaudeText] chunk ${chunkIndex}/${chunkTotal} stop_reason: ${data.stop_reason} output_tokens: ${data.usage?.output_tokens}\n`)
   const block = data.content?.[0]
   const text = block?.type === 'text' ? block.text || '' : ''
   const clean = text
@@ -287,6 +290,22 @@ async function callClaudeText(
     .replace(/^```\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim()
+
+  if (data.stop_reason === 'max_tokens') {
+    process.stdout.write('[callClaudeText] TRUNCADO — intentando salvage\n')
+    const salvaged = salvageTruncatedJson(clean)
+    if (salvaged) {
+      return normalizeEntries({
+        source_system: (salvaged.source_system as string) || 'UNKNOWN',
+        entries: Array.isArray(salvaged.entries) ? (salvaged.entries as LogbookAnalysisResult['entries']) : [],
+        summary: salvaged.summary as LogbookAnalysisResult['summary'],
+        source_system_label: salvaged.source_system_label as string | undefined,
+        technician_name: salvaged.technician_name as string | undefined,
+        mro_operator: salvaged.mro_operator as string | undefined,
+        pages_detected: salvaged.pages_detected as number | undefined,
+      })
+    }
+  }
 
   try {
     return parseClaudeJson(clean)
