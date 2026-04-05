@@ -310,6 +310,18 @@ async function callClaudeText(
   try {
     return parseClaudeJson(clean)
   } catch {
+    const lastBoundary = clean.lastIndexOf('},{')
+    if (lastBoundary !== -1) {
+      try {
+        const truncated = clean.substring(0, lastBoundary + 1) + ']}'
+        const recovered = JSON.parse(truncated) as LogbookAnalysisResult
+        console.log('callClaudeText: JSON truncado recuperado,',
+          recovered.entries?.length, 'entradas')
+        return normalizeEntries(recovered)
+      } catch {
+        // no se pudo recuperar
+      }
+    }
     throw new Error(`JSON parse failed. Snippet: ${clean.substring(0, 500)}`)
   }
 }
