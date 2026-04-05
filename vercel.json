@@ -4,5 +4,10 @@
       "path": "/api/cron/job-requests",
       "schedule": "0 3 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/logbook/process/route.ts": {
+      "maxDuration": 300
+    }
+  }
 }

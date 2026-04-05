@@ -942,15 +942,26 @@ export default function DocumentsPage() {
                 )
                 })()}
 
-            <div className="card p-5">
-              <p className="font-medium text-white mb-1">
-                {language === 'es' ? 'Análisis disponible próximamente' : 'Analysis available soon'}
-              </p>
-              <p className="text-sm text-steel-400">
-                {language === 'es'
-                  ? 'Pronto podrás ver análisis automático de experiencia y trazabilidad del logbook.'
-                  : 'Soon you will see automatic analysis of experience and logbook traceability.'}
-              </p>
+            <div className="rounded-xl border border-gold-500/20 bg-gold-500/5 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-gold-500 shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                    <path d="M8 1l1.8 3.6L14 5.3l-3 2.9.7 4.1L8 10.4l-3.7 1.9.7-4.1-3-2.9 4.2-.7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gold-400 mb-1">
+                    {language === 'es'
+                      ? 'Disfruta de todas las ventajas Premium en esta fase.'
+                      : 'Enjoy all Premium benefits during this phase.'}
+                  </p>
+                  <p className="text-xs text-steel-400 leading-relaxed">
+                    {language === 'es'
+                      ? 'Próximamente se activarán los procesos de pago con un precio especial para los técnicos ya registrados con perfil completo y disponible. El análisis logBook360 está en la pestaña logBook360 del panel.'
+                      : 'Payment flows will go live soon with special pricing for technicians already registered with a complete profile. logBook360 analysis is available under the logBook360 tab in your dashboard.'}
+                  </p>
+                </div>
+              </div>
             </div>
               </>
             )}

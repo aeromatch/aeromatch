@@ -7,7 +7,7 @@ import { Logo } from './Logo'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { useLanguage, LanguageSwitch } from '@/lib/i18n/LanguageContext'
 import { TechnicianVisibilityToggle } from '@/components/ui/TechnicianVisibilityToggle'
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, BookOpen } from 'lucide-react'
 
 interface NavItem {
   href: string
@@ -69,6 +69,8 @@ const IconRequests = () => (
 
 const IconTraining = () => <GraduationCap className="w-5 h-5" />
 
+const IconLogbook360 = () => <BookOpen className="w-5 h-5" />
+
 const IconSearch = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -93,6 +95,7 @@ export function AppLayout({ children, userEmail, userRole }: AppLayoutProps) {
     { href: '/profile', label: t.nav.myProfile, icon: <IconProfile /> },
     { href: '/profile/availability', label: t.nav.availability, icon: <IconCalendar /> },
     { href: '/profile/documents', label: t.nav.documents, icon: <IconDocument /> },
+    { href: '/dashboard/logbook360', label: t.nav.logbook360, icon: <IconLogbook360 /> },
     { href: '/requests', label: t.nav.requests, icon: <IconRequests /> },
     { href: '/simulator', label: 'Training', icon: <IconTraining /> },
   ]
