@@ -432,6 +432,7 @@ Devuelve SOLO el objeto JSON con el array entries con las entradas de estas pág
  * Analiza un PDF en base64: modo texto (pdf-parse + Claude texto) o visión (PDF binario a Claude).
  */
 export async function analyzeLogbookWithClaude(base64PDF: string): Promise<LogbookAnalysisResult> {
+  console.log('=== ANALYZER VERSION 3 - CHUNKING ACTIVO ===')
   const buffer = Buffer.from(base64PDF, 'base64')
   const parsed = await parsePdfBuffer(buffer)
   const strippedLen = parsed.text.replace(/\s/g, '').length
