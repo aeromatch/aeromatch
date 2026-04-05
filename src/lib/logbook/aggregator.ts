@@ -28,8 +28,8 @@ export async function recalculateAnalysis(technicianId: string, supabase: Supaba
 
   const activityByYear: Record<string, Record<string, number>> = {}
   for (const e of entries) {
-    const year = String(e.entry_date).substring(0, 4)
-    const fleet = (e.ac_type as string) || 'Desconocido'
+    const year = String(e.entry_date ?? '').substring(0, 4)
+    const fleet = String(e.ac_type ?? 'Desconocido')
     if (!activityByYear[year]) activityByYear[year] = {}
     activityByYear[year][fleet] = (activityByYear[year][fleet] || 0) + 1
   }
@@ -47,7 +47,7 @@ export async function recalculateAnalysis(technicianId: string, supabase: Supaba
   > = {}
 
   for (const e of entries) {
-    const fleet = (e.ac_type as string) || 'Desconocido'
+    const fleet = String(e.ac_type ?? 'Desconocido')
     if (!fleetMap[fleet]) {
       fleetMap[fleet] = {
         ac_type: fleet,
@@ -63,7 +63,9 @@ export async function recalculateAnalysis(technicianId: string, supabase: Supaba
     f.total_hours += Number(e.duration_hours) || 0
     if (String(e.entry_date) > f.date_to) f.date_to = e.entry_date as string
     if (String(e.entry_date) < f.date_from) f.date_from = e.entry_date as string
-    if (e.location) f.bases.add(e.location as string)
+    if (e.location && typeof e.location === 'string' && e.location.trim()) {
+      f.bases.add(e.location.trim())
+    }
   }
 
   const fleetSummary = Object.values(fleetMap)
@@ -79,7 +81,10 @@ export async function recalculateAnalysis(technicianId: string, supabase: Supaba
 
   const baseMap: Record<string, number> = {}
   for (const e of entries) {
-    if (e.location) baseMap[e.location as string] = (baseMap[e.location as string] || 0) + 1
+    if (e.location && typeof e.location === 'string' && e.location.trim()) {
+      const loc = e.location.trim()
+      baseMap[loc] = (baseMap[loc] || 0) + 1
+    }
   }
   const bases = Object.entries(baseMap)
     .map(([code, count]) => ({ code, entries_count: count }))
@@ -87,14 +92,15 @@ export async function recalculateAnalysis(technicianId: string, supabase: Supaba
 
   const ataByFleet: Record<string, Record<string, { count: number; description: string }>> = {}
   for (const e of entries) {
-    if (!e.ata_chapter) continue
-    const fleet = (e.ac_type as string) || 'Desconocido'
-    const ch = String(e.ata_chapter)
+    if (e.ata_chapter === null || e.ata_chapter === undefined || e.ata_chapter === '') continue
+    const ataChapter = String(e.ata_chapter)
+    const fleet = String(e.ac_type ?? 'Desconocido')
+    const desc = e.ata_description != null ? String(e.ata_description) : ''
     if (!ataByFleet[fleet]) ataByFleet[fleet] = {}
-    if (!ataByFleet[fleet][ch]) {
-      ataByFleet[fleet][ch] = { count: 0, description: (e.ata_description as string) || '' }
+    if (!ataByFleet[fleet][ataChapter]) {
+      ataByFleet[fleet][ataChapter] = { count: 0, description: desc }
     }
-    ataByFleet[fleet][ch].count++
+    ataByFleet[fleet][ataChapter].count++
   }
 
   const ataByFleetFormatted: Record<string, Array<{ chapter: string; count: number; description: string }>> = {}

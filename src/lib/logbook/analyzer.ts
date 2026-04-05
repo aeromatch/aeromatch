@@ -165,7 +165,22 @@ export async function analyzeLogbookWithClaude(base64PDF: string): Promise<Logbo
     .trim()
 
   try {
-    return JSON.parse(clean) as LogbookAnalysisResult
+    const parsed = JSON.parse(clean) as LogbookAnalysisResult
+    if (!parsed.entries || !Array.isArray(parsed.entries)) {
+      parsed.entries = []
+    }
+    parsed.entries = parsed.entries.map((e) => ({
+      ...e,
+      entry_date: e.entry_date != null ? String(e.entry_date) : '',
+      ata_chapter:
+        e.ata_chapter !== undefined && e.ata_chapter !== null ? String(e.ata_chapter) : null,
+      wo_number: e.wo_number !== undefined && e.wo_number !== null ? String(e.wo_number) : null,
+      duration_hours:
+        e.duration_hours !== undefined && e.duration_hours !== null
+          ? Number(e.duration_hours) || null
+          : null,
+    }))
+    return parsed
   } catch {
     throw new Error(`JSON parse failed. Snippet: ${clean.substring(0, 500)}`)
   }

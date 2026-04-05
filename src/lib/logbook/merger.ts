@@ -1,10 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { LogbookAnalysisResult } from '@/lib/logbook/analyzer'
 
-function safeStr(v: string | null | undefined): string {
-  return (v ?? '').trim()
-}
-
 export async function mergeEntries(
   result: LogbookAnalysisResult,
   jobId: string,
@@ -56,27 +52,41 @@ export async function mergeEntries(
     }
   }
 
-  const rows = entriesRaw.map((e) => {
-    const ata = safeStr(e.ata_chapter)
-    const wo =
-      safeStr(e.wo_number) ||
-      `${safeStr(e.entry_date)}-${ata || 'na'}-${Math.random().toString(36).slice(2, 9)}`
-    return {
-      technician_id: technicianId,
-      source_id: source.id,
-      entry_date: e.entry_date,
-      ac_registration: e.ac_registration ?? null,
-      ac_type: e.ac_type ?? null,
-      ac_type_raw: e.ac_type_raw ?? null,
-      ata_chapter: ata,
-      ata_description: e.ata_description?.substring(0, 500) ?? null,
-      wo_number: wo,
-      description: e.description?.substring(0, 500) ?? null,
-      duration_hours: e.duration_hours ?? null,
-      location: e.location ?? null,
-      skill_level: e.skill_level ?? null,
-    }
-  })
+  const rows = entriesRaw
+    .map((e) => {
+      const ataStr =
+        e.ata_chapter !== null && e.ata_chapter !== undefined
+          ? String(e.ata_chapter).trim()
+          : ''
+      const woStr =
+        e.wo_number !== null && e.wo_number !== undefined
+          ? String(e.wo_number).trim()
+          : `${String(e.entry_date ?? '')}-${ataStr || 'na'}-${Math.random().toString(36).slice(2, 7)}`
+      return {
+        technician_id: technicianId,
+        source_id: source.id,
+        entry_date: String(e.entry_date ?? '').trim() || null,
+        ac_registration: e.ac_registration != null ? String(e.ac_registration).trim() : null,
+        ac_type: e.ac_type != null ? String(e.ac_type).trim() : null,
+        ac_type_raw: e.ac_type_raw != null ? String(e.ac_type_raw).trim() : null,
+        ata_chapter: ataStr,
+        ata_description:
+          e.ata_description != null ? String(e.ata_description).trim().substring(0, 500) : null,
+        wo_number: woStr,
+        description:
+          e.description != null ? String(e.description).trim().substring(0, 500) : null,
+        duration_hours:
+          e.duration_hours !== null && e.duration_hours !== undefined
+            ? Number(e.duration_hours) || null
+            : null,
+        location: e.location != null ? String(e.location).trim() : null,
+        skill_level: e.skill_level != null ? String(e.skill_level).trim() : null,
+      }
+    })
+    .filter(
+      (row): row is typeof row & { entry_date: string } =>
+        Boolean(row.entry_date && /^\d{4}-\d{2}-\d{2}$/.test(row.entry_date))
+    )
 
   const chunk = 200
   for (let i = 0; i < rows.length; i += chunk) {
