@@ -298,14 +298,16 @@ async function callClaudeText(
 async function callClaudeVision(
   base64PDF: string,
   totalPages: number,
-  customPrompt?: string
+  customPrompt?: string,
+  maxTokensOverride?: number
 ): Promise<LogbookAnalysisResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not configured')
   }
 
-  console.log('[callClaudeVision] max_tokens:', VISION_MAX_TOKENS, '(fijo 16000, sin 64000)')
+  const tokensToUse = maxTokensOverride ?? VISION_MAX_TOKENS
+  process.stdout.write(`[callClaudeVision] max_tokens: ${tokensToUse}\n`)
 
   const prompt =
     customPrompt?.trim() ||
@@ -320,7 +322,7 @@ async function callClaudeVision(
     },
     body: JSON.stringify({
       model: LOGBOOK360_MODEL,
-      max_tokens: VISION_MAX_TOKENS,
+      max_tokens: tokensToUse,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -354,18 +356,18 @@ async function callClaudeVision(
     usage?: { input_tokens?: number; output_tokens?: number }
     stop_reason?: string
   }
-  console.log('[callClaudeVision] stop_reason:', data.stop_reason ?? 'desconocido')
+  process.stdout.write(`VISION stop_reason: ${data.stop_reason}\n`)
+  process.stdout.write(`VISION output_tokens: ${data.usage?.output_tokens}\n`)
   if (data.usage) {
-    console.log(
-      `Tokens visión — input: ${data.usage.input_tokens ?? '—'} output: ${data.usage.output_tokens ?? '—'}`
-    )
+    process.stdout.write(`VISION input_tokens: ${data.usage.input_tokens}\n`)
   }
   if (data.stop_reason === 'max_tokens') {
-    console.warn('[callClaudeVision] RESPUESTA TRUNCADA por max_tokens')
+    process.stdout.write('VISION TRUNCADA por max_tokens\n')
   }
 
   const block = data.content?.[0]
   const raw = block?.type === 'text' ? block.text || '' : ''
+  process.stdout.write(`VISION raw length: ${raw.length}\n`)
   const clean = raw
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
@@ -404,7 +406,9 @@ Devuelve el JSON completo con source_system, source_system_label, technician_nam
 Analiza las páginas ${pageFrom} a ${pageTo}.
 Devuelve SOLO el objeto JSON con el array entries con las entradas de estas páginas. Sin repetir source_system si no aplica; el formato debe ser: {"entries":[...]} .`
 
-    const result = await callClaudeVision(base64PDF, totalPages, prompt)
+    const chunkTokens = isFirst ? 4000 : VISION_MAX_TOKENS
+    process.stdout.write(`Bloque ${chunk + 1} → max_tokens: ${chunkTokens}\n`)
+    const result = await callClaudeVision(base64PDF, totalPages, prompt, chunkTokens)
 
     if (isFirst) {
       sourceInfo = result
@@ -457,7 +461,8 @@ Devuelve SOLO el objeto JSON con el array entries con las entradas de estas pág
  * Analiza un PDF en base64: modo texto (pdf-parse + Claude texto) o visión (PDF binario a Claude).
  */
 export async function analyzeLogbookWithClaude(base64PDF: string): Promise<LogbookAnalysisResult> {
-  console.log('=== ANALYZER VERSION 4 - VISION PAGINATED FIX ===')
+  process.stdout.write('=== ANALYZER VERSION 5 STDOUT ===\n')
+  console.log('=== ANALYZER VERSION 5 - VISION PAGINATED FIX ===')
   const buffer = Buffer.from(base64PDF, 'base64')
   const parsed = await parsePdfBuffer(buffer)
   const strippedLen = parsed.text.replace(/\s/g, '').length
