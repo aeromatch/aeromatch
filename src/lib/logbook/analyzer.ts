@@ -179,14 +179,34 @@ function parseClaudeJson(clean: string): LogbookAnalysisResult {
 const PAGES_PER_VISION_CHUNK = 15
 const VISION_MAX_TOKENS = 16000
 
+function salvageTruncatedJson(raw: string): Record<string, unknown> | null {
+  const lastBoundary = raw.lastIndexOf('},{')
+  if (lastBoundary === -1) return null
+  const truncated = raw.substring(0, lastBoundary + 1) + ']}'
+  try {
+    const parsed = JSON.parse(truncated) as Record<string, unknown>
+    const count = Array.isArray(parsed.entries) ? parsed.entries.length : 0
+    console.log(`JSON truncado recuperado: ${count} entradas rescatadas`)
+    return parsed
+  } catch {
+    return null
+  }
+}
+
 /** Parsea JSON de una respuesta de visión (objeto completo o solo `{ "entries": [...] }`). */
 function parseVisionResponseJson(clean: string): LogbookAnalysisResult {
   let parsed: Record<string, unknown>
   try {
     parsed = JSON.parse(clean) as Record<string, unknown>
-  } catch (e) {
-    console.log('JSON parse error, raw response:', clean.substring(0, 300))
-    throw new Error(`JSON parse failed: ${clean.substring(0, 200)}`)
+  } catch {
+    console.log('JSON parse error, intentando recuperar JSON truncado...')
+    console.log('Raw (500 chars):', clean.substring(0, 500))
+    const salvaged = salvageTruncatedJson(clean)
+    if (salvaged) {
+      parsed = salvaged
+    } else {
+      throw new Error(`JSON parse failed (no recuperable): ${clean.substring(0, 200)}`)
+    }
   }
   if (!parsed.entries || !Array.isArray(parsed.entries)) {
     parsed.entries = []
@@ -332,11 +352,16 @@ async function callClaudeVision(
   const data = (await response.json()) as {
     content: Array<{ type: string; text?: string }>
     usage?: { input_tokens?: number; output_tokens?: number }
+    stop_reason?: string
   }
+  console.log('[callClaudeVision] stop_reason:', data.stop_reason ?? 'desconocido')
   if (data.usage) {
     console.log(
       `Tokens visión — input: ${data.usage.input_tokens ?? '—'} output: ${data.usage.output_tokens ?? '—'}`
     )
+  }
+  if (data.stop_reason === 'max_tokens') {
+    console.warn('[callClaudeVision] RESPUESTA TRUNCADA por max_tokens')
   }
 
   const block = data.content?.[0]
@@ -432,15 +457,20 @@ Devuelve SOLO el objeto JSON con el array entries con las entradas de estas pág
  * Analiza un PDF en base64: modo texto (pdf-parse + Claude texto) o visión (PDF binario a Claude).
  */
 export async function analyzeLogbookWithClaude(base64PDF: string): Promise<LogbookAnalysisResult> {
-  console.log('=== ANALYZER VERSION 3 - CHUNKING ACTIVO ===')
+  console.log('=== ANALYZER VERSION 4 - VISION PAGINATED FIX ===')
   const buffer = Buffer.from(base64PDF, 'base64')
   const parsed = await parsePdfBuffer(buffer)
   const strippedLen = parsed.text.replace(/\s/g, '').length
   const hasText = strippedLen > 500
-  const totalPages = parsed.numpages || 0
 
+  const pdfSizeKB = Math.round(buffer.length / 1024)
+  const parsedPages = parsed.numpages || 0
+  const estimatedPages = Math.max(1, Math.round(pdfSizeKB / 100))
+  const totalPages = parsedPages > 0 ? parsedPages : estimatedPages
+
+  console.log('PDF size:', pdfSizeKB, 'KB')
   console.log('Chars sin espacios:', strippedLen)
-  console.log('PDF pages:', totalPages)
+  console.log('Pages pdf-parse:', parsedPages, '| estimadas:', estimatedPages, '| usadas:', totalPages)
   console.log('Modo seleccionado:', hasText ? 'TEXT' : 'VISION_PAGINATED')
 
   if (hasText) {
