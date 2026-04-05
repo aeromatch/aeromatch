@@ -285,6 +285,8 @@ async function callClaudeVision(
     throw new Error('ANTHROPIC_API_KEY is not configured')
   }
 
+  console.log('[callClaudeVision] max_tokens:', VISION_MAX_TOKENS, '(fijo 16000, sin 64000)')
+
   const prompt =
     customPrompt?.trim() ||
     `Analiza este logbook de ${totalPages} páginas y extrae TODAS las entradas. Devuelve el JSON estructurado según el system prompt.`
@@ -355,6 +357,7 @@ async function callClaudeVisionPaginated(
   const pageCount = Math.max(totalPages, 1)
   const totalChunks = Math.max(1, Math.ceil(pageCount / PAGES_PER_VISION_CHUNK))
 
+  console.log('INICIANDO PAGINACIÓN:', totalChunks, 'bloques')
   console.log(`Procesando PDF en ${totalChunks} bloque(s) de hasta ${PAGES_PER_VISION_CHUNK} páginas`)
 
   let sourceInfo: LogbookAnalysisResult | null = null
@@ -432,10 +435,12 @@ export async function analyzeLogbookWithClaude(base64PDF: string): Promise<Logbo
   const buffer = Buffer.from(base64PDF, 'base64')
   const parsed = await parsePdfBuffer(buffer)
   const strippedLen = parsed.text.replace(/\s/g, '').length
-  const hasText = strippedLen > 200
+  const hasText = strippedLen > 500
   const totalPages = parsed.numpages || 0
 
-  console.log('PDF pages:', totalPages, '| mode:', hasText ? 'TEXT' : 'VISION')
+  console.log('Chars sin espacios:', strippedLen)
+  console.log('PDF pages:', totalPages)
+  console.log('Modo seleccionado:', hasText ? 'TEXT' : 'VISION_PAGINATED')
 
   if (hasText) {
     const fullText = parsed.text
@@ -460,6 +465,7 @@ export async function analyzeLogbookWithClaude(base64PDF: string): Promise<Logbo
     return mergeChunkResults(results, totalPages)
   }
 
+  console.log('→ Rama hasText=false: ejecutando callClaudeVisionPaginated (no una sola callClaudeVision)')
   return callClaudeVisionPaginated(base64PDF, totalPages)
 }
 
