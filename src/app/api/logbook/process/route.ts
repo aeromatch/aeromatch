@@ -1,9 +1,8 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { analyzeLogbookWithClaude } from '@/lib/logbook/analyzer'
+import { analyzeLogbookWithClaude, extractTextFromPDF } from '@/lib/logbook/analyzer'
 import { mergeEntries } from '@/lib/logbook/merger'
 import { recalculateAnalysis } from '@/lib/logbook/aggregator'
 import { NextResponse } from 'next/server'
-import { PDFParse } from 'pdf-parse'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -59,16 +58,7 @@ export async function POST(req: Request) {
     console.log('PDF buffer size bytes:', buffer.length)
     console.log('PDF buffer size MB:', (buffer.length / 1024 / 1024).toFixed(2))
 
-    const parser = new PDFParse({ data: buffer })
-    let fullText = ''
-    let numPages = 0
-    try {
-      const textResult = await parser.getText()
-      fullText = textResult.text ?? ''
-      numPages = textResult.total ?? 0
-    } finally {
-      await parser.destroy()
-    }
+    const { text: fullText, pages: numPages } = await extractTextFromPDF(buffer)
 
     console.log('Páginas detectadas:', numPages)
     console.log('Caracteres extraídos:', fullText.length)

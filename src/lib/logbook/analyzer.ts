@@ -1,6 +1,19 @@
 /**
- * Análisis de logbook vía Anthropic: texto extraído localmente con pdf-parse (ver process route).
+ * Análisis de logbook vía Anthropic: texto extraído localmente con pdf-parse v1 (Node, sin pdfjs-dist DOM).
  */
+
+/** Extracción de texto con pdf-parse@1.x (evita pdfjs-dist / DOMMatrix en Vercel). */
+/** No importar desde `pdf-parse` (index.js ejecuta un debug que rompe el build Next — ENOENT test/data). */
+export async function extractTextFromPDF(buffer: Buffer): Promise<{ text: string; pages: number }> {
+  const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')) as unknown as (
+    b: Buffer
+  ) => Promise<{ text: string; numpages: number }>
+  const data = await pdfParse(buffer)
+  return {
+    text: data.text,
+    pages: data.numpages,
+  }
+}
 
 const SYSTEM_PROMPT = `Eres un sistema especializado en análisis de logbooks de mantenimiento aeronáutico EASA Part-66. Recibes un PDF exportado de un sistema MRO y debes extraer datos estructurados.
 
