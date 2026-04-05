@@ -3,8 +3,10 @@ import { analyzeLogbookWithClaude } from '@/lib/logbook/analyzer'
 import { mergeEntries } from '@/lib/logbook/merger'
 import { recalculateAnalysis } from '@/lib/logbook/aggregator'
 import { NextResponse } from 'next/server'
+import { PDFParse } from 'pdf-parse'
 
 export const maxDuration = 300
+export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   const auth = req.headers.get('Authorization')
@@ -51,17 +53,45 @@ export async function POST(req: Request) {
       throw new Error(`Storage download failed: ${dlError?.message || 'no data'}`)
     }
 
-    const buffer = Buffer.from(await fileData.arrayBuffer())
-    const base64PDF = buffer.toString('base64')
+    const arrayBuffer = await fileData.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    const result = await analyzeLogbookWithClaude(base64PDF)
+    console.log('PDF buffer size bytes:', buffer.length)
+    console.log('PDF buffer size MB:', (buffer.length / 1024 / 1024).toFixed(2))
+
+    const parser = new PDFParse({ data: buffer })
+    let fullText = ''
+    let numPages = 0
+    try {
+      const textResult = await parser.getText()
+      fullText = textResult.text ?? ''
+      numPages = textResult.total ?? 0
+    } finally {
+      await parser.destroy()
+    }
+
+    console.log('Páginas detectadas:', numPages)
+    console.log('Caracteres extraídos:', fullText.length)
+    console.log('Muestra texto (primeros 500 chars):', fullText.substring(0, 500))
+    console.log('Muestra texto (chars 5000-5500):', fullText.substring(5000, 5500))
+
+    if (fullText.length < 1000) {
+      throw new Error(
+        `PDF text extraction failed: only ${fullText.length} chars extracted from ${numPages} pages`
+      )
+    }
+
+    const result = await analyzeLogbookWithClaude({
+      fullText,
+      numPages,
+    })
 
     await supabase
       .from('logbook_jobs')
       .update({
         source_system: result.source_system,
         source_system_label: result.source_system_label,
-        source_pages: result.pages_detected ?? null,
+        source_pages: result.pages_detected ?? numPages ?? null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', jobId)

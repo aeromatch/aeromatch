@@ -52,41 +52,55 @@ export async function mergeEntries(
     }
   }
 
-  const rows = entriesRaw
-    .map((e) => {
-      const ataStr =
-        e.ata_chapter !== null && e.ata_chapter !== undefined
-          ? String(e.ata_chapter).trim()
-          : ''
-      const woStr =
-        e.wo_number !== null && e.wo_number !== undefined
-          ? String(e.wo_number).trim()
-          : `${String(e.entry_date ?? '')}-${ataStr || 'na'}-${Math.random().toString(36).slice(2, 7)}`
-      return {
-        technician_id: technicianId,
-        source_id: source.id,
-        entry_date: String(e.entry_date ?? '').trim() || null,
-        ac_registration: e.ac_registration != null ? String(e.ac_registration).trim() : null,
-        ac_type: e.ac_type != null ? String(e.ac_type).trim() : null,
-        ac_type_raw: e.ac_type_raw != null ? String(e.ac_type_raw).trim() : null,
-        ata_chapter: ataStr,
-        ata_description:
-          e.ata_description != null ? String(e.ata_description).trim().substring(0, 500) : null,
-        wo_number: woStr,
-        description:
-          e.description != null ? String(e.description).trim().substring(0, 500) : null,
-        duration_hours:
-          e.duration_hours !== null && e.duration_hours !== undefined
-            ? Number(e.duration_hours) || null
-            : null,
-        location: e.location != null ? String(e.location).trim() : null,
-        skill_level: e.skill_level != null ? String(e.skill_level).trim() : null,
-      }
-    })
-    .filter(
-      (row): row is typeof row & { entry_date: string } =>
-        Boolean(row.entry_date && /^\d{4}-\d{2}-\d{2}$/.test(row.entry_date))
-    )
+  const mappedRows = entriesRaw.map((e) => {
+    const ataStr =
+      e.ata_chapter !== null && e.ata_chapter !== undefined
+        ? String(e.ata_chapter).trim()
+        : ''
+    const woStr =
+      e.wo_number !== null && e.wo_number !== undefined
+        ? String(e.wo_number).trim()
+        : `${String(e.entry_date ?? '')}-${ataStr || 'na'}-${Math.random().toString(36).slice(2, 7)}`
+    return {
+      technician_id: technicianId,
+      source_id: source.id,
+      entry_date: String(e.entry_date ?? '').trim() || null,
+      ac_registration: e.ac_registration != null ? String(e.ac_registration).trim() : null,
+      ac_type: e.ac_type != null ? String(e.ac_type).trim() : null,
+      ac_type_raw: e.ac_type_raw != null ? String(e.ac_type_raw).trim() : null,
+      ata_chapter: ataStr,
+      ata_description:
+        e.ata_description != null ? String(e.ata_description).trim().substring(0, 500) : null,
+      wo_number: woStr,
+      description: e.description != null ? String(e.description).trim().substring(0, 500) : null,
+      duration_hours:
+        e.duration_hours !== null && e.duration_hours !== undefined
+          ? Number(e.duration_hours) || null
+          : null,
+      location: e.location != null ? String(e.location).trim() : null,
+      skill_level: e.skill_level != null ? String(e.skill_level).trim() : null,
+    }
+  })
+
+  // DEBUG temporal — quitar tras diagnosticar fechas Claude
+  const rawEntries = result.entries ?? []
+  console.log('Total entradas recibidas de Claude:', rawEntries.length)
+  console.log('Muestra primeras 3 entradas raw:', JSON.stringify(rawEntries.slice(0, 3), null, 2))
+
+  const sinFecha = rawEntries.filter(
+    (e: { entry_date?: unknown }) =>
+      !String(e.entry_date ?? '').match(/^\d{4}-\d{2}-\d{2}$/)
+  )
+  console.log('Entradas descartadas por fecha inválida:', sinFecha.length)
+  console.log(
+    'Muestra fechas inválidas:',
+    sinFecha.slice(0, 5).map((e: { entry_date?: unknown }) => e.entry_date)
+  )
+
+  const rows = mappedRows.filter(
+    (row): row is (typeof mappedRows)[number] & { entry_date: string } =>
+      Boolean(row.entry_date && /^\d{4}-\d{2}-\d{2}$/.test(row.entry_date))
+  )
 
   const chunk = 200
   for (let i = 0; i < rows.length; i += chunk) {
