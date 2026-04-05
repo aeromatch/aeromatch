@@ -27,7 +27,15 @@ export default async function LogBook360Page() {
 
   const { data: logbookDocs } = await supabase
     .from('documents')
-    .select('id, file_name, storage_path, created_at')
+    .select(`
+      id,
+      file_name,
+      storage_path,
+      created_at,
+      logbook_sources (
+        id
+      )
+    `)
     .eq('technician_id', user.id)
     .eq('doc_type', 'logbook')
     .order('created_at', { ascending: false })

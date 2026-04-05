@@ -34,6 +34,28 @@ export async function mergeEntries(
   if (insErr) throw new Error(`logbook_sources insert: ${insErr.message}`)
   if (!source?.id || entriesRaw.length === 0) return
 
+  const { data: jobRow } = await supabase
+    .from('logbook_jobs')
+    .select('storage_path')
+    .eq('id', jobId)
+    .maybeSingle()
+
+  if (jobRow?.storage_path) {
+    const { data: docMatch } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('technician_id', technicianId)
+      .eq('storage_path', jobRow.storage_path)
+      .maybeSingle()
+
+    if (docMatch?.id) {
+      await supabase
+        .from('logbook_sources')
+        .update({ document_id: docMatch.id })
+        .eq('id', source.id)
+    }
+  }
+
   const rows = entriesRaw.map((e) => {
     const ata = safeStr(e.ata_chapter)
     const wo =

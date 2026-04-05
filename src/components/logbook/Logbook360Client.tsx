@@ -16,6 +16,7 @@ type LogbookDoc = {
   file_name: string | null
   storage_path: string
   created_at: string
+  logbook_sources?: { id: string }[] | null
 }
 
 function JobPoller({
@@ -55,6 +56,8 @@ export function Logbook360Client({
   const [analysis, setAnalysis] = useState(initialAnalysis)
   const [analyzing, setAnalyzing] = useState(false)
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const reloadAnalysis = useCallback(async () => {
     const res = await fetch('/api/logbook/current')
@@ -80,6 +83,22 @@ export function Logbook360Client({
       if (data.job_id) setActiveJobId(data.job_id)
     } finally {
       setAnalyzing(false)
+    }
+  }
+
+  async function handleDelete(doc: LogbookDoc) {
+    const sourceId = doc.logbook_sources?.[0]?.id
+    setDeleting(true)
+    try {
+      const url = sourceId
+        ? `/api/logbook/source/${sourceId}`
+        : `/api/logbook/document/${doc.id}`
+      const res = await fetch(url, { method: 'DELETE' })
+      if (!res.ok) return
+      setConfirmingDelete(null)
+      window.location.reload()
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -142,15 +161,45 @@ export function Logbook360Client({
                     {new Date(doc.created_at).toLocaleDateString('es-ES')}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => analyzeExisting(doc.storage_path)}
-                  disabled={analyzing}
-                  className="flex items-center gap-1.5 text-xs text-gold-500 border border-gold-500/30 rounded-md px-3 py-1 hover:bg-gold-500/10 transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <RefreshCw size={11} className={analyzing ? 'animate-spin' : ''} />
-                  {analyzing ? '…' : 'Analizar'}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => analyzeExisting(doc.storage_path)}
+                    disabled={analyzing}
+                    className="flex items-center gap-1.5 text-xs text-gold-500 border border-gold-500/30 rounded-md px-3 py-1 hover:bg-gold-500/10 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw size={11} className={analyzing ? 'animate-spin' : ''} />
+                    {analyzing ? '…' : 'Analizar'}
+                  </button>
+                  {confirmingDelete === doc.id ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-steel-400">¿Eliminar?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(doc)}
+                        disabled={deleting}
+                        className="text-xs text-error-400 border border-error-500/30 rounded-md px-2 py-1 hover:bg-error-500/10 transition-colors"
+                      >
+                        {deleting ? '…' : 'Sí'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingDelete(null)}
+                        className="text-xs text-steel-400 border border-steel-700/40 rounded-md px-2 py-1 hover:bg-steel-700/20 transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingDelete(doc.id)}
+                      className="text-xs text-steel-500 border border-steel-700/40 rounded-md px-2 py-1 hover:text-error-400 hover:border-error-500/30 transition-colors"
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
