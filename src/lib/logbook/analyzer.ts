@@ -176,6 +176,46 @@ function parseClaudeJson(clean: string): LogbookAnalysisResult {
   return normalizeEntries(parsed)
 }
 
+const PAGES_PER_VISION_CHUNK = 15
+const VISION_MAX_TOKENS = 16000
+
+/** Parsea JSON de una respuesta de visión (objeto completo o solo `{ "entries": [...] }`). */
+function parseVisionResponseJson(clean: string): LogbookAnalysisResult {
+  let parsed: Record<string, unknown>
+  try {
+    parsed = JSON.parse(clean) as Record<string, unknown>
+  } catch (e) {
+    console.log('JSON parse error, raw response:', clean.substring(0, 300))
+    throw new Error(`JSON parse failed: ${clean.substring(0, 200)}`)
+  }
+  if (!parsed.entries || !Array.isArray(parsed.entries)) {
+    parsed.entries = []
+  }
+  const entries = (parsed.entries as LogbookAnalysisResult['entries']).map((e) => ({
+    ...e,
+    entry_date: e.entry_date != null ? String(e.entry_date) : '',
+    ata_chapter:
+      e.ata_chapter !== undefined && e.ata_chapter !== null ? String(e.ata_chapter) : null,
+    wo_number: e.wo_number !== undefined && e.wo_number !== null ? String(e.wo_number) : null,
+    duration_hours:
+      e.duration_hours !== undefined && e.duration_hours !== null
+        ? Number(e.duration_hours) || null
+        : null,
+  }))
+  const out: LogbookAnalysisResult = {
+    source_system: (parsed.source_system as string) || 'UNKNOWN',
+    source_system_label: parsed.source_system_label as string | undefined,
+    extraction_confidence: parsed.extraction_confidence as number | undefined,
+    technician_name: parsed.technician_name as string | undefined,
+    mro_operator: parsed.mro_operator as string | undefined,
+    pages_detected: parsed.pages_detected as number | undefined,
+    document_notes: parsed.document_notes as string | undefined,
+    summary: parsed.summary as LogbookAnalysisResult['summary'],
+    entries,
+  }
+  return normalizeEntries(out)
+}
+
 async function callClaudeText(
   textChunk: string,
   totalPages: number,
@@ -235,11 +275,19 @@ async function callClaudeText(
   }
 }
 
-async function callClaudeVision(base64PDF: string, totalPages: number): Promise<LogbookAnalysisResult> {
+async function callClaudeVision(
+  base64PDF: string,
+  totalPages: number,
+  customPrompt?: string
+): Promise<LogbookAnalysisResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not configured')
   }
+
+  const prompt =
+    customPrompt?.trim() ||
+    `Analiza este logbook de ${totalPages} páginas y extrae TODAS las entradas. Devuelve el JSON estructurado según el system prompt.`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -250,7 +298,7 @@ async function callClaudeVision(base64PDF: string, totalPages: number): Promise<
     },
     body: JSON.stringify({
       model: LOGBOOK360_MODEL,
-      max_tokens: 64000,
+      max_tokens: VISION_MAX_TOKENS,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -266,7 +314,7 @@ async function callClaudeVision(base64PDF: string, totalPages: number): Promise<
             },
             {
               type: 'text',
-              text: `Este PDF tiene ${totalPages} páginas y es un logbook escaneado o con poco texto extraíble. Analiza visualmente todas las páginas y extrae TODAS las entradas de mantenimiento que veas. Devuelve el JSON estructurado según las instrucciones.`,
+              text: prompt,
             },
           ],
         },
@@ -281,10 +329,12 @@ async function callClaudeVision(base64PDF: string, totalPages: number): Promise<
 
   const data = (await response.json()) as {
     content: Array<{ type: string; text?: string }>
-    usage?: unknown
+    usage?: { input_tokens?: number; output_tokens?: number }
   }
   if (data.usage) {
-    console.log('Claude vision usage:', data.usage)
+    console.log(
+      `Tokens visión — input: ${data.usage.input_tokens ?? '—'} output: ${data.usage.output_tokens ?? '—'}`
+    )
   }
 
   const block = data.content?.[0]
@@ -295,27 +345,84 @@ async function callClaudeVision(base64PDF: string, totalPages: number): Promise<
     .replace(/\s*```$/i, '')
     .trim()
 
-  try {
-    const parsed = JSON.parse(clean) as LogbookAnalysisResult
-    if (!parsed.entries || !Array.isArray(parsed.entries)) {
-      parsed.entries = []
+  return parseVisionResponseJson(clean)
+}
+
+async function callClaudeVisionPaginated(
+  base64PDF: string,
+  totalPages: number
+): Promise<LogbookAnalysisResult> {
+  const pageCount = Math.max(totalPages, 1)
+  const totalChunks = Math.max(1, Math.ceil(pageCount / PAGES_PER_VISION_CHUNK))
+
+  console.log(`Procesando PDF en ${totalChunks} bloque(s) de hasta ${PAGES_PER_VISION_CHUNK} páginas`)
+
+  let sourceInfo: LogbookAnalysisResult | null = null
+  const allEntries: LogbookAnalysisResult['entries'] = []
+
+  for (let chunk = 0; chunk < totalChunks; chunk++) {
+    const pageFrom = chunk * PAGES_PER_VISION_CHUNK + 1
+    const pageTo = Math.min((chunk + 1) * PAGES_PER_VISION_CHUNK, pageCount)
+    const isFirst = chunk === 0
+
+    console.log(`Bloque visión ${chunk + 1}/${totalChunks}: páginas ${pageFrom}-${pageTo}`)
+
+    const prompt = isFirst
+      ? `Este PDF tiene ${totalPages || pageCount} páginas en total.
+Analiza las páginas ${pageFrom} a ${pageTo}.
+Extrae la información del técnico y TODAS las entradas de mantenimiento visibles en estas páginas.
+Devuelve el JSON completo con source_system, source_system_label, technician_name, mro_operator, summary y entries.`
+      : `Continúa extrayendo entradas del mismo logbook.
+Analiza las páginas ${pageFrom} a ${pageTo}.
+Devuelve SOLO el objeto JSON con el array entries con las entradas de estas páginas. Sin repetir source_system si no aplica; el formato debe ser: {"entries":[...]} .`
+
+    const result = await callClaudeVision(base64PDF, totalPages, prompt)
+
+    if (isFirst) {
+      sourceInfo = result
+      if (result.entries?.length) {
+        allEntries.push(...result.entries)
+      }
+    } else if (result.entries?.length) {
+      allEntries.push(...result.entries)
     }
-    parsed.entries = parsed.entries.map((e) => ({
-      ...e,
-      entry_date: e.entry_date != null ? String(e.entry_date) : '',
-      ata_chapter:
-        e.ata_chapter !== undefined && e.ata_chapter !== null ? String(e.ata_chapter) : null,
-      wo_number: e.wo_number !== undefined && e.wo_number !== null ? String(e.wo_number) : null,
-      duration_hours:
-        e.duration_hours !== undefined && e.duration_hours !== null
-          ? Number(e.duration_hours) || null
-          : null,
-    }))
-    console.log('Entradas extraídas por visión:', parsed.entries.length)
-    return normalizeEntries(parsed)
-  } catch {
-    throw new Error(`JSON parse failed: ${clean.substring(0, 500)}`)
+
+    console.log(
+      `Bloque ${chunk + 1}: ${result.entries?.length || 0} entradas. Total acumulado: ${allEntries.length}`
+    )
+
+    if (chunk < totalChunks - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
   }
+
+  const base = sourceInfo ?? ({
+    source_system: 'UNKNOWN',
+    entries: [],
+  } as LogbookAnalysisResult)
+
+  const sortedEntries = [...allEntries].sort((a, b) =>
+    (b.entry_date || '').localeCompare(a.entry_date || '')
+  )
+
+  const totalHours = sortedEntries.reduce(
+    (sum, e) => sum + (Number(e.duration_hours) || 0),
+    0
+  )
+
+  return normalizeEntries({
+    ...base,
+    pages_detected: totalPages || pageCount,
+    summary: {
+      ...base.summary,
+      total_entries: sortedEntries.length,
+      total_hours: Math.round(totalHours * 10) / 10,
+      date_from:
+        sortedEntries[sortedEntries.length - 1]?.entry_date || base.summary?.date_from || undefined,
+      date_to: sortedEntries[0]?.entry_date || base.summary?.date_to || undefined,
+    },
+    entries: sortedEntries,
+  })
 }
 
 /**
@@ -328,14 +435,7 @@ export async function analyzeLogbookWithClaude(base64PDF: string): Promise<Logbo
   const hasText = strippedLen > 200
   const totalPages = parsed.numpages || 0
 
-  console.log(
-    'PDF pages:',
-    totalPages,
-    '| extractable text chars (no ws):',
-    strippedLen,
-    '| mode:',
-    hasText ? 'TEXT' : 'VISION'
-  )
+  console.log('PDF pages:', totalPages, '| mode:', hasText ? 'TEXT' : 'VISION')
 
   if (hasText) {
     const fullText = parsed.text
@@ -348,15 +448,19 @@ export async function analyzeLogbookWithClaude(base64PDF: string): Promise<Logbo
     const results: LogbookAnalysisResult[] = []
     for (let i = 0; i < chunks.length; i++) {
       const result = await callClaudeText(chunks[i], totalPages, i + 1, chunks.length)
-      results.push(result)
+      if (result.entries?.length) {
+        results.push(result)
+      }
+    }
+    if (results.length === 0) {
+      const fallback = await callClaudeText(chunks[0]!, totalPages, 1, chunks.length)
+      fallback.pages_detected = totalPages
+      return normalizeEntries(fallback)
     }
     return mergeChunkResults(results, totalPages)
   }
 
-  console.log('PDF escaneado o sin texto extraíble, usando visión de Claude')
-  const out = await callClaudeVision(base64PDF, totalPages)
-  out.pages_detected = totalPages || out.pages_detected
-  return normalizeEntries(out)
+  return callClaudeVisionPaginated(base64PDF, totalPages)
 }
 
 /** Solo para diagnóstico / otras rutas que necesiten texto local. */
