@@ -120,28 +120,39 @@ export function LogbookUpload({
     )
   }
 
+  // TODO: reactivar cuando el análisis esté listo
+  const ANALYSIS_DISABLED = true
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <label className="cursor-pointer">
-        <input
-          type="file"
-          accept=".pdf"
-          className="hidden"
-          onChange={handleFile}
-          disabled={uploading}
-        />
-        <span className="inline-block text-xs text-gold-500 border border-gold-500/30 rounded-md px-3 py-1.5 hover:bg-gold-500/10 transition-colors">
-          {uploading ? 'Subiendo…' : '+ Subir logbook PDF'}
+      {ANALYSIS_DISABLED ? (
+        <span className="inline-block text-xs text-steel-500 border border-steel-700/30 rounded-md px-3 py-1.5">
+          Análisis en mantenimiento — disponible próximamente
         </span>
-      </label>
-      {pendingAnalyze && (
-        <button
-          type="button"
-          onClick={() => startAnalyze(pendingAnalyze.jobId)}
-          className="text-xs text-gold-500 border border-gold-500/50 rounded-md px-3 py-1.5 hover:bg-gold-500/10 transition-colors"
-        >
-          Analizar
-        </button>
+      ) : (
+        <>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={handleFile}
+              disabled={uploading}
+            />
+            <span className="inline-block text-xs text-gold-500 border border-gold-500/30 rounded-md px-3 py-1.5 hover:bg-gold-500/10 transition-colors">
+              {uploading ? 'Subiendo…' : '+ Subir logbook PDF'}
+            </span>
+          </label>
+          {pendingAnalyze && (
+            <button
+              type="button"
+              onClick={() => startAnalyze(pendingAnalyze.jobId)}
+              className="text-xs text-gold-500 border border-gold-500/50 rounded-md px-3 py-1.5 hover:bg-gold-500/10 transition-colors"
+            >
+              Analizar
+            </button>
+          )}
+        </>
       )}
     </div>
   )

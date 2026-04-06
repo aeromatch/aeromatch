@@ -162,15 +162,13 @@ export function Logbook360Client({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => analyzeExisting(doc.storage_path)}
-                    disabled={analyzing}
-                    className="flex items-center gap-1.5 text-xs text-gold-500 border border-gold-500/30 rounded-md px-3 py-1 hover:bg-gold-500/10 transition-colors disabled:opacity-50"
+                  <span
+                    className="flex items-center gap-1.5 text-xs text-steel-600 border border-steel-700/30 rounded-md px-3 py-1 opacity-60 cursor-not-allowed"
+                    title="Análisis en mantenimiento"
                   >
-                    <RefreshCw size={11} className={analyzing ? 'animate-spin' : ''} />
-                    {analyzing ? '…' : 'Analizar'}
-                  </button>
+                    <RefreshCw size={11} />
+                    En mantenimiento
+                  </span>
                   {confirmingDelete === doc.id ? (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-steel-400">¿Eliminar?</span>
