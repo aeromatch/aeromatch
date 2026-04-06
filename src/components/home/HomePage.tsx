@@ -373,7 +373,7 @@ No paperwork. No middlemen. No commissions.`,
               </Link>
               <LanguageSwitch />
               <Link
-                href="/sobre-aeromatch"
+                href="/about"
                 className="inline-flex items-center justify-center rounded-lg border border-gold-500/50 bg-gold-500/5 px-4 py-2 text-sm font-semibold text-gold-400 transition-colors hover:border-gold-400 hover:bg-gold-500/10 hover:text-gold-300"
               >
                 {content.footer.about}

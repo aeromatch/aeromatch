@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Sobre aeroMatch — Built by techs, for techs',
     description:
       'Construido por un técnico B1/B2 para conectar profesionales EASA con empresas, sin intermediarios.',
-    url: 'https://aeromatch.eu/sobre-aeromatch',
+    url: 'https://aeromatch.eu/about',
     siteName: 'aeroMatch',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
     locale: 'es_ES',
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://aeromatch.eu/sobre-aeromatch',
+    canonical: 'https://aeromatch.eu/about',
   },
   robots: {
     index: true,
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
 }
 
-export default function SobreAeromatchLayout({
+export default function AboutLayout({
   children,
 }: {
   children: React.ReactNode
