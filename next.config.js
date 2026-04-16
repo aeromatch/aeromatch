@@ -15,6 +15,28 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/:path*.(png|jpg|jpeg|svg|ico|webp|avif|gif)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/fonts/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ]
+  },
   // No añadir Content-Type aquí para /sitemap.xml: duplica la cabecera con la del Route Handler
   // y algunos clientes (p. ej. Google) rechazan respuestas con Content-Type duplicado o ambiguo.
 }
