@@ -46,7 +46,8 @@ async function getRecipients(segment: Segment) {
     query = query.or('verification_status.is.null,verification_status.neq.verified')
   }
 
-  const { data } = await query
+  const { data, error } = await query
+  if (error) console.error('[mailing] getRecipients error:', error)
   return (data ?? []).map((r) => {
     const p = r.profiles as unknown as { email: string; full_name: string | null }
     return { email: p.email, name: p.full_name || 'there' }
@@ -102,8 +103,14 @@ export async function GET(req: Request) {
   if (action === 'count') {
     const segment = searchParams.get('segment') as Segment
     if (!segment) return NextResponse.json({ count: 0 })
-    const recipients = await getRecipients(segment)
-    return NextResponse.json({ count: recipients.length })
+    try {
+      const recipients = await getRecipients(segment)
+      console.log(`[mailing] count segment=${segment} → ${recipients.length}`)
+      return NextResponse.json({ count: recipients.length })
+    } catch (err) {
+      console.error('[mailing] count error:', err)
+      return NextResponse.json({ count: 0, error: String(err) })
+    }
   }
 
   if (action === 'history') {
