@@ -25,33 +25,36 @@ async function getRecipients(segment: Segment) {
   const supa = createServiceClient()
 
   if (segment === 'all_companies') {
-    const { data } = await supa
-      .from('companies')
-      .select('user_id, company_name, profiles!inner(email, full_name)')
+    const { data, error } = await supa
+      .from('profiles')
+      .select('email, full_name, companies!inner(user_id, company_name)')
+      .eq('role', 'company')
+    if (error) console.error('[mailing] companies error:', error)
     return (data ?? []).map((r) => {
-      const p = r.profiles as unknown as { email: string; full_name: string | null }
-      return { email: p.email, name: p.full_name || r.company_name || 'there' }
+      const c = r.companies as unknown as { company_name: string | null }
+      return { email: r.email, name: r.full_name || c?.company_name || 'there' }
     })
   }
 
   let query = supa
-    .from('technicians')
-    .select('user_id, profiles!inner(email, full_name), verification_status')
+    .from('profiles')
+    .select('email, full_name, technicians!inner(user_id, is_available, verification_status)')
+    .eq('role', 'technician')
 
   if (segment === 'technicians_no_availability') {
-    query = query.eq('is_available', false)
+    query = query.eq('technicians.is_available', false)
   } else if (segment === 'technicians_verified') {
-    query = query.eq('verification_status', 'verified')
+    query = query.eq('technicians.verification_status', 'verified')
   } else if (segment === 'technicians_unverified') {
-    query = query.or('verification_status.is.null,verification_status.neq.verified')
+    query = query.or('technicians.verification_status.is.null,technicians.verification_status.neq.verified')
   }
 
   const { data, error } = await query
-  if (error) console.error('[mailing] getRecipients error:', error)
-  return (data ?? []).map((r) => {
-    const p = r.profiles as unknown as { email: string; full_name: string | null }
-    return { email: p.email, name: p.full_name || 'there' }
-  })
+  if (error) console.error('[mailing] technicians error:', error)
+  return (data ?? []).map((r) => ({
+    email: r.email,
+    name: r.full_name || 'there',
+  }))
 }
 
 function buildEmailHtml(
