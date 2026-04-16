@@ -23,6 +23,8 @@ type HistoryRow = {
   segment: string
   recipients_count: number
   errors_count: number
+  status: string
+  scheduled_at: string | null
   created_at: string
 }
 
@@ -37,10 +39,12 @@ export function MailingTab() {
   const [ctaText, setCtaText] = useState('')
   const [ctaUrl, setCtaUrl] = useState('')
 
+  const [scheduledAt, setScheduledAt] = useState('')
+
   const [previewing, setPreviewing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [sending, setSending] = useState(false)
-  const [result, setResult] = useState<{ sent: number; errors: number } | null>(null)
+  const [result, setResult] = useState<{ sent: number; errors: number; scheduled?: boolean } | null>(null)
 
   const [history, setHistory] = useState<HistoryRow[]>([])
 
@@ -79,13 +83,18 @@ export function MailingTab() {
     try {
       const payload: Record<string, unknown> = { segment, subject, body, cta_text: ctaText || undefined, cta_url: ctaUrl || undefined }
       if (manualEmail.trim()) payload.manual_email = manualEmail.trim()
+      if (scheduledAt) payload.scheduled_at = new Date(scheduledAt).toISOString()
       const res = await fetch('/api/admin/mailing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
       const data = await res.json()
-      setResult({ sent: data.sent ?? 0, errors: data.errors ?? 0 })
+      if (data.scheduled) {
+        setResult({ sent: 0, errors: 0, scheduled: true })
+      } else {
+        setResult({ sent: data.sent ?? 0, errors: data.errors ?? 0 })
+      }
       setConfirmOpen(false)
       fetchHistory()
     } finally {
@@ -181,6 +190,21 @@ export function MailingTab() {
             />
           </div>
         </div>
+        <div>
+          <label className="block text-xs text-steel-400 mb-1">Programar envío (opcional)</label>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            className="w-full sm:w-auto bg-navy-950 border border-steel-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500/50"
+          />
+          {scheduledAt && (
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gold-400">Se enviará el {new Date(scheduledAt).toLocaleString('es-ES')}</p>
+              <button type="button" onClick={() => setScheduledAt('')} className="text-xs text-steel-500 hover:text-white">✕</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -198,16 +222,20 @@ export function MailingTab() {
           onClick={() => setConfirmOpen(true)}
           className="text-sm bg-gold-500 text-navy-950 font-semibold rounded-lg px-5 py-2 hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Enviar
+          {scheduledAt ? 'Programar' : 'Enviar'}
         </button>
       </div>
 
       {result && (
         <div className="text-sm p-3 rounded-lg border border-steel-700/40 bg-navy-900">
-          Enviados: <span className="text-green-400 font-semibold">{result.sent}</span>
-          {result.errors > 0 && (
-            <> · Errores: <span className="text-error-400 font-semibold">{result.errors}</span></>
-          )}
+          {result.scheduled
+            ? <span className="text-gold-400 font-semibold">Programado para {new Date(scheduledAt).toLocaleString('es-ES')}</span>
+            : <>Enviados: <span className="text-green-400 font-semibold">{result.sent}</span>
+              {result.errors > 0 && (
+                <> · Errores: <span className="text-error-400 font-semibold">{result.errors}</span></>
+              )}
+            </>
+          }
         </div>
       )}
 
@@ -228,11 +256,11 @@ export function MailingTab() {
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-navy-900 border border-steel-700/50 rounded-2xl p-6 max-w-md w-full mx-4 space-y-4">
-            <h3 className="text-white font-semibold">Confirmar envío</h3>
+            <h3 className="text-white font-semibold">{scheduledAt ? 'Confirmar programación' : 'Confirmar envío'}</h3>
             <p className="text-sm text-steel-300">
               {isManualMode
-                ? <>Vas a enviar este email a <span className="text-gold-400 font-semibold">{manualEmail}</span>. ¿Confirmar?</>
-                : <>Vas a enviar este email a <span className="text-gold-400 font-semibold">{recipientCount}</span> destinatarios. ¿Confirmar?</>
+                ? <>Vas a {scheduledAt ? 'programar' : 'enviar'} este email a <span className="text-gold-400 font-semibold">{manualEmail}</span>.{scheduledAt && <> Fecha: <span className="text-gold-400">{new Date(scheduledAt).toLocaleString('es-ES')}</span>.</>} ¿Confirmar?</>
+                : <>Vas a {scheduledAt ? 'programar' : 'enviar'} este email a <span className="text-gold-400 font-semibold">{recipientCount}</span> destinatarios.{scheduledAt && <> Fecha: <span className="text-gold-400">{new Date(scheduledAt).toLocaleString('es-ES')}</span>.</>} ¿Confirmar?</>
               }
             </p>
             <div className="flex gap-3 justify-end">
@@ -267,6 +295,7 @@ export function MailingTab() {
                   <th className="py-2 pr-4">Fecha</th>
                   <th className="py-2 pr-4">Asunto</th>
                   <th className="py-2 pr-4">Segmento</th>
+                  <th className="py-2 pr-4">Estado</th>
                   <th className="py-2 pr-4 text-right">Enviados</th>
                   <th className="py-2 text-right">Errores</th>
                 </tr>
@@ -279,6 +308,15 @@ export function MailingTab() {
                     </td>
                     <td className="py-2 pr-4 text-white truncate max-w-[200px]">{row.subject}</td>
                     <td className="py-2 pr-4 text-steel-400">{SEGMENT_LABELS[row.segment as Segment] ?? row.segment}</td>
+                    <td className="py-2 pr-4">
+                      {row.status === 'scheduled' ? (
+                        <span className="text-gold-400">Programado {row.scheduled_at ? new Date(row.scheduled_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                      ) : row.status === 'sending' ? (
+                        <span className="text-blue-400">Enviando…</span>
+                      ) : (
+                        <span className="text-green-400">Enviado</span>
+                      )}
+                    </td>
                     <td className="py-2 pr-4 text-right text-green-400">{row.recipients_count}</td>
                     <td className="py-2 text-right text-error-400">{row.errors_count || '—'}</td>
                   </tr>

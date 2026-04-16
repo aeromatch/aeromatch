@@ -126,14 +126,31 @@ export async function POST(req: Request) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
 
-  const { segment, subject, body: bodyText, cta_text, cta_url, manual_email } = await req.json()
+  const { segment, subject, body: bodyText, cta_text, cta_url, manual_email, scheduled_at } = await req.json()
   if (!subject || !bodyText) {
     return NextResponse.json({ error: 'subject and body required' }, { status: 400 })
   }
 
+  const supa = createServiceClient()
+
+  if (scheduled_at) {
+    await supa.from('mailing_history').insert({
+      subject,
+      body: bodyText,
+      cta_text: cta_text || null,
+      cta_url: cta_url || null,
+      segment: manual_email ? `manual:${manual_email}` : segment,
+      recipients_count: 0,
+      errors_count: 0,
+      status: 'scheduled',
+      scheduled_at,
+      sent_by: adminId,
+    })
+    return NextResponse.json({ scheduled: true })
+  }
+
   let recipients: { email: string; name: string }[]
   if (manual_email) {
-    const supa = createServiceClient()
     const { data: profile } = await supa
       .from('profiles')
       .select('full_name')
@@ -172,15 +189,15 @@ export async function POST(req: Request) {
     await new Promise((resolve) => setTimeout(resolve, 300))
   }
 
-  const supa = createServiceClient()
   await supa.from('mailing_history').insert({
     subject,
     body: bodyText,
     cta_text: cta_text || null,
     cta_url: cta_url || null,
-    segment,
+    segment: manual_email ? `manual:${manual_email}` : segment,
     recipients_count: sent,
     errors_count: errors,
+    status: 'sent',
     sent_by: adminId,
   })
 
