@@ -1,17 +1,22 @@
 'use client'
 
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import '@/styles/infographic.css'
 import { Logo, LogoGoldA } from '@/components/ui/Logo'
 import { useLanguage, LanguageSwitch } from '@/lib/i18n/LanguageContext'
-import { StorySection } from '@/components/home/StorySection'
-import { HowItWorks } from '@/components/home/HowItWorks'
-import { ShareProfile } from '@/components/home/ShareProfile'
-import { Ecosystem } from '@/components/home/Ecosystem'
-import { Stats } from '@/components/home/Stats'
-import { FinalCTA } from '@/components/home/FinalCTA'
-import { InfographicMotion } from '@/components/home/InfographicMotion'
+
+const StorySection = dynamic(() => import('@/components/home/StorySection').then(m => ({ default: m.StorySection })))
+const HowItWorks = dynamic(() => import('@/components/home/HowItWorks').then(m => ({ default: m.HowItWorks })))
+const ShareProfile = dynamic(() => import('@/components/home/ShareProfile').then(m => ({ default: m.ShareProfile })))
+const Ecosystem = dynamic(() => import('@/components/home/Ecosystem').then(m => ({ default: m.Ecosystem })))
+const Stats = dynamic(() => import('@/components/home/Stats').then(m => ({ default: m.Stats })))
+const FinalCTA = dynamic(() => import('@/components/home/FinalCTA').then(m => ({ default: m.FinalCTA })))
+const InfographicMotion = dynamic(
+  () => import('@/components/home/InfographicMotion').then(m => ({ default: m.InfographicMotion })),
+  { ssr: false }
+)
 import { 
   FEATURE_FLAGS, 
   PRELAUNCH_COPY, 
@@ -217,7 +222,7 @@ No paperwork. No middlemen. No commissions.`,
   }
 
   return (
-    <div className="min-h-screen bg-navy-950">
+    <main className="min-h-screen bg-navy-950">
       {/* Pre-Launch Banner (replaces expired Jan 20 offer) */}
       <div className="bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950">
         <div className="max-w-6xl mx-auto px-4 py-2.5">
@@ -336,13 +341,13 @@ No paperwork. No middlemen. No commissions.`,
               </div>
             </div>
 
-            <p className="mt-6 text-sm text-steel-500">{content.pricingContext}</p>
+            <p className="mt-6 text-sm text-steel-300">{content.pricingContext}</p>
           </div>
         </div>
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg className="w-6 h-6 text-steel-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-steel-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
@@ -379,7 +384,7 @@ No paperwork. No middlemen. No commissions.`,
                 {content.footer.about}
               </Link>
             </div>
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-steel-500">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-steel-300">
               <Link href="/privacy" className="hover:text-white transition-colors">
                 {content.footer.privacy}
               </Link>
@@ -446,6 +451,6 @@ No paperwork. No middlemen. No commissions.`,
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }
