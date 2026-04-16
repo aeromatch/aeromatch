@@ -3,13 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
 
-const ADMIN_EMAILS = ['raulsburgos@gmail.com']
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'aeroMatch <onboarding@resend.dev>'
 
 async function isAdmin(): Promise<string | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) return null
+  if (!user) return null
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
+  if (!adminEmails.includes(user.email?.toLowerCase() || '')) return null
   return user.id
 }
 
