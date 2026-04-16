@@ -27,31 +27,39 @@ async function getRecipients(supa: ReturnType<typeof createServiceClient>, segme
 
   if (segment === 'all_companies') {
     const { data } = await supa
-      .from('companies')
-      .select('user_id, company_name, profiles!inner(email, full_name)')
-    return (data ?? []).map((r) => {
-      const p = r.profiles as unknown as { email: string; full_name: string | null }
-      return { email: p.email, name: p.full_name || r.company_name || 'there' }
-    })
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('role', 'company')
+    return (data ?? []).map((r) => ({ email: r.email, name: r.full_name || 'there' }))
   }
 
-  let query = supa
-    .from('technicians')
-    .select('user_id, profiles!inner(email, full_name), verification_status')
+  if (segment === 'all_technicians') {
+    const { data } = await supa
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('role', 'technician')
+    return (data ?? []).map((r) => ({ email: r.email, name: r.full_name || 'there' }))
+  }
 
+  let techQuery = supa.from('technicians').select('user_id, is_available, verification_status')
   if (segment === 'technicians_no_availability') {
-    query = query.eq('is_available', false)
+    techQuery = techQuery.eq('is_available', false)
   } else if (segment === 'technicians_verified') {
-    query = query.eq('verification_status', 'verified')
+    techQuery = techQuery.eq('verification_status', 'verified')
   } else if (segment === 'technicians_unverified') {
-    query = query.or('verification_status.is.null,verification_status.neq.verified')
+    techQuery = techQuery.or('verification_status.is.null,verification_status.neq.verified')
   }
 
-  const { data } = await query
-  return (data ?? []).map((r) => {
-    const p = r.profiles as unknown as { email: string; full_name: string | null }
-    return { email: p.email, name: p.full_name || 'there' }
-  })
+  const { data: techs } = await techQuery
+  const techIds = (techs ?? []).map((t) => t.user_id)
+  if (techIds.length === 0) return []
+
+  const { data: profiles } = await supa
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', techIds)
+
+  return (profiles ?? []).map((p) => ({ email: p.email, name: p.full_name || 'there' }))
 }
 
 function buildEmailHtml(bodyText: string, recipientName: string, ctaText?: string | null, ctaUrl?: string | null) {

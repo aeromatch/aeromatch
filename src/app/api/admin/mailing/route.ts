@@ -27,34 +27,47 @@ async function getRecipients(segment: Segment) {
   if (segment === 'all_companies') {
     const { data, error } = await supa
       .from('profiles')
-      .select('email, full_name, companies!inner(user_id, company_name)')
+      .select('id, email, full_name')
       .eq('role', 'company')
     if (error) console.error('[mailing] companies error:', error)
-    return (data ?? []).map((r) => {
-      const c = r.companies as unknown as { company_name: string | null }
-      return { email: r.email, name: r.full_name || c?.company_name || 'there' }
-    })
+    console.log(`[mailing] companies found: ${data?.length ?? 0}`)
+    return (data ?? []).map((r) => ({ email: r.email, name: r.full_name || 'there' }))
   }
 
-  let query = supa
-    .from('profiles')
-    .select('email, full_name, technicians!inner(user_id, is_available, verification_status)')
-    .eq('role', 'technician')
+  if (segment === 'all_technicians') {
+    const { data, error } = await supa
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('role', 'technician')
+    if (error) console.error('[mailing] all_technicians error:', error)
+    console.log(`[mailing] all_technicians profiles: ${data?.length ?? 0}`)
+    return (data ?? []).map((r) => ({ email: r.email, name: r.full_name || 'there' }))
+  }
 
+  let techQuery = supa.from('technicians').select('user_id, is_available, verification_status')
   if (segment === 'technicians_no_availability') {
-    query = query.eq('technicians.is_available', false)
+    techQuery = techQuery.eq('is_available', false)
   } else if (segment === 'technicians_verified') {
-    query = query.eq('technicians.verification_status', 'verified')
+    techQuery = techQuery.eq('verification_status', 'verified')
   } else if (segment === 'technicians_unverified') {
-    query = query.or('technicians.verification_status.is.null,technicians.verification_status.neq.verified')
+    techQuery = techQuery.or('verification_status.is.null,verification_status.neq.verified')
   }
 
-  const { data, error } = await query
-  if (error) console.error('[mailing] technicians error:', error)
-  return (data ?? []).map((r) => ({
-    email: r.email,
-    name: r.full_name || 'there',
-  }))
+  const { data: techs, error: techErr } = await techQuery
+  if (techErr) console.error('[mailing] technicians error:', techErr)
+  const techIds = (techs ?? []).map((t) => t.user_id)
+  console.log(`[mailing] segment=${segment} technicians: ${techIds.length}`)
+
+  if (techIds.length === 0) return []
+
+  const { data: profiles, error: profErr } = await supa
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', techIds)
+  if (profErr) console.error('[mailing] profiles lookup error:', profErr)
+  console.log(`[mailing] profiles matched: ${profiles?.length ?? 0}`)
+
+  return (profiles ?? []).map((p) => ({ email: p.email, name: p.full_name || 'there' }))
 }
 
 function buildEmailHtml(
