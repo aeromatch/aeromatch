@@ -131,7 +131,7 @@ export async function POST(req: Request) {
   }
 
   const recipients = manual_email
-    ? [{ email: manual_email, name: 'there' }]
+    ? [{ email: manual_email, name: manual_email.split('@')[0] }]
     : await getRecipients(segment as Segment)
 
   if (recipients.length === 0) {
@@ -142,18 +142,21 @@ export async function POST(req: Request) {
   let sent = 0
   let errors = 0
 
+  console.log(`[mailing] Enviando a ${recipients.length} destinatarios, from: ${FROM_EMAIL}`)
+
   for (const r of recipients) {
     try {
       const html = buildEmailHtml(bodyText, r.name, cta_text, cta_url)
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: FROM_EMAIL,
         to: r.email,
         subject: subject.replace(/\[nombre\]/gi, r.name),
         html,
       })
+      console.log(`[mailing] OK ${r.email}:`, JSON.stringify(result))
       sent++
     } catch (err) {
-      console.error('Mailing error for', r.email, err)
+      console.error(`[mailing] ERROR ${r.email}:`, err)
       errors++
     }
     await new Promise((resolve) => setTimeout(resolve, 300))
