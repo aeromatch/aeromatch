@@ -72,12 +72,11 @@ function buildEmailHtml(
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#111827;border-radius:12px;overflow:hidden">
       <tr>
         <td style="background:#0B132B;padding:24px 40px;border-bottom:1px solid #1e293b">
-          <img src="https://aeromatch.eu/MAINHORIZONTAL01.png" alt="aeroMatch" height="32" style="height:32px"/>
+          <img src="https://aeromatch.eu/logo-email.svg" alt="aeroMatch" width="180" style="max-width:180px;height:auto"/>
         </td>
       </tr>
       <tr>
         <td style="padding:32px 40px 0">
-          <p style="color:#e2e8f0;font-size:15px;margin:0 0 16px">Hola <strong>${recipientName}</strong>,</p>
           <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0">${bodyHtml}</p>
         </td>
       </tr>
@@ -125,12 +124,15 @@ export async function POST(req: Request) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
 
-  const { segment, subject, body: bodyText, cta_text, cta_url } = await req.json()
-  if (!segment || !subject || !bodyText) {
-    return NextResponse.json({ error: 'segment, subject, body required' }, { status: 400 })
+  const { segment, subject, body: bodyText, cta_text, cta_url, manual_email } = await req.json()
+  if (!subject || !bodyText) {
+    return NextResponse.json({ error: 'subject and body required' }, { status: 400 })
   }
 
-  const recipients = await getRecipients(segment as Segment)
+  const recipients = manual_email
+    ? [{ email: manual_email, name: 'there' }]
+    : await getRecipients(segment as Segment)
+
   if (recipients.length === 0) {
     return NextResponse.json({ error: 'No recipients' }, { status: 400 })
   }

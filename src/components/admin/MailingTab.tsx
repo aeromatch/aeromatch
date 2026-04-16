@@ -30,6 +30,7 @@ export function MailingTab() {
   const [segment, setSegment] = useState<Segment>('all_technicians')
   const [recipientCount, setRecipientCount] = useState<number | null>(null)
   const [loadingCount, setLoadingCount] = useState(false)
+  const [manualEmail, setManualEmail] = useState('')
 
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
@@ -76,10 +77,12 @@ export function MailingTab() {
     setSending(true)
     setResult(null)
     try {
+      const payload: Record<string, unknown> = { segment, subject, body, cta_text: ctaText || undefined, cta_url: ctaUrl || undefined }
+      if (manualEmail.trim()) payload.manual_email = manualEmail.trim()
       const res = await fetch('/api/admin/mailing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ segment, subject, body, cta_text: ctaText || undefined, cta_url: ctaUrl || undefined }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       setResult({ sent: data.sent ?? 0, errors: data.errors ?? 0 })
@@ -91,7 +94,8 @@ export function MailingTab() {
   }
 
   const previewHtml = buildPreviewHtml(subject, body, ctaText, ctaUrl)
-  const canSend = subject.trim() && body.trim() && recipientCount && recipientCount > 0
+  const isManualMode = manualEmail.trim().length > 0
+  const canSend = subject.trim() && body.trim() && (isManualMode || (recipientCount && recipientCount > 0))
 
   return (
     <div className="space-y-8">
@@ -115,6 +119,20 @@ export function MailingTab() {
         </div>
         <div className="mt-3 text-xs text-steel-500">
           {loadingCount ? 'Contando…' : `${recipientCount ?? '—'} destinatarios`}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-steel-700/30">
+          <label className="block text-xs text-steel-400 mb-1">Envío manual (prueba o unitario)</label>
+          <input
+            type="email"
+            value={manualEmail}
+            onChange={(e) => setManualEmail(e.target.value)}
+            placeholder="email@ejemplo.com — deja vacío para usar el segmento"
+            className="w-full bg-navy-950 border border-steel-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-steel-600 focus:outline-none focus:border-gold-500/50"
+          />
+          {isManualMode && (
+            <p className="text-xs text-gold-400 mt-1">Se enviará solo a este email, ignorando el segmento.</p>
+          )}
         </div>
       </div>
 
@@ -212,7 +230,10 @@ export function MailingTab() {
           <div className="bg-navy-900 border border-steel-700/50 rounded-2xl p-6 max-w-md w-full mx-4 space-y-4">
             <h3 className="text-white font-semibold">Confirmar envío</h3>
             <p className="text-sm text-steel-300">
-              Vas a enviar este email a <span className="text-gold-400 font-semibold">{recipientCount}</span> destinatarios. ¿Confirmar?
+              {isManualMode
+                ? <>Vas a enviar este email a <span className="text-gold-400 font-semibold">{manualEmail}</span>. ¿Confirmar?</>
+                : <>Vas a enviar este email a <span className="text-gold-400 font-semibold">{recipientCount}</span> destinatarios. ¿Confirmar?</>
+              }
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -287,7 +308,7 @@ function buildPreviewHtml(subject: string, body: string, ctaText: string, ctaUrl
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#111827;border-radius:12px;overflow:hidden">
         <tr>
           <td style="background:#0B132B;padding:24px 40px;border-bottom:1px solid #1e293b">
-            <img src="https://aeromatch.eu/MAINHORIZONTAL01.png" alt="aeroMatch" height="32" style="height:32px"/>
+            <img src="https://aeromatch.eu/logo-email.svg" alt="aeroMatch" width="180" style="max-width:180px;height:auto"/>
           </td>
         </tr>
         <tr>
@@ -297,7 +318,6 @@ function buildPreviewHtml(subject: string, body: string, ctaText: string, ctaUrl
         </tr>
         <tr>
           <td style="padding:8px 40px 0">
-            <p style="color:#e2e8f0;font-size:15px;margin:0 0 8px">Hola <strong>Carlos</strong>,</p>
             <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0">${bodyHtml}</p>
           </td>
         </tr>
