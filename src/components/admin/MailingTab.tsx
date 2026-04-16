@@ -191,7 +191,7 @@ export function MailingTab() {
           </div>
         </div>
         <div>
-          <label className="block text-xs text-steel-400 mb-1">Programar envío (opcional)</label>
+          <label className="block text-xs text-steel-400 mb-1">Programar envío (opcional — deja vacío para enviar ya)</label>
           <input
             type="datetime-local"
             value={scheduledAt}
