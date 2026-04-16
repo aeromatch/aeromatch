@@ -131,9 +131,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'subject and body required' }, { status: 400 })
   }
 
-  const recipients = manual_email
-    ? [{ email: manual_email, name: manual_email.split('@')[0] }]
-    : await getRecipients(segment as Segment)
+  let recipients: { email: string; name: string }[]
+  if (manual_email) {
+    const supa = createServiceClient()
+    const { data: profile } = await supa
+      .from('profiles')
+      .select('full_name')
+      .eq('email', manual_email)
+      .maybeSingle()
+    recipients = [{ email: manual_email, name: profile?.full_name || manual_email.split('@')[0] }]
+  } else {
+    recipients = await getRecipients(segment as Segment)
+  }
 
   if (recipients.length === 0) {
     return NextResponse.json({ error: 'No recipients' }, { status: 400 })
