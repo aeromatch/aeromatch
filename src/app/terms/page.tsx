@@ -13,6 +13,7 @@ export default function TermsPage() {
       <iframe
         title="Términos y condiciones"
         src="/terms.html"
+        loading="lazy"
         className="min-h-[100vh] w-full flex-1 border-0"
       />
     </div>

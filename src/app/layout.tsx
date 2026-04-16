@@ -4,7 +4,13 @@ import Script from 'next/script'
 import './globals.css'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-inter',
+  fallback: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+})
 
 const jsonLd = {
   '@context': 'https://schema.org',

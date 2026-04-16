@@ -9,6 +9,12 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
+  compress: true,
+  poweredByHeader: false,
   // No añadir Content-Type aquí para /sitemap.xml: duplica la cabecera con la del Route Handler
   // y algunos clientes (p. ej. Google) rechazan respuestas con Content-Type duplicado o ambiguo.
 }

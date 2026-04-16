@@ -13,6 +13,7 @@ export default function PrivacyPage() {
       <iframe
         title="Política de privacidad"
         src="/privacy.html"
+        loading="lazy"
         className="min-h-[100vh] w-full flex-1 border-0"
       />
     </div>

@@ -46,7 +46,7 @@ export function Ecosystem({ copy }: { copy: LandingCopy["ecosystem"] }) {
               </span>
               {card.logo ? (
                 <span className="eco-icon" style={{ display: "flex", alignItems: "center" }}>
-                  <Image src="/logbook360.png" alt="logBook360" width={28} height={28} />
+                  <Image src="/logbook360.png" alt="logBook360" width={28} height={28} loading="lazy" />
                 </span>
               ) : (
                 <span className="eco-icon">{card.icon}</span>
