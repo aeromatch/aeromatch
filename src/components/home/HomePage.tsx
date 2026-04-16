@@ -47,6 +47,7 @@ export function HomePage({ isLoggedIn }: HomePageProps) {
     // Header
     nav: {
       signIn: language === 'es' ? 'Iniciar sesión' : 'Sign in',
+      signUp: language === 'es' ? 'Regístrate' : 'Sign up',
       dashboard: language === 'es' ? 'Ir al Panel' : 'Go to Dashboard',
     },
     // Hero Section
@@ -267,7 +268,7 @@ No paperwork. No middlemen. No commissions.`,
                     href="/auth?mode=signup" 
                     className="btn-cta group"
                   >
-                    {content.hero.ctaTechnician}
+                    {content.nav.signUp}
                   </Link>
                 </>
               )}

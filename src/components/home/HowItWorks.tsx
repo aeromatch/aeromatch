@@ -10,7 +10,7 @@ export function HowItWorks({ copy }: { copy: LandingCopy["how"] }) {
     <>
       <section className="step-section">
         <div className="ig-container step-inner">
-          <span className="step-num" aria-hidden="true">01</span>
+          <span className="step-num" aria-hidden="true" data-num="01" />
           <div className="anim">
             <div className="step-label">{copy.stepLabel(1)}</div>
             <h2 className="step-title">{s1.title}</h2>
@@ -41,7 +41,7 @@ export function HowItWorks({ copy }: { copy: LandingCopy["how"] }) {
 
       <section className="step-section">
         <div className="ig-container step-inner">
-          <span className="step-num" aria-hidden="true">02</span>
+          <span className="step-num" aria-hidden="true" data-num="02" />
           <div className="anim">
             <div className="step-label">{copy.stepLabel(2)}</div>
             <h2 className="step-title">{s2.title}</h2>
@@ -187,7 +187,7 @@ export function HowItWorks({ copy }: { copy: LandingCopy["how"] }) {
 
       <section className="step-section">
         <div className="ig-container step-inner">
-          <span className="step-num" aria-hidden="true">03</span>
+          <span className="step-num" aria-hidden="true" data-num="03" />
           <div className="anim">
             <div className="step-label">{copy.stepLabel(3)}</div>
             <h2 className="step-title">{s3.title}</h2>
@@ -280,7 +280,7 @@ export function HowItWorks({ copy }: { copy: LandingCopy["how"] }) {
 
       <section className="step-section">
         <div className="ig-container step-inner">
-          <span className="step-num" aria-hidden="true">04</span>
+          <span className="step-num" aria-hidden="true" data-num="04" />
           <div className="anim">
             <div className="step-label">{copy.stepLabel(4)}</div>
             <h2 className="step-title">{s4.title}</h2>
@@ -351,7 +351,7 @@ export function HowItWorks({ copy }: { copy: LandingCopy["how"] }) {
 
       <section className="step-section">
         <div className="ig-container step-inner">
-          <span className="step-num" aria-hidden="true">05</span>
+          <span className="step-num" aria-hidden="true" data-num="05" />
           <div className="anim">
             <div className="step-label">{copy.stepLabel(5)}</div>
             <h2 className="step-title">{s5.title}</h2>
