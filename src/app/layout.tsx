@@ -54,9 +54,10 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
         <Script
           id="meta-pixel"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               !function(f,b,e,v,n,t,s)
