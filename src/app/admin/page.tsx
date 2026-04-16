@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/Logo'
+import { MailingTab } from '@/components/admin/MailingTab'
 
 interface Metrics {
   totalTechnicians: number
@@ -76,7 +77,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
-  const [activeTab, setActiveTab] = useState<'metrics' | 'verification' | 'technicians' | 'companies'>('metrics')
+  const [activeTab, setActiveTab] = useState<'metrics' | 'verification' | 'technicians' | 'companies' | 'mailing'>('metrics')
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [technicians, setTechnicians] = useState<Technician[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
@@ -409,7 +410,7 @@ export default function AdminPage() {
       <div className="border-b border-steel-800">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
-            {(['metrics', 'verification', 'technicians', 'companies'] as const).map(tab => (
+            {(['metrics', 'verification', 'technicians', 'companies', 'mailing'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -419,7 +420,7 @@ export default function AdminPage() {
                     : 'border-transparent text-steel-400 hover:text-white'
                 }`}
               >
-                {tab === 'verification' ? '🔍 Verificación' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab === 'verification' ? '🔍 Verificación' : tab === 'mailing' ? '📧 Mailing' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -650,6 +651,8 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {activeTab === 'mailing' && <MailingTab />}
       </main>
 
       {/* Verification Modal */}
