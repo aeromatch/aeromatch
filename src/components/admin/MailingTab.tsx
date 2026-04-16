@@ -318,6 +318,7 @@ function buildPreviewHtml(subject: string, body: string, ctaText: string, ctaUrl
         </tr>
         <tr>
           <td style="padding:8px 40px 0">
+            <p style="color:#e2e8f0;font-size:15px;margin:0 0 8px">Hola <strong>Carlos</strong>,</p>
             <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0">${bodyHtml}</p>
           </td>
         </tr>

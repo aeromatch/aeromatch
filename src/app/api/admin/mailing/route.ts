@@ -77,6 +77,7 @@ function buildEmailHtml(
       </tr>
       <tr>
         <td style="padding:32px 40px 0">
+          <p style="color:#e2e8f0;font-size:15px;margin:0 0 16px">Hola <strong>${recipientName}</strong>,</p>
           <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin:0">${bodyHtml}</p>
         </td>
       </tr>
