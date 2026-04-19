@@ -12,6 +12,27 @@ export interface Question {
   phase: string
 }
 
+const ENGINE_ATAS = [
+  { code: '70', description: 'Engine Overview & General' },
+  { code: '71', description: 'Nacelle & Powerplant / Engine R&I' },
+  { code: '72', description: 'Fan, Compressor, Turbine, Combustion' },
+  { code: '73', description: 'Fuel System & FADEC/ECU' },
+  { code: '74', description: 'Ignition System' },
+  { code: '75', description: 'Air System - VSV/VBV, ACC' },
+  { code: '76', description: 'Engine Controls' },
+  { code: '77', description: 'Engine Monitoring / Indicating' },
+  { code: '78', description: 'Thrust Reverser' },
+  { code: '79', description: 'Oil System' },
+  { code: '80', description: 'Starting System' },
+] as const
+
+export const ENGINE_SECTION = {
+  sectionId: 'engines',
+  sectionTitle: 'Engines',
+  sectionSubtitle: 'A320 Family - All Engine Types',
+  bookIds: ['book5_iae', 'book5_cfm', 'book5_pw', 'book5_leap'] as const,
+} as const
+
 export const BOOKS = [
   {
     id: 'book1',
@@ -81,23 +102,41 @@ export const BOOKS = [
     ],
   },
   {
-    id: 'book5',
-    name: 'Book 5',
+    id: 'book5_iae',
+    name: 'IAE V2500',
     phase: 'Phase 5',
-    description: 'Engines (IAE V2500 & CFM56-5B) - All ATAs',
-    atas: [
-      { code: '70', description: 'Engine Overview & General' },
-      { code: '71', description: 'Nacelle & Powerplant / Engine R&I' },
-      { code: '72', description: 'Fan, Compressor, Turbine, Combustion' },
-      { code: '73', description: 'Fuel System & FADEC/ECU' },
-      { code: '74', description: 'Ignition System' },
-      { code: '75', description: 'Air System - VSV/VBV, ACC' },
-      { code: '76', description: 'Engine Controls' },
-      { code: '77', description: 'Engine Monitoring / Indicating' },
-      { code: '78', description: 'Thrust Reverser' },
-      { code: '79', description: 'Oil System' },
-      { code: '80', description: 'Starting System' },
-    ],
+    description: 'A320 CEO - IAE V2500 Engine',
+    engineSection: true,
+    engineTag: 'CEO',
+    atas: ENGINE_ATAS,
+  },
+  {
+    id: 'book5_cfm',
+    name: 'CFM56-5B',
+    phase: 'Phase 5',
+    description: 'A320 CEO - CFM56-5B Engine',
+    engineSection: true,
+    engineTag: 'CEO',
+    atas: ENGINE_ATAS,
+  },
+  {
+    id: 'book5_pw',
+    name: 'PW1100G',
+    phase: 'Phase 5',
+    description: 'A320neo - PW1100G Engine',
+    engineSection: true,
+    engineTag: 'NEO',
+    atas: ENGINE_ATAS,
+  },
+  {
+    id: 'book5_leap',
+    name: 'LEAP-1A',
+    phase: 'Phase 5',
+    description: 'A320neo - LEAP-1A Engine',
+    engineSection: true,
+    engineTag: 'NEO',
+    comingSoon: true,
+    atas: ENGINE_ATAS,
   },
   {
     id: 'book6',

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/ui/AppLayout'
 import { createClient } from '@/lib/supabase/client'
-import { BOOKS, computeBookProgressFromLocalStorage, type Question } from '@/lib/simulator'
+import { BOOKS, ENGINE_SECTION, computeBookProgressFromLocalStorage, type Question } from '@/lib/simulator'
 import { useAccess } from '@/hooks/useAccess'
 import { UpgradeBanner } from '@/components/ui/UpgradeBanner'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
@@ -37,6 +37,14 @@ export default function SimulatorBookSelectorPage() {
   const { hasAccess: canTrial } = useAccess('simulatorTrial')
   const [bannerOpen, setBannerOpen] = useState(true)
   const [activeCourse, setActiveCourse] = useState<'a320' | null>(null)
+
+  // Books that appear as individual tiles in the selector.
+  // The engine books (IAE / CFM / PW / LEAP) are collapsed into a single
+  // "Engines" tile that leads to /simulator/engines.
+  const visibleBooks = useMemo(
+    () => (BOOKS as readonly any[]).filter((b) => b.engineSection !== true),
+    []
+  )
 
   const [progress, setProgress] = useState<BookProgress>(() => {
     const initial: BookProgress = {}
@@ -84,7 +92,17 @@ export default function SimulatorBookSelectorPage() {
     run()
   }, [])
 
-  const bankTotal = Object.values(progress).reduce((sum, p) => sum + (p?.total || 0), 0)
+  // Sum visible books + engines (counted as max of engine files to avoid
+  // double-counting shared/generic questions duplicated across IAE and CFM).
+  const bankTotal = (() => {
+    const visible = visibleBooks.reduce(
+      (sum, b) => sum + (progress[b.id]?.total || 0),
+      0
+    )
+    const engines = ENGINE_SECTION.bookIds.map((id) => progress[id]?.total || 0)
+    const engineMax = engines.length ? Math.max(0, ...engines) : 0
+    return visible + engineMax
+  })()
 
   if (loadingAuth) {
     return (
@@ -197,7 +215,7 @@ export default function SimulatorBookSelectorPage() {
                 </div>
               </Link>
 
-              {BOOKS.map((b) => {
+              {visibleBooks.map((b) => {
                 const p = progress[b.id]
                 const answered = p?.answered ?? 0
                 const total = p?.total ?? 0
@@ -229,6 +247,35 @@ export default function SimulatorBookSelectorPage() {
                   </Link>
                 )
               })}
+
+              {/* Engines section - collapses IAE / CFM / PW / LEAP into one tile */}
+              <Link href="/simulator/engines" className="card-action p-5 group">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold truncate">
+                      {ENGINE_SECTION.sectionTitle}
+                    </p>
+                    <p className="text-xs text-steel-500 mt-1">
+                      {ENGINE_SECTION.sectionSubtitle}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-navy-800/60 border border-steel-700/40 text-steel-300">
+                    Phase 5
+                  </span>
+                </div>
+                <div className="mt-4 p-3 rounded-lg bg-navy-800/40 border border-steel-700/30">
+                  <p className="text-xs text-steel-400">Engine types</p>
+                  <p className="text-sm text-white mt-1">
+                    IAE V2500 · CFM56-5B · PW1100G · LEAP-1A
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center justify-between text-xs text-steel-500">
+                  <span>{ENGINE_SECTION.bookIds.length} engines</span>
+                  <span className="text-gold-400 group-hover:text-gold-300 transition-colors">
+                    Open →
+                  </span>
+                </div>
+              </Link>
             </div>
           </>
         )}
