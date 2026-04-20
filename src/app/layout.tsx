@@ -39,6 +39,14 @@ export const metadata: Metadata = {
   },
   description:
     'Plataforma europea para técnicos de mantenimiento aeronáutico EASA B1/B2. Conecta con MROs y operadoras sin intermediarios.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: {
     siteName: 'aeroMatch',
     locale: 'es_ES',
