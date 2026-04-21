@@ -269,6 +269,7 @@ export const SPECIALTIES = [
   'Emergency Equipment',
   'Flight Controls',
   'AOG Support',
+  'Flying Spanner',
 ]
 
 // License categories
