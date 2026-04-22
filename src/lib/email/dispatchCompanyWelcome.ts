@@ -1,14 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import {
-  buildTechnicianGreeting,
-  sendTechnicianSignupAdminNotice,
-  sendTechnicianWelcomeEmail,
+  sendCompanySignupAdminNotice,
+  sendCompanyWelcomeEmail,
   type SupportedLanguage,
-} from '@/lib/email/technicianWelcome'
-
-function normalizeLanguage(raw: unknown): SupportedLanguage {
-  return raw === 'en' ? 'en' : 'es'
-}
+} from '@/lib/email/companyWelcome'
 
 function getSupabaseProfilesDashboardUrl(profileId: string): string {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -28,14 +23,19 @@ function getSupabaseProfilesDashboardUrl(profileId: string): string {
   }
 }
 
-export type DispatchWelcomeResult =
+function normalizeLanguage(raw: unknown): SupportedLanguage {
+  return raw === 'en' ? 'en' : 'es'
+}
+
+export type DispatchCompanyWelcomeResult =
   | { ok: true; sent: true }
-  | { ok: true; skipped: 'not_technician' | 'already_sent' | 'no_email' | 'no_profile' }
+  | { ok: true; skipped: 'not_company' | 'already_sent' | 'no_email' | 'no_profile' }
 
 /**
- * Idempotente: envía bienvenida + aviso admin si role=technician y welcome_email_sent_at es null.
+ * Idempotente: envia bienvenida + aviso admin si role=company y welcome_email_sent_at es null.
+ * Se dispara desde /auth/callback (confirmacion de email u OAuth) y desde /onboarding/role.
  */
-export async function dispatchTechnicianWelcomeIfNeeded(userId: string): Promise<DispatchWelcomeResult> {
+export async function dispatchCompanyWelcomeIfNeeded(userId: string): Promise<DispatchCompanyWelcomeResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) {
@@ -54,8 +54,8 @@ export async function dispatchTechnicianWelcomeIfNeeded(userId: string): Promise
     return { ok: true, skipped: 'no_profile' }
   }
 
-  if (profile.role !== 'technician') {
-    return { ok: true, skipped: 'not_technician' }
+  if (profile.role !== 'company') {
+    return { ok: true, skipped: 'not_company' }
   }
 
   if (profile.welcome_email_sent_at) {
@@ -67,28 +67,29 @@ export async function dispatchTechnicianWelcomeIfNeeded(userId: string): Promise
     return { ok: true, skipped: 'no_email' }
   }
 
-  const { data: tech } = await admin
-    .from('technicians')
-    .select('first_name')
+  // Nombre de empresa: companies.name (si ya completo onboarding) o full_name del profile
+  const { data: company } = await admin
+    .from('companies')
+    .select('name')
     .eq('user_id', userId)
     .maybeSingle()
 
+  const companyName = company?.name?.trim() || profile.full_name?.trim() || null
   const language = normalizeLanguage(profile.preferred_language)
-  const greetingLine = buildTechnicianGreeting(tech?.first_name, profile.full_name, language)
   const appBase = (process.env.NEXT_PUBLIC_APP_URL || 'https://app.aeromatch.eu').replace(/\/$/, '')
-  const completeProfileUrl = `${appBase}/profile`
+  const searchUrl = `${appBase}/search`
   const registeredAt = profile.created_at ? new Date(profile.created_at) : new Date()
-  const displayName = profile.full_name?.trim() || email
+  const displayName = companyName || email
 
-  await sendTechnicianWelcomeEmail({
+  await sendCompanyWelcomeEmail({
     to: email,
-    greetingLine,
-    completeProfileUrl,
+    companyName,
+    searchUrl,
     language,
   })
-  await sendTechnicianSignupAdminNotice({
-    technicianName: displayName,
-    technicianEmail: email,
+  await sendCompanySignupAdminNotice({
+    companyName: displayName,
+    contactEmail: email,
     registeredAt,
     supabaseProfilesLink: getSupabaseProfilesDashboardUrl(profile.id),
   })
@@ -100,7 +101,7 @@ export async function dispatchTechnicianWelcomeIfNeeded(userId: string): Promise
     .is('welcome_email_sent_at', null)
 
   if (upErr) {
-    console.error('dispatchTechnicianWelcome: update welcome_email_sent_at failed', upErr)
+    console.error('dispatchCompanyWelcome: update welcome_email_sent_at failed', upErr)
   }
 
   return { ok: true, sent: true }

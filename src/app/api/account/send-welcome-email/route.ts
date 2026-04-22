@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { dispatchTechnicianWelcomeIfNeeded } from '@/lib/email/dispatchTechnicianWelcome'
+import { dispatchCompanyWelcomeIfNeeded } from '@/lib/email/dispatchCompanyWelcome'
 
 export const runtime = 'nodejs'
 
 /**
- * Envía una sola vez el email de bienvenida al técnico (y aviso a admin).
- * Idempotente vía welcome_email_sent_at en profiles.
+ * Envia una sola vez el email de bienvenida al usuario recien registrado
+ * (tecnico o empresa) y el aviso a admin. Idempotente via welcome_email_sent_at
+ * en profiles. El dispatcher de cada rol se salta solo si no aplica.
  */
 export async function POST() {
   const supabase = await createServerClient()
@@ -16,11 +18,23 @@ export async function POST() {
   }
 
   try {
-    const result = await dispatchTechnicianWelcomeIfNeeded(user.id)
-    if ('skipped' in result) {
-      return NextResponse.json({ ok: true, skipped: result.skipped })
+    const [techRes, companyRes] = await Promise.allSettled([
+      dispatchTechnicianWelcomeIfNeeded(user.id),
+      dispatchCompanyWelcomeIfNeeded(user.id),
+    ])
+
+    const summary = {
+      technician:
+        techRes.status === 'fulfilled'
+          ? techRes.value
+          : { error: techRes.reason instanceof Error ? techRes.reason.message : String(techRes.reason) },
+      company:
+        companyRes.status === 'fulfilled'
+          ? companyRes.value
+          : { error: companyRes.reason instanceof Error ? companyRes.reason.message : String(companyRes.reason) },
     }
-    return NextResponse.json({ ok: true, sent: true })
+
+    return NextResponse.json({ ok: true, ...summary })
   } catch (e: unknown) {
     console.error('send-welcome-email:', e)
     const message = e instanceof Error ? e.message : 'Send failed'

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { dispatchTechnicianWelcomeIfNeeded } from '@/lib/email/dispatchTechnicianWelcome'
+import { dispatchCompanyWelcomeIfNeeded } from '@/lib/email/dispatchCompanyWelcome'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -38,12 +39,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/reset-password`)
     }
 
-    // Tras confirmar email / OAuth: sesión válida; enviar bienvenida al técnico si aplica
+    // Tras confirmar email / OAuth: sesión válida. Dispara welcome segun role.
+    // Cada dispatcher es idempotente y se salta solo si el role no coincide,
+    // si el profile no existe, o si ya se envio.
     if (data?.user?.id) {
-      try {
-        await dispatchTechnicianWelcomeIfNeeded(data.user.id)
-      } catch (welcomeErr) {
-        console.error('Welcome email dispatch:', welcomeErr)
+      const userId = data.user.id
+      const results = await Promise.allSettled([
+        dispatchTechnicianWelcomeIfNeeded(userId),
+        dispatchCompanyWelcomeIfNeeded(userId),
+      ])
+      for (const r of results) {
+        if (r.status === 'rejected') {
+          console.error('Welcome email dispatch:', r.reason)
+        }
       }
     }
 

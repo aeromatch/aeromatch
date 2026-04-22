@@ -86,6 +86,7 @@ export function AuthForm() {
             data: {
               full_name: fullName,
               role: role,
+              preferred_language: language,
             },
           },
         })
@@ -93,7 +94,9 @@ export function AuthForm() {
         if (signUpError) throw signUpError
 
         if (data.user) {
-          // Create profile with consent tracking
+          // Create profile with consent tracking. El welcome email se dispara
+          // desde /auth/callback cuando el usuario confirma su email, no aqui:
+          // tras signUp todavia no hay sesion valida.
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
@@ -101,6 +104,7 @@ export function AuthForm() {
               email: email,
               full_name: fullName,
               role: role,
+              preferred_language: language,
               onboarding_completed: false,
               terms_accepted: true,
               terms_accepted_at: new Date().toISOString(),
@@ -108,11 +112,6 @@ export function AuthForm() {
 
           if (profileError) {
             console.error('Profile error:', profileError)
-          } else if (role === 'technician') {
-            void fetch(`${window.location.origin}/api/account/send-welcome-email`, {
-              method: 'POST',
-              credentials: 'include',
-            }).catch(() => {})
           }
 
           setMessage(language === 'es' 

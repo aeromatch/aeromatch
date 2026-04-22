@@ -91,17 +91,17 @@ export default function RoleSelectionPage() {
           email: userEmail,
           role: role,
           plan: 'premium',
+          preferred_language: language,
           onboarding_completed: false
         }, { onConflict: 'id' })
 
       if (error) throw error
 
-      if (role === 'technician') {
-        void fetch(`${window.location.origin}/api/account/send-welcome-email`, {
-          method: 'POST',
-          credentials: 'include',
-        }).catch(() => {})
-      }
+      // Dispara el welcome email adecuado (el endpoint decide segun role del profile).
+      void fetch(`${window.location.origin}/api/account/send-welcome-email`, {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(() => {})
 
       // Redirect to role-specific onboarding
       router.push(role === 'technician' ? '/onboarding/technician' : '/onboarding/company')
