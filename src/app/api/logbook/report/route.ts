@@ -104,22 +104,76 @@ export async function GET(request: Request) {
   if (error || !file) {
     return NextResponse.json({ error: error?.message || 'download failed' }, { status: 500 })
   }
-  const arrayBuffer = await file.arrayBuffer()
 
   const disposition = isDownload
     ? 'attachment; filename="logbook360.html"'
-    : isInline
-    ? 'inline; filename="logbook360.html"'
     : 'inline; filename="logbook360.html"'
 
-  return new NextResponse(arrayBuffer, {
+  // Para descarga directa, no tocamos el HTML (lo entregamos tal cual al usuario).
+  // Para mostrarlo en el iframe (inline), inyectamos un <style> con reglas de
+  // print que evitan cortar tarjetas/secciones a mitad de pagina.
+  if (isDownload) {
+    const arrayBuffer = await file.arrayBuffer()
+    return new NextResponse(arrayBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': disposition,
+        'Cache-Control': 'private, max-age=0, no-store',
+        'X-Frame-Options': 'SAMEORIGIN',
+      },
+    })
+  }
+
+  const html = await file.text()
+  const augmented = injectPrintStyles(html)
+
+  return new NextResponse(augmented, {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Content-Disposition': disposition,
       'Cache-Control': 'private, max-age=0, no-store',
-      // Permite renderizar dentro del iframe del propio dominio.
       'X-Frame-Options': 'SAMEORIGIN',
     },
   })
+}
+
+/**
+ * Inyecta reglas CSS de impresion en el HTML del logBook360 sin tocar el
+ * resto del documento. Evita cortes en tarjetas/secciones cuando el tecnico
+ * o la empresa imprime el HTML directamente desde el iframe.
+ */
+function injectPrintStyles(html: string): string {
+  const printCss = `
+<style id="aerom-print-fix">
+@media print {
+  @page { size: A4; margin: 12mm; }
+  html, body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Evita cortes a mitad de bloque en tarjetas y secciones tipicas */
+  .header, .header-left, .header-right,
+  .kpi-row, .kpi-card,
+  .ata-card, .ata-grid,
+  .fleet-card, .fleet-summary,
+  .base-card, .bases,
+  .verified-badge,
+  section, .card, .panel,
+  table, thead, tbody, tr, td, th {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  h1, h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
+}
+</style>`
+  if (/<\/head>/i.test(html)) {
+    return html.replace(/<\/head>/i, `${printCss}\n</head>`)
+  }
+  if (/<head[^>]*>/i.test(html)) {
+    return html.replace(/<head[^>]*>/i, (m) => `${m}\n${printCss}`)
+  }
+  // Sin head: prepend
+  return `${printCss}\n${html}`
 }

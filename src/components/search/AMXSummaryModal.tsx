@@ -33,8 +33,6 @@ interface AMXSummary {
     documentsVerified: number
     documentsPending: number
   }
-  hasLogbookReport?: boolean
-  logbookReportUploadedAt?: string | null
 }
 
 interface AMXSummaryModalProps {
@@ -85,9 +83,6 @@ export function AMXSummaryModal({ isOpen, onClose, technicianId, techId }: AMXSu
     notSpecified: language === 'es' ? 'No especificado' : 'Not specified',
     downloadPdf: language === 'es' ? 'Descargar PDF' : 'Download PDF',
     downloading: language === 'es' ? 'Descargando...' : 'Downloading...',
-    logbook360Title: 'logBook360',
-    logbook360Verified: language === 'es' ? 'Verificado' : 'Verified',
-    logbook360Updated: language === 'es' ? 'Actualizado' : 'Updated',
   }
 
   const handleDownloadPdf = async () => {
@@ -359,38 +354,6 @@ export function AMXSummaryModal({ isOpen, onClose, technicianId, techId }: AMXSu
                 </p>
               </div>
             </div>
-
-            {/* logBook360 — solo si el tecnico esta verificado y hay HTML subido */}
-            {summary.hasLogbookReport && (
-              <div className="p-4 bg-navy-800/50 rounded-lg border border-steel-700/30">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-steel-500 uppercase tracking-wider">
-                      {labels.logbook360Title}
-                    </p>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium border border-green-500/30 bg-green-500/10 text-green-400">
-                      ✓ {labels.logbook360Verified}
-                    </span>
-                  </div>
-                  {summary.logbookReportUploadedAt && (
-                    <span className="text-[11px] text-steel-500">
-                      {labels.logbook360Updated}{' '}
-                      {new Date(summary.logbookReportUploadedAt).toLocaleDateString(
-                        language === 'es' ? 'es-ES' : 'en-GB',
-                      )}
-                    </span>
-                  )}
-                </div>
-                <iframe
-                  src={`/api/logbook/report?technician_id=${encodeURIComponent(
-                    technicianId,
-                  )}&inline=1`}
-                  className="w-full border-0 rounded-lg bg-white"
-                  style={{ height: '700px' }}
-                  title={`logBook360 · ${techId}`}
-                />
-              </div>
-            )}
 
             {/* Footer */}
             <div className="pt-4 border-t border-steel-700/30">

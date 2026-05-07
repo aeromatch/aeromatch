@@ -147,6 +147,19 @@ export async function POST(request: Request) {
       : { data: [] as any[] }
     const hasLogbookSet = new Set((logbooks || []).map((d: any) => d.technician_id))
 
+    // logBook360 HTML report (visible solo si el tecnico esta verificado)
+    const { data: logbookReports } = technicianIds.length > 0
+      ? await supabase
+          .from('logbook_analysis')
+          .select('technician_id, html_report_path')
+          .in('technician_id', technicianIds)
+      : { data: [] as any[] }
+    const hasLogbookReportSet = new Set(
+      (logbookReports || [])
+        .filter((r: any) => Boolean(r.html_report_path))
+        .map((r: any) => r.technician_id),
+    )
+
     // Calculate freshness based on created_at and sort results
     const now = Date.now()
     const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000
@@ -189,7 +202,10 @@ export async function POST(request: Request) {
         contract_type_preference: t.contract_type_preference || 'both',
         years_experience: t.years_experience,
         average_rating: t.average_rating,
-        has_logbook: hasLogbookSet.has(t.user_id)
+        has_logbook: hasLogbookSet.has(t.user_id),
+        // logBook360 HTML solo se expone a empresas si el tecnico esta verificado
+        has_logbook_report:
+          t.verification_status === 'verified' && hasLogbookReportSet.has(t.user_id),
       }
     })
 
