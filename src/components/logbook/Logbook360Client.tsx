@@ -61,10 +61,10 @@ export function Logbook360Client({
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Estado del HTML report (solo si analysis.html_report_path existe).
-  const [reportSignedUrl, setReportSignedUrl] = useState<string | null>(null)
-  const [reportLoading, setReportLoading] = useState(false)
-  const [reportError, setReportError] = useState<string | null>(null)
+  // El HTML report se sirve directamente desde /api/logbook/report (con
+  // Content-Type: text/html). No necesitamos signed URL: el endpoint
+  // valida la sesion y proxy del Storage con headers correctos.
+  const reportSrc = '/api/logbook/report?inline=1'
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
   const [tab, setTab] = useState<Tab>('view')
@@ -90,36 +90,6 @@ export function Logbook360Client({
       }))
     }
   }, [])
-
-  // Carga signed URL del HTML cuando hay report.
-  useEffect(() => {
-    if (!hasHtmlReport) {
-      setReportSignedUrl(null)
-      return
-    }
-    let cancelled = false
-    async function loadReport() {
-      setReportLoading(true)
-      setReportError(null)
-      try {
-        const res = await fetch('/api/logbook/report')
-        if (!res.ok) {
-          if (!cancelled) setReportError('No se pudo cargar el logBook360.')
-          return
-        }
-        const data = await res.json()
-        if (!cancelled) setReportSignedUrl(data.signed_url ?? null)
-      } catch {
-        if (!cancelled) setReportError('No se pudo cargar el logBook360.')
-      } finally {
-        if (!cancelled) setReportLoading(false)
-      }
-    }
-    void loadReport()
-    return () => {
-      cancelled = true
-    }
-  }, [hasHtmlReport, analysis?.html_report_uploaded_at])
 
   async function handleDelete(doc: LogbookDoc) {
     const sourceId = doc.logbook_sources?.[0]?.id
@@ -207,8 +177,7 @@ export function Logbook360Client({
                   <button
                     type="button"
                     onClick={handlePrint}
-                    disabled={!reportSignedUrl}
-                    className="flex items-center gap-1.5 text-xs text-steel-300 border border-steel-700/40 rounded-md px-3 py-1.5 hover:bg-steel-700/20 disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs text-steel-300 border border-steel-700/40 rounded-md px-3 py-1.5 hover:bg-steel-700/20"
                   >
                     <Printer size={12} />
                     Imprimir / PDF
@@ -223,23 +192,13 @@ export function Logbook360Client({
                 </div>
               </div>
 
-              {reportLoading && (
-                <div className="flex items-center justify-center py-16 text-xs text-steel-500">
-                  <RefreshCw size={14} className="animate-spin mr-2" /> Cargando logBook360…
-                </div>
-              )}
-              {reportError && (
-                <div className="px-4 py-6 text-xs text-red-400">{reportError}</div>
-              )}
-              {reportSignedUrl && !reportError && (
-                <iframe
-                  ref={iframeRef}
-                  src={reportSignedUrl}
-                  className="w-full border-0 bg-white"
-                  style={{ height: 'calc(100vh - 220px)', minHeight: '600px' }}
-                  title="logBook360"
-                />
-              )}
+              <iframe
+                ref={iframeRef}
+                src={reportSrc}
+                className="w-full border-0 bg-white"
+                style={{ height: 'calc(100vh - 220px)', minHeight: '600px' }}
+                title="logBook360"
+              />
             </div>
           ) : hasAnalysis ? (
             <div className="rounded-xl border border-steel-700/40 bg-navy-900/40 p-5">

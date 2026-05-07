@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 const STORAGE_BUCKET = 'documents'
-const SIGNED_URL_TTL = 3600 // 1 hora
 
 function getAdminClient() {
   return createAdminClient(
@@ -67,36 +66,42 @@ export async function GET(request: Request) {
     return NextResponse.json({ has_report: false }, { status: 404 })
   }
 
-  if (isDownload) {
-    const { data: file, error } = await admin.storage
-      .from(STORAGE_BUCKET)
-      .download(row.html_report_path)
-    if (error || !file) {
-      return NextResponse.json({ error: error?.message || 'download failed' }, { status: 500 })
-    }
-    const arrayBuffer = await file.arrayBuffer()
-    return new NextResponse(arrayBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="logbook360.html"',
-        'Cache-Control': 'private, max-age=0, no-store',
-      },
+  const isInline = searchParams.get('inline') === '1'
+  const wantsMeta = searchParams.get('meta') === '1'
+
+  // Modo "meta": devuelve solo metadata (sin descargar el HTML).
+  if (wantsMeta) {
+    return NextResponse.json({
+      has_report: true,
+      html_report_uploaded_at: row.html_report_uploaded_at,
     })
   }
 
-  const { data: signed, error: signedErr } = await admin.storage
+  // Por defecto, servimos el HTML directamente con el Content-Type correcto.
+  // Asi el iframe lo renderiza como pagina (no como texto plano) y respetamos
+  // la auth (solo dueno/admin acceden).
+  const { data: file, error } = await admin.storage
     .from(STORAGE_BUCKET)
-    .createSignedUrl(row.html_report_path, SIGNED_URL_TTL)
-
-  if (signedErr || !signed?.signedUrl) {
-    return NextResponse.json({ error: signedErr?.message || 'failed to sign url' }, { status: 500 })
+    .download(row.html_report_path)
+  if (error || !file) {
+    return NextResponse.json({ error: error?.message || 'download failed' }, { status: 500 })
   }
+  const arrayBuffer = await file.arrayBuffer()
 
-  return NextResponse.json({
-    has_report: true,
-    signed_url: signed.signedUrl,
-    expires_in: SIGNED_URL_TTL,
-    html_report_uploaded_at: row.html_report_uploaded_at,
+  const disposition = isDownload
+    ? 'attachment; filename="logbook360.html"'
+    : isInline
+    ? 'inline; filename="logbook360.html"'
+    : 'inline; filename="logbook360.html"'
+
+  return new NextResponse(arrayBuffer, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Disposition': disposition,
+      'Cache-Control': 'private, max-age=0, no-store',
+      // Permite renderizar dentro del iframe del propio dominio.
+      'X-Frame-Options': 'SAMEORIGIN',
+    },
   })
 }
