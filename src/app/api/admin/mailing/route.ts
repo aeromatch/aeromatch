@@ -142,6 +142,39 @@ export async function GET(req: Request) {
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
 
+// Limites de adjuntos (Resend acepta hasta 40 MB total).
+const MAX_ATTACHMENTS = 5
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB por archivo
+const MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024 // 25 MB en total
+
+type Attachment = { filename: string; content: Buffer }
+
+async function readAttachmentsFromFormData(formData: FormData): Promise<
+  | { ok: true; attachments: Attachment[] }
+  | { ok: false; error: string }
+> {
+  const files = formData.getAll('attachments').filter((v): v is File => v instanceof File && v.size > 0)
+  if (files.length === 0) return { ok: true, attachments: [] }
+  if (files.length > MAX_ATTACHMENTS) {
+    return { ok: false, error: `Maximo ${MAX_ATTACHMENTS} archivos por email.` }
+  }
+
+  let total = 0
+  const attachments: Attachment[] = []
+  for (const file of files) {
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      return { ok: false, error: `${file.name} excede ${MAX_ATTACHMENT_BYTES / 1024 / 1024} MB.` }
+    }
+    total += file.size
+    if (total > MAX_TOTAL_ATTACHMENT_BYTES) {
+      return { ok: false, error: `El total de adjuntos excede ${MAX_TOTAL_ATTACHMENT_BYTES / 1024 / 1024} MB.` }
+    }
+    const buffer = Buffer.from(await file.arrayBuffer())
+    attachments.push({ filename: file.name, content: buffer })
+  }
+  return { ok: true, attachments }
+}
+
 export async function POST(req: Request) {
   const adminId = await isAdmin()
   if (!adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -149,9 +182,50 @@ export async function POST(req: Request) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
 
-  const { segment, subject, body: bodyText, cta_text, cta_url, manual_email, scheduled_at } = await req.json()
+  // Soportamos tanto JSON (compat hacia atras) como multipart/form-data (con adjuntos).
+  const contentType = req.headers.get('content-type') || ''
+  let segment: Segment | undefined
+  let subject = ''
+  let bodyText = ''
+  let cta_text: string | undefined
+  let cta_url: string | undefined
+  let manual_email: string | undefined
+  let scheduled_at: string | undefined
+  let attachments: Attachment[] = []
+
+  if (contentType.includes('multipart/form-data')) {
+    const formData = await req.formData()
+    segment = (formData.get('segment') as Segment | null) ?? undefined
+    subject = (formData.get('subject') as string | null) ?? ''
+    bodyText = (formData.get('body') as string | null) ?? ''
+    cta_text = (formData.get('cta_text') as string | null) ?? undefined
+    cta_url = (formData.get('cta_url') as string | null) ?? undefined
+    manual_email = (formData.get('manual_email') as string | null) ?? undefined
+    scheduled_at = (formData.get('scheduled_at') as string | null) ?? undefined
+
+    const att = await readAttachmentsFromFormData(formData)
+    if (!att.ok) return NextResponse.json({ error: att.error }, { status: 400 })
+    attachments = att.attachments
+  } else {
+    const json = await req.json()
+    segment = json.segment
+    subject = json.subject
+    bodyText = json.body
+    cta_text = json.cta_text
+    cta_url = json.cta_url
+    manual_email = json.manual_email
+    scheduled_at = json.scheduled_at
+  }
+
   if (!subject || !bodyText) {
     return NextResponse.json({ error: 'subject and body required' }, { status: 400 })
+  }
+
+  if (scheduled_at && attachments.length > 0) {
+    return NextResponse.json(
+      { error: 'Los adjuntos solo estan soportados en envio inmediato. Quita los archivos o el envio programado.' },
+      { status: 400 },
+    )
   }
 
   const supa = createServiceClient()
@@ -181,7 +255,10 @@ export async function POST(req: Request) {
       .maybeSingle()
     recipients = [{ email: manual_email, name: profile?.full_name || manual_email.split('@')[0] }]
   } else {
-    recipients = await getRecipients(segment as Segment)
+    if (!segment) {
+      return NextResponse.json({ error: 'segment or manual_email required' }, { status: 400 })
+    }
+    recipients = await getRecipients(segment)
   }
 
   if (recipients.length === 0) {
@@ -192,7 +269,9 @@ export async function POST(req: Request) {
   let sent = 0
   let errors = 0
 
-  console.log(`[mailing] Enviando a ${recipients.length} destinatarios, from: ${FROM_EMAIL}`)
+  console.log(
+    `[mailing] Enviando a ${recipients.length} destinatarios, from: ${FROM_EMAIL}, attachments: ${attachments.length}`,
+  )
 
   for (const r of recipients) {
     try {
@@ -202,6 +281,9 @@ export async function POST(req: Request) {
         to: r.email,
         subject: subject.replace(/\[nombre\]/gi, r.name),
         html,
+        ...(attachments.length > 0
+          ? { attachments: attachments.map((a) => ({ filename: a.filename, content: a.content })) }
+          : {}),
       })
       console.log(`[mailing] OK ${r.email}:`, JSON.stringify(result))
       sent++

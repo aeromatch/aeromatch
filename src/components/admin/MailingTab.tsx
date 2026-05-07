@@ -1,6 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+
+const MAX_ATTACHMENTS = 5
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB
+const MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024 // 25 MB
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+}
 
 type Segment =
   | 'all_technicians'
@@ -41,6 +51,10 @@ export function MailingTab() {
 
   const [scheduledAt, setScheduledAt] = useState('')
 
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
   const [previewing, setPreviewing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [sending, setSending] = useState(false)
@@ -77,23 +91,74 @@ export function MailingTab() {
     fetchHistory()
   }, [fetchHistory])
 
+  function handleFilesAdded(newFiles: FileList | null) {
+    if (!newFiles || newFiles.length === 0) return
+    setAttachmentError(null)
+
+    const incoming = Array.from(newFiles)
+    const combined = [...attachments]
+
+    for (const file of incoming) {
+      if (combined.length >= MAX_ATTACHMENTS) {
+        setAttachmentError(`Máximo ${MAX_ATTACHMENTS} archivos por email.`)
+        break
+      }
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        setAttachmentError(`${file.name}: supera ${formatBytes(MAX_ATTACHMENT_BYTES)}.`)
+        continue
+      }
+      if (combined.some((f) => f.name === file.name && f.size === file.size)) {
+        // ya existe, lo ignoramos en silencio
+        continue
+      }
+      const totalAfter = combined.reduce((sum, f) => sum + f.size, 0) + file.size
+      if (totalAfter > MAX_TOTAL_ATTACHMENT_BYTES) {
+        setAttachmentError(`Tamaño total supera ${formatBytes(MAX_TOTAL_ATTACHMENT_BYTES)}.`)
+        break
+      }
+      combined.push(file)
+    }
+
+    setAttachments(combined)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function removeAttachment(idx: number) {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx))
+    setAttachmentError(null)
+  }
+
   async function handleSend() {
     setSending(true)
     setResult(null)
     try {
-      const payload: Record<string, unknown> = { segment, subject, body, cta_text: ctaText || undefined, cta_url: ctaUrl || undefined }
-      if (manualEmail.trim()) payload.manual_email = manualEmail.trim()
-      if (scheduledAt) payload.scheduled_at = new Date(scheduledAt).toISOString()
+      const formData = new FormData()
+      formData.append('subject', subject)
+      formData.append('body', body)
+      if (segment) formData.append('segment', segment)
+      if (ctaText) formData.append('cta_text', ctaText)
+      if (ctaUrl) formData.append('cta_url', ctaUrl)
+      if (manualEmail.trim()) formData.append('manual_email', manualEmail.trim())
+      if (scheduledAt) formData.append('scheduled_at', new Date(scheduledAt).toISOString())
+      for (const file of attachments) {
+        formData.append('attachments', file, file.name)
+      }
+
       const res = await fetch('/api/admin/mailing', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: formData,
       })
       const data = await res.json()
+      if (!res.ok) {
+        setResult({ sent: 0, errors: 0 })
+        setAttachmentError(data.error || 'Error al enviar')
+        return
+      }
       if (data.scheduled) {
         setResult({ sent: 0, errors: 0, scheduled: true })
       } else {
         setResult({ sent: data.sent ?? 0, errors: data.errors ?? 0 })
+        setAttachments([])
       }
       setConfirmOpen(false)
       fetchHistory()
@@ -104,7 +169,14 @@ export function MailingTab() {
 
   const previewHtml = buildPreviewHtml(subject, body, ctaText, ctaUrl)
   const isManualMode = manualEmail.trim().length > 0
-  const canSend = subject.trim() && body.trim() && (isManualMode || (recipientCount && recipientCount > 0))
+  const hasAttachments = attachments.length > 0
+  const isScheduledWithAttachments = Boolean(scheduledAt) && hasAttachments
+  const canSend =
+    subject.trim() &&
+    body.trim() &&
+    (isManualMode || (recipientCount && recipientCount > 0)) &&
+    !isScheduledWithAttachments
+  const totalAttachmentBytes = attachments.reduce((sum, f) => sum + f.size, 0)
 
   return (
     <div className="space-y-8">
@@ -205,6 +277,72 @@ export function MailingTab() {
             </div>
           )}
         </div>
+
+        {/* Attachments */}
+        <div className="pt-4 border-t border-steel-700/30">
+          <label className="block text-xs text-steel-400 mb-1">
+            Adjuntos (opcional · máx. {MAX_ATTACHMENTS} archivos · {formatBytes(MAX_TOTAL_ATTACHMENT_BYTES)} total)
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs border border-steel-600/50 text-steel-300 rounded-lg px-3 py-2 hover:bg-steel-700/20 transition-colors"
+            >
+              + Añadir archivo
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={(e) => handleFilesAdded(e.target.files)}
+              className="hidden"
+            />
+            {hasAttachments && (
+              <span className="text-xs text-steel-500">
+                {attachments.length}/{MAX_ATTACHMENTS} · {formatBytes(totalAttachmentBytes)} de{' '}
+                {formatBytes(MAX_TOTAL_ATTACHMENT_BYTES)}
+              </span>
+            )}
+          </div>
+
+          {hasAttachments && (
+            <ul className="mt-3 space-y-1.5">
+              {attachments.map((file, idx) => (
+                <li
+                  key={`${file.name}-${idx}`}
+                  className="flex items-center justify-between gap-3 bg-navy-950 border border-steel-700/40 rounded-lg px-3 py-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className="w-4 h-4 shrink-0 text-steel-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 10-5.656-5.656L4.879 11.293a6 6 0 008.486 8.485L21 12.172"/>
+                    </svg>
+                    <span className="text-xs text-white truncate">{file.name}</span>
+                    <span className="text-xs text-steel-500 shrink-0">{formatBytes(file.size)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(idx)}
+                    className="text-xs text-steel-500 hover:text-error-400 shrink-0"
+                    aria-label={`Quitar ${file.name}`}
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {attachmentError && (
+            <p className="text-xs text-error-400 mt-2">{attachmentError}</p>
+          )}
+
+          {isScheduledWithAttachments && (
+            <p className="text-xs text-error-400 mt-2">
+              Los adjuntos solo están soportados en envío inmediato. Quita los archivos o el envío programado.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -263,6 +401,11 @@ export function MailingTab() {
                 : <>Vas a {scheduledAt ? 'programar' : 'enviar'} este email a <span className="text-gold-400 font-semibold">{recipientCount}</span> destinatarios.{scheduledAt && <> Fecha: <span className="text-gold-400">{new Date(scheduledAt).toLocaleString('es-ES')}</span>.</>} ¿Confirmar?</>
               }
             </p>
+            {hasAttachments && (
+              <p className="text-xs text-steel-400">
+                Con <span className="text-gold-400 font-semibold">{attachments.length}</span> adjunto{attachments.length === 1 ? '' : 's'} ({formatBytes(totalAttachmentBytes)}).
+              </p>
+            )}
             <div className="flex gap-3 justify-end">
               <button
                 type="button"
