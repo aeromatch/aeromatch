@@ -63,29 +63,29 @@ export async function GET(request: Request) {
     }
 
     if (type === 'technicians') {
-      // Get technicians with their profile and premium status
-      const { data: profiles } = await adminClient
-        .from('profiles')
-        .select('id, email, full_name, created_at, plan')
-        .eq('role', 'technician')
-        .order('created_at', { ascending: false })
-        .limit(100)
+      // Partimos de la tabla `technicians` (no de `profiles`) para que aparezcan
+      // todos los registros aunque el profile no tenga role='technician' (p.ej.
+      // OAuth incompletos, datos historicos). Esto alinea esta pestana con la
+      // pestana Verificacion, que tambien lee de `technicians`.
+      const { data: technicianData } = await adminClient
+        .from('technicians')
+        .select('user_id, license_category, aircraft_types, specialties, profile_active')
+        .limit(500)
 
-      if (!profiles) {
+      if (!technicianData || technicianData.length === 0) {
         return NextResponse.json({ users: [] })
       }
 
-      // Get technician details
-      const userIds = profiles.map(p => p.id)
-      
-      const [technicianData, premiumData, docsData, availData] = await Promise.all([
-        adminClient.from('technicians').select('user_id, license_category, aircraft_types, specialties, profile_active').in('user_id', userIds),
+      const userIds = technicianData.map(t => t.user_id)
+
+      const [profilesData, premiumData, docsData, availData] = await Promise.all([
+        adminClient.from('profiles').select('id, email, full_name, created_at, plan').in('id', userIds),
         adminClient.from('premium_grants').select('technician_id, expires_at').in('technician_id', userIds),
         adminClient.from('documents').select('technician_id').in('technician_id', userIds),
-        adminClient.from('availability_slots').select('technician_id').in('technician_id', userIds)
+        adminClient.from('availability_slots').select('technician_id').in('technician_id', userIds),
       ])
 
-      const techMap = new Map(technicianData.data?.map(t => [t.user_id, t]) || [])
+      const profileMap = new Map(profilesData.data?.map(p => [p.id, p]) || [])
       const premiumMap = new Map(premiumData.data?.map(p => [p.technician_id, p]) || [])
       const docsMap = new Map<string, number>()
       const availMap = new Map<string, number>()
@@ -93,26 +93,34 @@ export async function GET(request: Request) {
       docsData.data?.forEach(d => docsMap.set(d.technician_id, (docsMap.get(d.technician_id) || 0) + 1))
       availData.data?.forEach(a => availMap.set(a.technician_id, (availMap.get(a.technician_id) || 0) + 1))
 
-      const users = profiles.map(p => {
-        const tech = techMap.get(p.id)
-        const premium = premiumMap.get(p.id)
+      const users = technicianData.map(tech => {
+        const profile = profileMap.get(tech.user_id)
+        const premium = premiumMap.get(tech.user_id)
         return {
-          id: p.id,
-          email: p.email,
-          fullName: p.full_name,
-          createdAt: p.created_at,
-          plan: p.plan || 'free',
-          hasCapabilities: tech && (
-            (tech.license_category?.length > 0) ||
-            (tech.aircraft_types?.length > 0) ||
-            (tech.specialties?.length > 0)
+          id: tech.user_id,
+          email: profile?.email || 'Unknown',
+          fullName: profile?.full_name || '-',
+          createdAt: profile?.created_at || null,
+          plan: profile?.plan || 'free',
+          hasCapabilities: !!(
+            (tech.license_category?.length || 0) > 0 ||
+            (tech.aircraft_types?.length || 0) > 0 ||
+            (tech.specialties?.length || 0) > 0
           ),
-          docsCount: docsMap.get(p.id) || 0,
-          availCount: availMap.get(p.id) || 0,
+          docsCount: docsMap.get(tech.user_id) || 0,
+          availCount: availMap.get(tech.user_id) || 0,
           hasPremium: !!premium,
           premiumExpires: premium?.expires_at,
-          profileActive: tech?.profile_active !== false
+          profileActive: tech.profile_active !== false,
         }
+      })
+
+      // Orden: mas recientes primero (los sin createdAt al final)
+      users.sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0
+        if (!a.createdAt) return 1
+        if (!b.createdAt) return -1
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       })
 
       return NextResponse.json({ users })
