@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/Logo'
 import { MailingTab } from '@/components/admin/MailingTab'
+import { LogbookReportUploadButton } from '@/components/admin/LogbookReportUploadButton'
 
 interface Metrics {
   totalTechnicians: number
@@ -559,6 +560,7 @@ export default function AdminPage() {
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Avail</th>
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Premium</th>
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Estado</th>
+                  <th className="text-center py-3 px-4 text-steel-400 font-medium">logBook360</th>
                   <th className="text-center py-3 px-4 text-steel-400 font-medium">Acciones</th>
                   <th className="text-left py-3 px-4 text-steel-400 font-medium">Registered</th>
                 </tr>
@@ -586,6 +588,12 @@ export default function AdminPage() {
                       ) : (
                         <span className="text-green-400 text-xs">Activo</span>
                       )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <LogbookReportUploadButton
+                        technicianId={t.id}
+                        technicianName={t.fullName || t.email}
+                      />
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">

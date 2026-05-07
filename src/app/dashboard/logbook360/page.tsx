@@ -12,7 +12,7 @@ export default async function LogBook360Page() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('email, role')
+    .select('email, role, full_name')
     .eq('id', user.id)
     .single()
 
@@ -21,7 +21,7 @@ export default async function LogBook360Page() {
 
   const { data: analysis } = await supabase
     .from('logbook_analysis')
-    .select('analysis_json, entries_total, last_updated')
+    .select('analysis_json, entries_total, last_updated, html_report_path, html_report_uploaded_at')
     .eq('technician_id', user.id)
     .maybeSingle()
 
@@ -42,7 +42,11 @@ export default async function LogBook360Page() {
 
   return (
     <AppLayout userEmail={profile.email} userRole="technician">
-      <Logbook360Client initialAnalysis={analysis} logbookDocs={logbookDocs || []} />
+      <Logbook360Client
+        initialAnalysis={analysis}
+        logbookDocs={logbookDocs || []}
+        technicianName={profile.full_name || profile.email}
+      />
     </AppLayout>
   )
 }

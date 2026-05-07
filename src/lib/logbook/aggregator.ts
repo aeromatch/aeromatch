@@ -10,7 +10,17 @@ export async function recalculateAnalysis(technicianId: string, supabase: Supaba
   if (error) throw new Error(error.message)
 
   if (!entries?.length) {
-    await supabase.from('logbook_analysis').delete().eq('technician_id', technicianId)
+    // Sin entries: dejamos la fila vacia (entries_total=0, analysis_json={}) para
+    // preservar otras columnas como html_report_path / html_report_uploaded_at.
+    await supabase.from('logbook_analysis').upsert(
+      {
+        technician_id: technicianId,
+        analysis_json: {},
+        entries_total: 0,
+        last_updated: new Date().toISOString(),
+      },
+      { onConflict: 'technician_id' },
+    )
     return
   }
 
