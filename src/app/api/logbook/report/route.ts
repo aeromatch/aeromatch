@@ -37,19 +37,37 @@ export async function GET(request: Request) {
   const technicianId = searchParams.get('technician_id') || user.id
   const isDownload = searchParams.get('download') === '1'
 
-  // Solo el propio tecnico o admin pueden pedir el report.
+  // Reglas de acceso:
+  //  - Owner (el propio tecnico) → OK
+  //  - Admin (ADMIN_EMAILS o role='admin') → OK
+  //  - Empresa autenticada → OK SOLO si el tecnico esta verificado (AMX checked).
+  //    Replica la misma policy que ya existe sobre logbook_analysis para
+  //    "companies_see_verified".
   if (technicianId !== user.id) {
     const adminEmails = (process.env.ADMIN_EMAILS || '')
       .split(',')
       .map((e) => e.trim().toLowerCase())
     const isAdminEmail = adminEmails.includes((user.email || '').toLowerCase())
+
     if (!isAdminEmail) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-      if (profile?.role !== 'admin') {
+
+      if (profile?.role === 'admin') {
+        // OK admin role
+      } else if (profile?.role === 'company') {
+        const { data: tech } = await supabase
+          .from('technicians')
+          .select('verification_status')
+          .eq('user_id', technicianId)
+          .maybeSingle()
+        if (tech?.verification_status !== 'verified') {
+          return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+        }
+      } else {
         return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
       }
     }

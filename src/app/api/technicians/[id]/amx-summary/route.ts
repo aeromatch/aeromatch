@@ -63,6 +63,15 @@ export async function GET(
       .select('doc_type, status, created_at')
       .eq('technician_id', id)
 
+    // logBook360 HTML report (visible solo si el tecnico esta verificado)
+    const { data: logbookRow } = await supabase
+      .from('logbook_analysis')
+      .select('html_report_path, html_report_uploaded_at')
+      .eq('technician_id', id)
+      .maybeSingle()
+    const isVerified = technician.verification_status === 'verified'
+    const hasLogbookReport = isVerified && Boolean(logbookRow?.html_report_path)
+
     // Build verification checklist
     const docTypes = documents?.map(d => d.doc_type) || []
     const verifiedDocs = documents?.filter(d => d.status === 'checked') || []
@@ -137,7 +146,11 @@ export async function GET(
         documentsTotal: documents?.length || 0,
         documentsVerified: verifiedDocs.length,
         documentsPending: uploadedDocs.length
-      }
+      },
+
+      // logBook360 (solo si esta verificado y hay HTML subido)
+      hasLogbookReport,
+      logbookReportUploadedAt: hasLogbookReport ? logbookRow?.html_report_uploaded_at ?? null : null,
     }
 
     return NextResponse.json({ summary })
