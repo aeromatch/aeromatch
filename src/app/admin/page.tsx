@@ -31,7 +31,16 @@ interface Technician {
   hasPremium: boolean
   premiumExpires?: string
   profileActive?: boolean
+  hasLogbookReport?: boolean
+  logbookReportUploadedAt?: string | null
 }
+
+type TechnicianSort =
+  | 'name-asc'
+  | 'name-desc'
+  | 'logbook-missing-first'
+  | 'logbook-with-first'
+  | 'recent-first'
 
 interface Company {
   id: string
@@ -81,6 +90,8 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'metrics' | 'verification' | 'technicians' | 'companies' | 'mailing'>('metrics')
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [technicians, setTechnicians] = useState<Technician[]>([])
+  const [techSort, setTechSort] = useState<TechnicianSort>('name-asc')
+  const [techSearch, setTechSearch] = useState('')
   const [companies, setCompanies] = useState<Company[]>([])
   
   // Verification tab state
@@ -549,8 +560,36 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'technicians' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="text"
+                value={techSearch}
+                onChange={(e) => setTechSearch(e.target.value)}
+                placeholder="Buscar por nombre o email…"
+                className="bg-navy-800 border border-steel-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-steel-500 focus:outline-none focus:border-gold-500/50 w-64"
+              />
+              <label className="text-xs text-steel-400">Orden:</label>
+              <select
+                value={techSort}
+                onChange={(e) => setTechSort(e.target.value as TechnicianSort)}
+                className="bg-navy-800 border border-steel-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500/50"
+              >
+                <option value="name-asc">Nombre A → Z</option>
+                <option value="name-desc">Nombre Z → A</option>
+                <option value="logbook-missing-first">Sin logBook360 primero</option>
+                <option value="logbook-with-first">Con logBook360 primero</option>
+                <option value="recent-first">Registro más reciente</option>
+              </select>
+              <span className="text-xs text-steel-500 ml-auto">
+                {technicians.filter((t) => filterTechnician(t, techSearch)).length} de {technicians.length}
+                {' · '}
+                {technicians.filter((t) => t.hasLogbookReport).length} con logBook360
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-steel-700">
                   <th className="text-left py-3 px-4 text-steel-400 font-medium">Email</th>
@@ -566,7 +605,10 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {technicians.map(t => (
+                {sortTechnicians(
+                  technicians.filter((t) => filterTechnician(t, techSearch)),
+                  techSort,
+                ).map(t => (
                   <tr key={t.id} className="border-b border-steel-800 hover:bg-navy-800/30">
                     <td className="py-3 px-4 text-white">{t.email}</td>
                     <td className="py-3 px-4 text-steel-300">{t.fullName || '-'}</td>
@@ -593,6 +635,21 @@ export default function AdminPage() {
                       <LogbookReportUploadButton
                         technicianId={t.id}
                         technicianName={t.fullName || t.email}
+                        initialHasReport={!!t.hasLogbookReport}
+                        initialUploadedAt={t.logbookReportUploadedAt ?? null}
+                        onChange={(next) => {
+                          setTechnicians((prev) =>
+                            prev.map((row) =>
+                              row.id === t.id
+                                ? {
+                                    ...row,
+                                    hasLogbookReport: next.hasReport,
+                                    logbookReportUploadedAt: next.uploadedAt,
+                                  }
+                                : row,
+                            ),
+                          )
+                        }}
                       />
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -623,6 +680,7 @@ export default function AdminPage() {
             {technicians.length === 0 && (
               <p className="text-steel-500 text-center py-8">No technicians found</p>
             )}
+            </div>
           </div>
         )}
 
@@ -965,6 +1023,53 @@ export default function AdminPage() {
       )}
     </div>
   )
+}
+
+function technicianDisplayName(t: Technician): string {
+  return (t.fullName && t.fullName !== '-' ? t.fullName : t.email || '').trim()
+}
+
+function filterTechnician(t: Technician, q: string): boolean {
+  const query = q.trim().toLowerCase()
+  if (!query) return true
+  return (
+    technicianDisplayName(t).toLowerCase().includes(query) ||
+    (t.email || '').toLowerCase().includes(query)
+  )
+}
+
+function sortTechnicians(rows: Technician[], mode: TechnicianSort): Technician[] {
+  const sorted = [...rows]
+  const byName = (a: Technician, b: Technician) =>
+    technicianDisplayName(a).localeCompare(technicianDisplayName(b), 'es', { sensitivity: 'base' })
+
+  switch (mode) {
+    case 'name-asc':
+      return sorted.sort(byName)
+    case 'name-desc':
+      return sorted.sort((a, b) => byName(b, a))
+    case 'logbook-missing-first':
+      return sorted.sort((a, b) => {
+        const av = a.hasLogbookReport ? 1 : 0
+        const bv = b.hasLogbookReport ? 1 : 0
+        if (av !== bv) return av - bv
+        return byName(a, b)
+      })
+    case 'logbook-with-first':
+      return sorted.sort((a, b) => {
+        const av = a.hasLogbookReport ? 0 : 1
+        const bv = b.hasLogbookReport ? 0 : 1
+        if (av !== bv) return av - bv
+        return byName(a, b)
+      })
+    case 'recent-first':
+      return sorted.sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0
+        if (!a.createdAt) return 1
+        if (!b.createdAt) return -1
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      })
+  }
 }
 
 function MetricCard({ label, value, highlight, subtitle }: { label: string, value: number, highlight?: boolean, subtitle?: string }) {

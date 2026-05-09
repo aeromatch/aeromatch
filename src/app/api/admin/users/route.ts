@@ -78,15 +78,22 @@ export async function GET(request: Request) {
 
       const userIds = technicianData.map(t => t.user_id)
 
-      const [profilesData, premiumData, docsData, availData] = await Promise.all([
+      const [profilesData, premiumData, docsData, availData, logbookReportsData] = await Promise.all([
         adminClient.from('profiles').select('id, email, full_name, created_at, plan').in('id', userIds),
         adminClient.from('premium_grants').select('technician_id, expires_at').in('technician_id', userIds),
         adminClient.from('documents').select('technician_id').in('technician_id', userIds),
         adminClient.from('availability_slots').select('technician_id').in('technician_id', userIds),
+        adminClient
+          .from('logbook_analysis')
+          .select('technician_id, html_report_path, html_report_uploaded_at')
+          .in('technician_id', userIds),
       ])
 
       const profileMap = new Map(profilesData.data?.map(p => [p.id, p]) || [])
       const premiumMap = new Map(premiumData.data?.map(p => [p.technician_id, p]) || [])
+      const logbookReportMap = new Map(
+        (logbookReportsData.data || []).map((r: any) => [r.technician_id, r]),
+      )
       const docsMap = new Map<string, number>()
       const availMap = new Map<string, number>()
 
@@ -96,6 +103,9 @@ export async function GET(request: Request) {
       const users = technicianData.map(tech => {
         const profile = profileMap.get(tech.user_id)
         const premium = premiumMap.get(tech.user_id)
+        const logbookReport = logbookReportMap.get(tech.user_id) as
+          | { html_report_path?: string | null; html_report_uploaded_at?: string | null }
+          | undefined
         return {
           id: tech.user_id,
           email: profile?.email || 'Unknown',
@@ -112,15 +122,17 @@ export async function GET(request: Request) {
           hasPremium: !!premium,
           premiumExpires: premium?.expires_at,
           profileActive: tech.profile_active !== false,
+          hasLogbookReport: Boolean(logbookReport?.html_report_path),
+          logbookReportUploadedAt: logbookReport?.html_report_uploaded_at || null,
         }
       })
 
-      // Orden: mas recientes primero (los sin createdAt al final)
+      // Orden por defecto: alfabetico por nombre (caso util para subir logbooks).
+      // El cliente puede reordenar sin tocar este endpoint.
       users.sort((a, b) => {
-        if (!a.createdAt && !b.createdAt) return 0
-        if (!a.createdAt) return 1
-        if (!b.createdAt) return -1
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        const an = (a.fullName && a.fullName !== '-' ? a.fullName : a.email).toLowerCase()
+        const bn = (b.fullName && b.fullName !== '-' ? b.fullName : b.email).toLowerCase()
+        return an.localeCompare(bn, 'es', { sensitivity: 'base' })
       })
 
       return NextResponse.json({ users })

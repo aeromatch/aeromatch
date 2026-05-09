@@ -12,11 +12,31 @@ type ReportStatus = {
 type Props = {
   technicianId: string
   technicianName?: string
+  /**
+   * Estado inicial que ya viene en el listado de admin (evita una peticion
+   * por fila). Si se pasa, no hacemos fetch al montar.
+   */
+  initialHasReport?: boolean
+  initialUploadedAt?: string | null
+  /** Callback opcional cuando cambia el estado tras upload/delete. */
+  onChange?: (next: { hasReport: boolean; uploadedAt: string | null }) => void
 }
 
-export function LogbookReportUploadButton({ technicianId, technicianName }: Props) {
-  const [status, setStatus] = useState<ReportStatus | null>(null)
-  const [loadingStatus, setLoadingStatus] = useState(true)
+export function LogbookReportUploadButton({
+  technicianId,
+  technicianName,
+  initialHasReport,
+  initialUploadedAt,
+  onChange,
+}: Props) {
+  const hasInitialStatus = typeof initialHasReport === 'boolean'
+
+  const [status, setStatus] = useState<ReportStatus | null>(
+    hasInitialStatus
+      ? { has_report: !!initialHasReport, html_report_uploaded_at: initialUploadedAt ?? null }
+      : null,
+  )
+  const [loadingStatus, setLoadingStatus] = useState(!hasInitialStatus)
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -33,10 +53,12 @@ export function LogbookReportUploadButton({ technicianId, technicianName }: Prop
       )
       if (res.ok) {
         const data = await res.json()
-        setStatus({
+        const next: ReportStatus = {
           has_report: Boolean(data.has_report),
           html_report_uploaded_at: data.html_report_uploaded_at ?? null,
-        })
+        }
+        setStatus(next)
+        onChange?.({ hasReport: next.has_report, uploadedAt: next.html_report_uploaded_at })
       } else {
         setStatus({ has_report: false, html_report_uploaded_at: null })
       }
@@ -46,8 +68,19 @@ export function LogbookReportUploadButton({ technicianId, technicianName }: Prop
   }
 
   useEffect(() => {
+    if (hasInitialStatus) return
     void fetchStatus()
   }, [technicianId])
+
+  // Si el padre actualiza initialHasReport (ej. tras refetch del listado),
+  // sincronizamos el estado local.
+  useEffect(() => {
+    if (!hasInitialStatus) return
+    setStatus({
+      has_report: !!initialHasReport,
+      html_report_uploaded_at: initialUploadedAt ?? null,
+    })
+  }, [initialHasReport, initialUploadedAt, hasInitialStatus])
 
   function openModal() {
     setOpen(true)
@@ -106,7 +139,9 @@ export function LogbookReportUploadButton({ technicianId, technicianName }: Prop
       setFeedback({ kind: 'ok', msg: 'logBook360 subido correctamente.' })
       setFile(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
-      await fetchStatus()
+      const uploadedAt: string = data.html_report_uploaded_at || new Date().toISOString()
+      setStatus({ has_report: true, html_report_uploaded_at: uploadedAt })
+      onChange?.({ hasReport: true, uploadedAt })
     } finally {
       setUploading(false)
     }
@@ -127,20 +162,22 @@ export function LogbookReportUploadButton({ technicianId, technicianName }: Prop
       }
       setFeedback({ kind: 'ok', msg: 'logBook360 eliminado.' })
       setConfirmingDelete(false)
-      await fetchStatus()
+      setStatus({ has_report: false, html_report_uploaded_at: null })
+      onChange?.({ hasReport: false, uploadedAt: null })
     } finally {
       setDeleting(false)
     }
   }
 
-  const buttonLabel = status?.has_report ? '↻ logBook360' : '↑ logBook360'
-  const buttonClass = status?.has_report
-    ? 'px-2 py-1 rounded bg-green-500/10 border border-green-500/30 text-green-300 text-xs'
+  const hasReport = !!status?.has_report
+  const buttonLabel = hasReport ? '✓ logBook360' : '↑ logBook360'
+  const buttonClass = hasReport
+    ? 'px-2 py-1 rounded bg-green-500/15 border border-green-500/40 text-green-300 text-xs font-semibold'
     : 'px-2 py-1 rounded bg-gold-500/10 border border-gold-500/30 text-gold-300 text-xs'
 
   const tooltip =
-    status?.has_report && status.html_report_uploaded_at
-      ? `Último upload: ${new Date(status.html_report_uploaded_at).toLocaleString('es-ES')}`
+    hasReport && status?.html_report_uploaded_at
+      ? `Subido: ${new Date(status.html_report_uploaded_at).toLocaleString('es-ES')}`
       : 'Subir logBook360 (HTML)'
 
   return (
